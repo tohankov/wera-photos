@@ -149,6 +149,8 @@ def fetch_pdf(art):
 
 def pdf_text_fields(doc):
     text = doc[0].get_text()
+    # a long value can share a line with the next label ("... RA 1 Country of origin:")
+    text = re.sub(r"\s*(Country of origin:)", r"\n\1", text)
     lines = [l.strip() for l in text.splitlines()]
 
     def after(label):
