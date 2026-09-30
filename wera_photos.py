@@ -4,6 +4,8 @@ Usage:
     python wera_photos.py 05005936001 05020350001   # only given articles
     python wera_photos.py                           # all articles from the xlsx
     python wera_photos.py --xlsx                    # all + build import_photos.xlsx
+
+Photo source: datasheet PDF photo (exact article) if present, else site photo.
 """
 import csv
 import io
@@ -48,15 +50,21 @@ def log(msg):
 
 
 def http_get(url):
-    """GET with 1-2 s pause between requests to wera.de."""
+    """GET with 1-2 s pause between requests to wera.de; retries on network errors."""
     global _last_wera
-    wait = random.uniform(1.0, 2.0) - (time.time() - _last_wera)
-    if wait > 0:
-        time.sleep(wait)
-    try:
-        return session.get(url, timeout=60)
-    finally:
-        _last_wera = time.time()
+    for attempt in range(5):
+        wait = random.uniform(1.0, 2.0) - (time.time() - _last_wera)
+        if wait > 0:
+            time.sleep(wait)
+        try:
+            return session.get(url, timeout=60)
+        except requests.exceptions.RequestException as e:
+            if attempt == 4:
+                raise
+            log(f"  network error ({type(e).__name__}), retry {attempt + 1}/4 in {5 * 2 ** attempt}s")
+            time.sleep(5 * 2 ** attempt)
+        finally:
+            _last_wera = time.time()
 
 
 def cached(path, url, validate=None):
@@ -206,12 +214,6 @@ def content_bbox(rgb):
     return diff.getbbox() or (0, 0, rgb.width, rgb.height)
 
 
-def product_size(im):
-    rgb = to_rgb_white(im)
-    b = content_bbox(rgb)
-    return b[2] - b[0], b[3] - b[1]
-
-
 def make_square(im):
     rgb = to_rgb_white(im)
     prod = rgb.crop(content_bbox(rgb))
@@ -269,13 +271,12 @@ def process(art):
             f"{site[1] + ' ' + site[2] if site else '-'} | pdf: "
             f"{'ok' if pdf_bytes else 'NOT FOUND'} img: {pdf[2] if pdf else '-'} | model: {model!r}")
 
+        # datasheet photo shows the exact article (size marking); site photo is per product line
         chosen, src = None, "none"
-        if site:
-            chosen, src = site, "site"
-        if pdf and (not site or
-                    product_size(pdf[0])[0] * product_size(pdf[0])[1] >
-                    product_size(site[0])[0] * product_size(site[0])[1]):
+        if pdf:
             chosen, src = pdf, "pdf"
+        elif site:
+            chosen, src = site, "site"
         if not chosen:
             rep["status"] = "not_found"
             return rep, data
