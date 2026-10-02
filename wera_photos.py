@@ -4,13 +4,16 @@ Usage:
     python wera_photos.py 05005936001 05020350001   # only given articles
     python wera_photos.py                           # all articles from the xlsx
     python wera_photos.py --xlsx                    # all + build import_photos.xlsx
+    python wera_photos.py --input batch2.xlsx --suffix _2 --xlsx
+                                                    # other input; writes report_2.csv,
+                                                    # data_2.csv, import_photos_2.xlsx
 
 Photo source: datasheet PDF photo (exact article) if present, else site photo.
 """
+import argparse
 import csv
 import io
 import re
-import sys
 import time
 import random
 from pathlib import Path
@@ -25,9 +28,6 @@ ROOT = Path(__file__).resolve().parent
 INPUT_XLSX = ROOT / "wera_novinki_import_130 (1).xlsx"
 CACHE = ROOT / "cache"
 IMAGES = ROOT / "images"
-REPORT = ROOT / "report.csv"
-DATA = ROOT / "data.csv"
-IMPORT_XLSX = ROOT / "import_photos.xlsx"
 RAW_BASE = "https://raw.githubusercontent.com/tohankov/wera-photos/main/images/"
 
 SITE = "https://www.wera.de"
@@ -239,8 +239,8 @@ def slugify(model):
 
 # ---------- main ----------
 
-def read_articles():
-    df = pd.read_excel(INPUT_XLSX, dtype=str)
+def read_articles(path):
+    df = pd.read_excel(path, dtype=str)
     arts = df["Артикул"].dropna().str.strip()
     return [a.zfill(11) for a in arts if a]
 
@@ -301,7 +301,7 @@ def write_csv(path, rows):
         w.writerows(rows)
 
 
-def write_import_xlsx(reports):
+def write_import_xlsx(path, reports):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Фото"
@@ -314,12 +314,21 @@ def write_import_xlsx(reports):
         row[0].data_type = "s"
     ws.column_dimensions["A"].width = 16
     ws.column_dimensions["B"].width = 100
-    wb.save(IMPORT_XLSX)
+    wb.save(path)
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    arts = args or read_articles()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("articles", nargs="*", help="process only these articles")
+    ap.add_argument("--input", default=str(INPUT_XLSX), help="xlsx with column 'Артикул'")
+    ap.add_argument("--suffix", default="", help="suffix for output files, e.g. _2")
+    ap.add_argument("--xlsx", action="store_true", help="also build import_photos{suffix}.xlsx")
+    opts = ap.parse_args()
+    report_path = ROOT / f"report{opts.suffix}.csv"
+    data_path = ROOT / f"data{opts.suffix}.csv"
+    import_path = ROOT / f"import_photos{opts.suffix}.xlsx"
+
+    arts = opts.articles or read_articles(Path(opts.input))
     reports, datas = [], []
     for n, art in enumerate(arts, 1):
         log(f"[{n}/{len(arts)}] {art}")
@@ -328,13 +337,13 @@ def main():
             f"{rep['result_resolution']} {rep['file']}")
         reports.append(rep)
         datas.append(data)
-    write_csv(REPORT, reports)
-    write_csv(DATA, datas)
+    write_csv(report_path, reports)
+    write_csv(data_path, datas)
     ok = sum(r["status"] == "ok" for r in reports)
-    log(f"\nDone: {ok}/{len(reports)} ok. report -> {REPORT.name}, data -> {DATA.name}")
-    if "--xlsx" in sys.argv:
-        write_import_xlsx(reports)
-        log(f"import -> {IMPORT_XLSX.name}")
+    log(f"\nDone: {ok}/{len(reports)} ok. report -> {report_path.name}, data -> {data_path.name}")
+    if opts.xlsx:
+        write_import_xlsx(import_path, reports)
+        log(f"import -> {import_path.name}")
 
 
 if __name__ == "__main__":
