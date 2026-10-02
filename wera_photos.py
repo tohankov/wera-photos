@@ -161,6 +161,23 @@ def pdf_text_fields(doc):
                         return nxt
         return ""
 
+    def model_name():
+        # long names wrap over several lines up to the next label
+        try:
+            start = lines.index("Article number:") + 1
+        except ValueError:
+            return ""
+        parts = []
+        for l in lines[start:]:
+            if l.endswith(":") or l.startswith("Customs"):
+                break
+            if l:
+                parts.append(l)
+        name = ""
+        for p in parts:
+            name += p if name.endswith("-") or not name else " " + p
+        return name
+
     weight = after("Weight")
     m = re.search(r"([\d.,]+)\s*g\b", weight)
     return {
@@ -169,7 +186,7 @@ def pdf_text_fields(doc):
         "weight_g": m.group(1) if m else weight,
         "package_size": after("Size"),
         "country_of_origin": after("Country of origin"),
-        "model": after("Article number"),
+        "model": model_name(),
     }
 
 
@@ -233,7 +250,10 @@ def make_square(im):
 
 
 def slugify(model):
-    s = re.sub(r"[^a-z0-9]+", "-", model.lower()).strip("-")
+    s = model.lower()
+    for a, b in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        s = s.replace(a, b)
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s or "product"
 
 
