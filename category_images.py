@@ -5,6 +5,9 @@ Usage:
     python category_images.py build --test          # 10 test sections, both variants
     python category_images.py build --variant A     # all sections, one variant
     python category_images.py tree                  # print tree with product counts
+    python category_images.py autopick              # fill missing leaf choices heuristically
+    python category_images.py review --start 0      # contact sheet of chosen photos to check
+    python category_images.py sheet ART [ART ...]   # contact sheet of any articles / sections
 
 Input: export.xlsx.xlsx (Horoshop export). Choices: category_choices.csv
 (path;article;reason). Output: category_images/{A,B}/cat-*.{jpg,png},
@@ -36,6 +39,9 @@ MARGIN = 0.08
 MIN_SOURCE = 600
 JPEG_QUALITY = 90
 REMBG_MODEL = "isnet-general-use"
+WHITE_NOISE = 10   # source pixels this close to white count as background
+WHITE_RAMP = 40    # ...and become fully opaque this far from white
+HOLE_PURE_SHARE = 0.75  # enclosed spot is a real hole if this share of it is pure white
 
 # sections present in the site menu but without products in the export
 SITE_ONLY = [
@@ -124,6 +130,15 @@ def translit(s):
     s = s.lower()
     s = "".join(TRANSLIT.get(c, c) for c in s)
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
+
+UA_ABC = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюя"
+
+
+def path_key(path):
+    """Sort sections in Ukrainian alphabetical order, level by level."""
+    return [[UA_ABC.index(c) if c in UA_ABC else 100 + ord(c) for c in s.lower()]
+            for s in split_path(path)]
 
 
 def file_stem(path):
@@ -231,15 +246,57 @@ def variant_a(im):
     return place(prod, (255, 255, 255, 255)).convert("RGB")
 
 
-def variant_b(im, cache_key):
+def rembg_cut(im, cache_key):
     path = CACHE / "rembg" / f"{cache_key}.png"
     if path.exists():
         cut = Image.open(path)
         cut.load()
-    else:
-        cut = remove_bg(to_rgba(im))
-        path.parent.mkdir(parents=True, exist_ok=True)
-        cut.save(path)
+        return cut
+    cut = remove_bg(to_rgba(im))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    cut.save(path)
+    return cut
+
+
+def fill_highlights(a, rgb):
+    """Make enclosed transparent spots opaque unless they are real see-through holes.
+    A real hole (wrench ring, handle eye, bag strap) shows flat pure-white background;
+    a blown-out chrome highlight is mostly a near-white gradient."""
+    import numpy as np
+    from scipy import ndimage
+    solid = a > 0.5
+    holes = ndimage.binary_fill_holes(solid) & ~solid
+    lab, n = ndimage.label(holes)
+    pure = rgb.min(axis=2) >= 252
+    share = ndimage.mean(pure, lab, range(1, n + 1))
+    real = np.isin(lab, [i + 1 for i, s in enumerate(share) if s >= HOLE_PURE_SHARE])
+    # whole silhouette minus real holes is opaque; 2 px border keeps the soft edge
+    body = ndimage.binary_erosion(ndimage.binary_fill_holes(solid) & ~real, iterations=2)
+    a = a.copy()
+    a[body] = 1
+    return a
+
+
+def cutout(im, cache_key):
+    """Transparent cut-out. rembg loses thin chrome shafts on white photos, so its mask is
+    merged with a 'not white' mask of the source; edge colours are un-blended from white."""
+    import numpy as np
+    if has_alpha(im):
+        return im.convert("RGBA")  # source already has a real transparent background
+    rgb = np.asarray(wp.to_rgb_white(im), dtype=np.float32)
+    a_rembg = np.asarray(rembg_cut(im, cache_key).getchannel("A"), dtype=np.float32) / 255
+    diff = (255 - rgb).max(axis=2)
+    a_white = np.clip((diff - WHITE_NOISE) / WHITE_RAMP, 0, 1)
+    a = np.maximum(a_rembg, a_white)
+    a = fill_highlights(a, rgb)
+    safe = np.maximum(a, 1e-3)[..., None]
+    col = np.clip((rgb - (1 - a[..., None]) * 255) / safe, 0, 255)
+    out = np.dstack([col, a * 255]).round().astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
+
+
+def variant_b(im, cache_key):
+    cut = cutout(im, cache_key)
     bbox = alpha_bbox(cut) or (0, 0, cut.width, cut.height)
     return place(cut.crop(bbox), (0, 0, 0, 0))
 
@@ -298,6 +355,67 @@ def read_choices():
         return {}
     with open(CHOICES, encoding="utf-8") as f:
         return {r["path"]: r for r in csv.DictReader(f, delimiter=";")}
+
+
+def write_choices(choices):
+    with open(CHOICES, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["path", "article", "source", "reason"], delimiter=";")
+        w.writeheader()
+        for p in sorted(choices, key=path_key):
+            w.writerow({k: choices[p].get(k, "") for k in w.fieldnames})
+
+
+BAG_WORDS = ("неукомплект", "без інструмент", "без інструмента", "запасн")
+BAG_START = ("сумка", "м'яка сумка", "м'який футляр", "футляр", "складна сумка", "ложемент",
+             "кожух", "текстильна", "поясна кобура", "сумка-скручування", "смужка")
+
+
+def is_bag(name):
+    n = name.lower().lstrip("0123456789 ")
+    return any(w in n for w in BAG_WORDS) or n.startswith(BAG_START)
+
+
+def is_set(name):
+    n = name.lower()
+    return "набір" in n or re.search(r"\bset\b", n) is not None or "ложемент" in n
+
+
+def is_set_section(name):
+    n = name.lower()
+    return "набор" in n or "набір" in n or "набори" in n
+
+
+def auto_pick(path, df, sections, own, extra, used):
+    """Leaf heuristic: topical own products, sets vs single tools by section name, median size."""
+    name = split_path(path)[-1]
+    own_idx = own.get(path, [])
+    pool = own_idx or section_products(path, sections, own, extra)
+    names = {i: df.loc[i, "Название (UA)"] for i in pool}
+    cand = [i for i in pool if not is_bag(names[i])] or pool
+    want_set = is_set_section(name)
+    pref = [i for i in cand if is_set(names[i]) == want_set] or cand
+    fresh = [i for i in pref if df.loc[i, "Артикул"] not in used] or pref
+    i = fresh[len(fresh) // 2]
+    kind = "набор — раздел про наборы" if want_set and is_set(names[i]) else \
+        "штучный инструмент — средний типоразмер/вариант раздела" if not is_set(names[i]) else \
+        "набор (штучных товаров в разделе нет)"
+    return df.loc[i, "Артикул"], kind
+
+
+def cmd_autopick(df, sections, own, extra, opts):
+    choices = read_choices()
+    used = {c["article"] for c in choices.values()}
+    leaves = [p for p in sections if not any(q.startswith(p + "/") for q in sections)]
+    n = 0
+    for p in sorted(leaves):
+        if p in choices or not section_products(p, sections, own, extra):
+            continue
+        art, why = auto_pick(p, df, sections, own, extra, used)
+        used.add(art)
+        choices[p] = {"path": p, "article": art, "source": "", "reason": "auto: " + why}
+        n += 1
+    write_choices(choices)
+    log(f"autopick: {n} new, {len(choices)} total")
 
 
 def write_xlsx(rows, empty, path):
@@ -372,9 +490,24 @@ def cmd_sheet(df, sections, own, extra, opts):
     log(f"sheet -> {opts.out} ({len(items)})")
 
 
+def cmd_review(df, sections, own, extra, opts):
+    """Sheet of chosen source photos: '#n section | article' for visual check."""
+    choices = read_choices()
+    by_art = {r["Артикул"]: i for i, r in df.iterrows()}
+    paths = sorted(choices, key=path_key)
+    items = []
+    for n, p in enumerate(paths[opts.start:opts.start + opts.count], opts.start):
+        ch = choices[p]
+        im, src = source_image(df.loc[by_art[ch["article"]]], ch.get("source") or None)
+        im = variant_a(im) if im is not None else Image.new("RGB", (100, 100), "red")
+        items.append((f"#{n} {split_path(p)[-1][:60]} | {ch['article']} {src.split()[0]}", im))
+    preview(items, Path(opts.out), cols=6, tile=280)
+    log(f"review -> {opts.out}: {opts.start}..{opts.start + len(items) - 1} of {len(paths)}")
+
+
 def cmd_build(df, sections, own, extra, opts):
     choices = read_choices()
-    paths = TEST if opts.test else sorted(sections, key=lambda p: [s.lower() for s in split_path(p)])
+    paths = TEST if opts.test else sorted(sections, key=path_key)
     variants = ["A", "B"] if opts.variant == "AB" else [opts.variant]
     by_art = {r["Артикул"]: i for i, r in df.iterrows()}
     rows, empty = [], []
@@ -421,7 +554,7 @@ def cmd_build(df, sections, own, extra, opts):
                      "Почему выбран": ch["reason"] + (f" [источник: {src}]" if src else "")})
     suffix = "_test" if opts.test else ""
     for v in variants:
-        preview(prev[v], ROOT / f"preview_{v}{suffix}.png")
+        preview(prev[v], ROOT / f"preview_{v}{suffix}.png", cols=5 if opts.test else 8)
     write_xlsx(rows, empty, ROOT / f"category_images{suffix}.xlsx")
     log(f"done: {len(rows)} sections with images, {len(empty)} without")
 
@@ -441,10 +574,16 @@ def main():
     p = sub.add_parser("build")
     p.add_argument("--test", action="store_true")
     p.add_argument("--variant", default="AB", choices=["A", "B", "AB"])
+    sub.add_parser("autopick")
+    p = sub.add_parser("review")
+    p.add_argument("--start", type=int, default=0)
+    p.add_argument("--count", type=int, default=30)
+    p.add_argument("--out", default="review.png")
     opts = ap.parse_args()
     df = load_products()
     sections, own, extra = build_tree(df)
-    cmds = {"tree": cmd_tree, "list": cmd_list, "sheet": cmd_sheet, "build": cmd_build}
+    cmds = {"tree": cmd_tree, "list": cmd_list, "sheet": cmd_sheet, "build": cmd_build,
+            "autopick": cmd_autopick, "review": cmd_review}
     cmds[opts.cmd](df, sections, own, extra, opts)
 
 
