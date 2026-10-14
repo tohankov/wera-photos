@@ -8,7 +8,7 @@ const REPO = 'C:/Users/Techlight/Desktop/wera-photos/backup/';
 const ids = require(D + '/ids.json'), content = require(D + '/content.js');
 const S = require('./session.js').open();
 const mcp = async (tool, args, out) => { const r = await S.call(tool, args); fs.writeFileSync(out, JSON.stringify(r)); return r; };
-const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || [s]; let out = ''; for (const p of parts) { if ((out + p).trim().length > max) break; out += p; } return (out || parts[0].slice(0, max)).trim(); };
+const { metaOf } = require('./meta.js'); const firstSentences = (s, max) => metaOf(s, max); // whole phrases, never cut inside a word
 const sets = Object.entries(ids).map(([a, id]) => {
   const c = content[a], core = l => c.title[l].replace(` WERA ${a}`, '');
   return { a, id, set: {

@@ -20,7 +20,7 @@ const call = async (tool, args) => { const r = await S.call(tool, args); if (r &
 // fields the import dryRun is allowed to report for one new product, derived from its own payload
 const plannedKeys = p => Object.keys(p).filter(k => k !== 'article').flatMap(k => k === 'title' || k === 'description' ? [k + '.ru', k + '.ua'] : k === 'parent' ? ['parent.id'] : [k]).sort().join(',');
 const exportArgs = arts => ({ expr: { article: arts }, includedParams: ['article', 'parent_article', 'title', 'slug', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description'], limit: 200, allowLarge: true });
-const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || [s]; let out = ''; for (const p of parts) { if ((out + p).trim().length > max) break; out += p; } return (out || parts[0].slice(0, max)).trim(); };
+const { metaOf } = require('./meta.js'); const firstSentences = (s, max) => metaOf(s, max); // whole phrases, never cut inside a word
 
 (async () => {
   const RESUME = process.argv[3] === 'resume';

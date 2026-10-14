@@ -2,7 +2,7 @@
 //   node lib/form_check.js batches/<name>
 const fs = require('fs'), path = require('path'); const V = require('./vt.js'); const S = require('./session.js').open();
 const D = path.resolve(process.argv[2]); const content = require(path.join(D, 'content.js')); const ids = JSON.parse(fs.readFileSync(path.join(D, 'ids.json'), 'utf8'));
-const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || [s]; let out = ''; for (const p of parts) { if ((out + p).trim().length > max) break; out += p; } return (out || parts[0].slice(0, max)).trim(); };
+const { metaOf } = require('./meta.js'); const firstSentences = (s, max) => metaOf(s, max); // whole phrases, never cut inside a word
 (async () => {
   const pending = [];
   for (const [a, id] of Object.entries(ids)) { const c = content[a], core = l => c.title[l].replace(` WERA ${a}`, '');
