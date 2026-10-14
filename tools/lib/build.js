@@ -17,9 +17,22 @@ function makeBuilder(dir) {
   const nbFile = REPO + 'backup/' + NAME + '_neighbours_before.json';
   const NB = () => Object.fromEntries(JSON.parse(fs.readFileSync(nbFile, 'utf8')).response.products.map(p => [p.article, p]));
   let nbCache = null; const nb = () => (nbCache = nbCache || NB());
-  const nbOf = a => T[a].unlinked.map(x => nb()[x]).filter(p => p && V.splitTable(p.description.ua) && V.splitTable(p.description.ru));
+  const nbOf = a => (T[a]?.unlinked || []).map(x => nb()[x]).filter(p => p && V.splitTable(p.description.ua) && V.splitTable(p.description.ru));
   const block = (a, lang) => V.splitTable(nbOf(a)[0].description[lang])[1];
+  // group Б: no series table on the site — characteristics come from content.js (chars), composition optional
+  function descriptionNoTable(a, lang) {
+    const c = content[a], f = facts(a);
+    const L = lang === 'ua' ? { ch: 'Характеристики', w: 'Вага', g: 'г', co: 'Країна виробництва', feat: 'Особливості', set: 'Склад набору' } : { ch: 'Характеристики', w: 'Вес', g: 'г', co: 'Страна производства', feat: 'Особенности', set: 'Состав набора' };
+    const ch = (c.chars ? c.chars[lang] : []).map(x => `<li>${x}</li>`);
+    if (f.weight) ch.push(`<li>${L.w}: ${f.weight} ${L.g}</li>`);
+    if (f.country && COUNTRY[f.country]) ch.push(`<li>${L.co}: ${COUNTRY[f.country][lang === 'ua' ? 0 : 1]}</li>`);
+    if (f.ean) ch.push(`<li>EAN: ${f.ean}</li>`);
+    return `<p>${c.intro[lang]}</p><p><strong>${L.feat}:</strong></p><ul>${c.feat[lang].map(x => `<li>${x}</li>`).join('')}</ul>`
+      + (c.set ? `<p><strong>${L.set}:</strong></p><ul>${c.set[lang].map(x => `<li>${x}</li>`).join('')}</ul>` : '')
+      + `<p><strong>${L.ch}:</strong></p><ul>${ch.join('')}</ul>` + datasheet(lang, a, 'ru');
+  }
   function description(a, lang, links) {
+    if (content[a].noTable) return descriptionNoTable(a, lang);
     const c = content[a], f = facts(a), b = block(a, lang), hdr = V.headers(b), row = V.rowOf(b, a);
     const L = lang === 'ua' ? { ch: 'Характеристики', w: 'Вага', g: 'г', co: 'Країна виробництва', feat: 'Особливості' } : { ch: 'Характеристики', w: 'Вес', g: 'г', co: 'Страна производства', feat: 'Особенности' };
     const ch = hdr.map((h, i) => [h, row.vals[i]]).filter(([, v]) => v && v !== '-').map(([h, v]) => `<li>${h.label}: ${v}${h.unit && !/[″"]$/.test(v) && h.unit !== 'дюйми' && h.unit !== 'дюймы' ? ' ' + h.unit : ''}</li>`);
@@ -38,8 +51,9 @@ function makeBuilder(dir) {
   }
   function payloadNew(arts) {
     return arts.map(a => {
-      const c = content[a], f = facts(a), sec = CL[a].section;
-      const p = { article: a, title: c.title, description: { ua: description(a, 'ua', linkMap(a, {})), ru: description(a, 'ru', linkMap(a, {})) }, price: P[a].price, brand: 'WERA', parent: { id: sec.parent }, presence: 'В наявності', display_in_showcase: 1,
+      const c = content[a], f = facts(a), sec = c.parent ? { parent: c.parent, alt: c.alt || [] } : CL[a].section;
+      const lm = c.noTable ? {} : linkMap(a, {});
+      const p = { article: a, title: c.title, description: { ua: description(a, 'ua', lm), ru: description(a, 'ru', lm) }, price: P[a].price, brand: 'WERA', parent: { id: sec.parent }, presence: 'В наявності', display_in_showcase: 1,
         images: { override: true, links: [`https://raw.githubusercontent.com/tohankov/wera-photos/main/images/${NAME}/${a}.jpg`] } };
       if (sec.alt && sec.alt.length) p.alt_parent = sec.alt.map(id => ({ id }));
       if (f.ean) p.gtin = f.ean;
@@ -49,8 +63,8 @@ function makeBuilder(dir) {
   // new products + every neighbour; a neighbour whose table would change beyond links is reported, not included
   function payloadLinks(arts, L) {
     const products = [], problems = [];
-    for (const a of arts) { const lm = linkMap(a, L); products.push({ article: a, description: { ua: description(a, 'ua', lm), ru: description(a, 'ru', lm) } }); }
-    const nbs = [...new Set(arts.flatMap(a => T[a].unlinked))].map(x => nb()[x]).filter(Boolean);
+    for (const a of arts.filter(x => !content[x].noTable)) { const lm = linkMap(a, L); products.push({ article: a, description: { ua: description(a, 'ua', lm), ru: description(a, 'ru', lm) } }); }
+    const nbs = [...new Set(arts.flatMap(a => (T[a]?.unlinked || [])))].map(x => nb()[x]).filter(Boolean);
     for (const p of nbs) {
       const desc = {}; let bad = null;
       for (const lang of ['ua', 'ru']) {
@@ -61,12 +75,12 @@ function makeBuilder(dir) {
         if (V.stripLinks(html) !== V.stripLinks(parts[1])) { bad = lang + ' differs beyond links'; break; }
         desc[lang] = parts[0] + html + parts[2];
       }
-      if (bad) problems.push({ neighbour: p.article, problem: bad, affects: arts.filter(a => T[a].unlinked.includes(p.article)) }); else products.push({ article: p.article, description: desc });
+      if (bad) problems.push({ neighbour: p.article, problem: bad, affects: arts.filter(a => (T[a]?.unlinked || []).includes(p.article)) }); else products.push({ article: p.article, description: desc });
     }
     return { products, problems };
   }
   // the new product's table must list exactly the rows of the series table it was taken from
-  function tableRowsOk(a) { for (const lang of ['ua', 'ru']) { const ref = V.rowsOf(block(a, lang)).map(r => r.art); const mine = V.rowsOf(V.splitTable(description(a, lang, linkMap(a, {})))[1]).map(r => r.art); if (ref.join() !== mine.join() || ref.some(x => !x)) return false; } return true; }
-  return { D, NAME, content, nbOf, payloadNew, payloadLinks, tableRowsOk, load, neighboursOf: arts => [...new Set(arts.flatMap(a => T[a].unlinked))] };
+  function tableRowsOk(a) { if (content[a].noTable) return true; for (const lang of ['ua', 'ru']) { const ref = V.rowsOf(block(a, lang)).map(r => r.art); const mine = V.rowsOf(V.splitTable(description(a, lang, linkMap(a, {})))[1]).map(r => r.art); if (ref.join() !== mine.join() || ref.some(x => !x)) return false; } return true; }
+  return { D, NAME, content, nbOf, payloadNew, payloadLinks, tableRowsOk, load, neighboursOf: arts => [...new Set(arts.flatMap(a => (T[a]?.unlinked || [])))] };
 }
 module.exports = { makeBuilder, REPO, facts };

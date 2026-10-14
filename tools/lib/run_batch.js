@@ -27,14 +27,14 @@ const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || 
   let arts = JSON.parse(fs.readFileSync(path.join(D, RESUME ? 'batch_final.json' : 'batch.json'), 'utf8')).filter(a => { const d = JSON.parse(fs.readFileSync(DEF, 'utf8')); return !d.some(x => x.article === a); });
   log(NAME, 'articles', arts.length);
   // 1. backup neighbours
-  const nbArts = [...new Set(arts.flatMap(a => T[a].unlinked))];
-  const nbExp = RESUME ? JSON.parse(fs.readFileSync(BK + NAME + '_neighbours_before.json', 'utf8')) : await call('horoshop_catalog_export', exportArgs(nbArts));
+  const nbArts = [...new Set(arts.flatMap(a => (T[a]?.unlinked || [])))];
+  const nbExp = !nbArts.length ? { response: { products: [] } } : RESUME ? JSON.parse(fs.readFileSync(BK + NAME + '_neighbours_before.json', 'utf8')) : await call('horoshop_catalog_export', exportArgs(nbArts));
   if (!nbExp.response || nbExp.response.products.length !== nbArts.length) stop('neighbour backup incomplete: ' + (nbExp.response ? nbExp.response.products.length : 'error') + ' of ' + nbArts.length);
   if (!RESUME) fs.writeFileSync(BK + NAME + '_neighbours_before.json', JSON.stringify(nbExp)); log(RESUME ? 'resume: backup from file' : 'backup neighbours', nbArts.length);
   B = makeBuilder(D);
   // 2. preflight: the new product's table rows and every neighbour table may change only by links
   for (const a of [...arts]) { const c = B.content[a]; if (!c || /undefined|NaN/.test(JSON.stringify(c))) { defer(a, 'нет данных для названия/текста (undefined в контенте)'); arts = arts.filter(x => x !== a); continue; } }
-  for (const a of [...arts]) { if (!B.nbOf(a).length) { defer(a, 'нет соседа с таблицей серии'); arts = arts.filter(x => x !== a); continue; } if (!B.tableRowsOk(a)) { defer(a, 'таблица нового товара не совпадает со строками серии у соседа'); arts = arts.filter(x => x !== a); } }
+  for (const a of [...arts]) { if (B.content[a].noTable) continue; if (!B.nbOf(a).length) { defer(a, 'нет соседа с таблицей серии'); arts = arts.filter(x => x !== a); continue; } if (!B.tableRowsOk(a)) { defer(a, 'таблица нового товара не совпадает со строками серии у соседа'); arts = arts.filter(x => x !== a); } }
   const predicted = Object.fromEntries(arts.map(a => [a, '/' + V.slugOf(B.content[a].title.ua) + '/']));
   const pre = B.payloadLinks(arts, predicted);
   for (const p of pre.problems) for (const a of p.affects) if (arts.includes(a)) { defer(a, `у соседа ${p.neighbour} таблица меняется не только ссылками (${p.problem})`); arts = arts.filter(x => x !== a); }
@@ -81,25 +81,28 @@ const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || 
   const lp = B.payloadLinks(linked, links);
   if (lp.problems.length) stop('neighbour tables changed beyond links at links step: ' + JSON.stringify(lp.problems).slice(0, 400));
   fs.writeFileSync(path.join(D, 'payload_links.json'), JSON.stringify({ products: lp.products }));
+  if (!lp.products.length) { log('no tables to link (group Б, noTable)'); } else {
   const ld = await call('horoshop_catalog_import', { productsFile: path.join(D, 'payload_links.json'), dryRun: true });
   const offL = ld.willChange.filter(w => w.isNew || Object.keys(w.changes || {}).some(k => !['description.ua', 'description.ru'].includes(k)));
   if (offL.length) stop('links dryRun outside plan: ' + JSON.stringify(offL.map(w => w.article)));
   const lr = await call('horoshop_catalog_import', { productsFile: path.join(D, 'payload_links.json'), dryRun: false });
   if ((lr.errors || []).length) stop('links write errors: ' + JSON.stringify(lr.errors).slice(0, 300));
+  }
   // 8. verify neighbours vs backup: only links changed, every new link present
-  const nbAfter = (await call('horoshop_catalog_export', exportArgs(nbArts))).response.products; fs.writeFileSync(BK + NAME + '_neighbours_after.json', JSON.stringify(nbAfter));
+  const nbAfter = nbArts.length ? (await call('horoshop_catalog_export', exportArgs(nbArts))).response.products : []; fs.writeFileSync(BK + NAME + '_neighbours_after.json', JSON.stringify(nbAfter));
   const nbBefore = nbExp.response.products, bad = []; let placed = 0;
   for (const x of nbBefore) { const y = nbAfter.find(q => q.article === x.article); for (const k of Object.keys(x)) if (k !== 'description' && JSON.stringify(x[k]) !== JSON.stringify(y[k])) bad.push(x.article + ' ' + k);
-    for (const l of ['ua', 'ru']) { if (V.stripLinks(y.description[l]).replace(/\s+/g, ' ') !== V.stripLinks(x.description[l]).replace(/\s+/g, ' ')) bad.push(x.article + ' ' + l + ' text'); const pre2 = l === 'ru' ? '/ru' : ''; for (const [a, s] of Object.entries(links).filter(([a]) => T[a].unlinked.includes(x.article))) { if (y.description[l].includes('href="' + pre2 + s + '">' + a)) placed++; else bad.push(x.article + ' ' + l + ' no link ' + a); } } }
+    for (const l of ['ua', 'ru']) { if (V.stripLinks(y.description[l]).replace(/\s+/g, ' ') !== V.stripLinks(x.description[l]).replace(/\s+/g, ' ')) bad.push(x.article + ' ' + l + ' text'); const pre2 = l === 'ru' ? '/ru' : ''; for (const [a, s] of Object.entries(links).filter(([a]) => (T[a]?.unlinked || []).includes(x.article))) { if (y.description[l].includes('href="' + pre2 + s + '">' + a)) placed++; else bad.push(x.article + ' ' + l + ' no link ' + a); } } }
   if (bad.length) { report.verifyProblems = bad; log('VERIFY PROBLEMS', bad.slice(0, 10)); }
   report.steps.neighbours = nbArts.length; report.steps.linksPlaced = placed;
   // 9. storefront: two products, UA + RU
   const get = require('../vt/fetchpage.js'); report.storefront = [];
-  for (const a of linked.slice(0, 2)) for (const pre3 of ['', '/ru']) { const r = await get('https://tl-shop.com.ua' + pre3 + links[a]); const h = r.html || ''; report.storefront.push({ a, lang: pre3 || 'ua', status: r.status, title: ((h.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '').trim().slice(0, 80), table: /цей товар|этот товар/.test(h), pdf: h.includes(a + '.pdf') }); }
+  for (const a of linked.slice(0, 2)) for (const pre3 of ['', '/ru']) { const r = await get('https://tl-shop.com.ua' + pre3 + links[a]); const h = r.html || ''; report.storefront.push({ a, lang: pre3 || 'ua', status: r.status, title: ((h.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '').trim().slice(0, 80), table: /Інші варіанти серії|Другие варианты серии/.test(h), pdf: h.includes(a + '.pdf') }); }
   report.finished = new Date().toISOString(); save();
   fs.appendFileSync(BK + 'variants_log.jsonl', JSON.stringify({ at: report.finished, task: `batch ${NAME}: ${linked.length} new, ${nbArts.length} neighbours, ${placed} links`, deferred: report.deferred, verify: bad }) + '\n');
   S.close();
   execFileSync('node', [path.join(__dirname, '../a422/progress.js')], { stdio: 'inherit' });
   log('DONE', NAME, 'created+linked', linked.length, 'deferred', report.deferred.length, 'neighbours', nbArts.length, 'links', placed, 'verify', bad.length ? bad.length + ' problems' : 'ok');
   for (const s of report.storefront) log('  ', s.a, s.lang, s.status, s.title, 'table', s.table, 'pdf', s.pdf);
+  process.exit(0);
 })().catch(e => { report.error = String(e && e.stack || e); save(); console.error(e); S.close(); process.exit(1); });
