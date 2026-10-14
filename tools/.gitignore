@@ -1,0 +1,14 @@
+# code is versioned; data, caches and downloads stay local (prices, catalog dumps, datasheets)
+node_modules/
+*.json
+!package.json
+!package-lock.json
+batch/ds/
+wimg/
+inv/
+*.log
+*.pdf
+*.jpg
+*.png
+*.webp
+*.html
