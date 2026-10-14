@@ -23,21 +23,25 @@ const exportArgs = arts => ({ expr: { article: arts }, includedParams: ['article
 const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || [s]; let out = ''; for (const p of parts) { if ((out + p).trim().length > max) break; out += p; } return (out || parts[0].slice(0, max)).trim(); };
 
 (async () => {
-  let arts = JSON.parse(fs.readFileSync(path.join(D, 'batch.json'), 'utf8')).filter(a => { const d = JSON.parse(fs.readFileSync(DEF, 'utf8')); return !d.some(x => x.article === a); });
+  const RESUME = process.argv[3] === 'resume';
+  let arts = JSON.parse(fs.readFileSync(path.join(D, RESUME ? 'batch_final.json' : 'batch.json'), 'utf8')).filter(a => { const d = JSON.parse(fs.readFileSync(DEF, 'utf8')); return !d.some(x => x.article === a); });
   log(NAME, 'articles', arts.length);
   // 1. backup neighbours
   const nbArts = [...new Set(arts.flatMap(a => T[a].unlinked))];
-  const nbExp = await call('horoshop_catalog_export', exportArgs(nbArts));
+  const nbExp = RESUME ? JSON.parse(fs.readFileSync(BK + NAME + '_neighbours_before.json', 'utf8')) : await call('horoshop_catalog_export', exportArgs(nbArts));
   if (!nbExp.response || nbExp.response.products.length !== nbArts.length) stop('neighbour backup incomplete: ' + (nbExp.response ? nbExp.response.products.length : 'error') + ' of ' + nbArts.length);
-  fs.writeFileSync(BK + NAME + '_neighbours_before.json', JSON.stringify(nbExp)); log('backup neighbours', nbArts.length);
+  if (!RESUME) fs.writeFileSync(BK + NAME + '_neighbours_before.json', JSON.stringify(nbExp)); log(RESUME ? 'resume: backup from file' : 'backup neighbours', nbArts.length);
   B = makeBuilder(D);
   // 2. preflight: the new product's table rows and every neighbour table may change only by links
+  for (const a of [...arts]) { const c = B.content[a]; if (!c || /undefined|NaN/.test(JSON.stringify(c))) { defer(a, 'нет данных для названия/текста (undefined в контенте)'); arts = arts.filter(x => x !== a); continue; } }
   for (const a of [...arts]) { if (!B.nbOf(a).length) { defer(a, 'нет соседа с таблицей серии'); arts = arts.filter(x => x !== a); continue; } if (!B.tableRowsOk(a)) { defer(a, 'таблица нового товара не совпадает со строками серии у соседа'); arts = arts.filter(x => x !== a); } }
   const predicted = Object.fromEntries(arts.map(a => [a, '/' + V.slugOf(B.content[a].title.ua) + '/']));
   const pre = B.payloadLinks(arts, predicted);
   for (const p of pre.problems) for (const a of p.affects) if (arts.includes(a)) { defer(a, `у соседа ${p.neighbour} таблица меняется не только ссылками (${p.problem})`); arts = arts.filter(x => x !== a); }
   if (!arts.length) stop('nothing left after preflight');
   fs.writeFileSync(path.join(D, 'batch_final.json'), JSON.stringify(arts));
+  let products;
+  if (!RESUME) {
   // 3. photos -> repo, commit, push, check raw URLs
   const sharp = require('sharp'); const src = B.load('photosrc.json'); fs.mkdirSync(REPO + 'images/' + NAME, { recursive: true });
   for (const a of arts) await V.squarePhoto(sharp, src[a], REPO + 'images/' + NAME + '/' + a + '.jpg');
@@ -48,15 +52,16 @@ const firstSentences = (s, max) => { const parts = s.match(/[^.!?]+[.!?]+/g) || 
   for (const a of arts) { const r = await fetch(`https://raw.githubusercontent.com/tohankov/wera-photos/main/images/${NAME}/${a}.jpg`); if (r.status !== 200) stop('photo not on GitHub: ' + a); }
   report.steps.photos = arts.length; log('photos pushed', arts.length);
   // 4. import dryRun -> import
-  const products = B.payloadNew(arts); fs.writeFileSync(path.join(D, 'payload_new.json'), JSON.stringify({ products }, null, 1));
+  products = B.payloadNew(arts); fs.writeFileSync(path.join(D, 'payload_new.json'), JSON.stringify({ products }, null, 1));
   const dry = await call('horoshop_catalog_import', { productsFile: path.join(D, 'payload_new.json'), dryRun: true });
   const offImport = dry.willChange.filter(w => { const p = products.find(x => x.article === w.article); return !p || !w.isNew || Object.keys(w.changes).sort().join(',') !== plannedKeys(p); });
   if (offImport.length || dry.summary.newProducts !== arts.length) stop('import dryRun outside plan: ' + JSON.stringify(offImport.map(w => w.article)));
   const imp = await call('horoshop_catalog_import', { productsFile: path.join(D, 'payload_new.json'), dryRun: false });
   if ((imp.errors || []).length || (imp.newProducts || []).length !== arts.length) stop('import errors: ' + JSON.stringify(imp.errors || imp).slice(0, 400));
   report.steps.created = arts.length; save(); log('created', arts.length);
+  } else { const ex = (await call('horoshop_catalog_export', { expr: { article: arts }, includedParams: ['article'], limit: 200 })).response.products; if (ex.length !== arts.length) stop('resume: not all products exist'); log('resume: products exist', ex.length); }
   // 5. ids
-  const ids = {}; for (const a of arts) { const r = await call('horoshop_admin_list', { entity: 'products', search: a }); const rec = (r.records || []).filter(x => x.code === a || x.label.startsWith(a)); if (rec.length !== 1) stop('id not unique for ' + a); ids[a] = rec[0].id; }
+  const ids = {}; for (const a of arts) { const r = await call('horoshop_admin_list', { entity: 'products', search: a }); const rec = (r.records || []).filter(x => x.code === a || (x.cells && x.cells[0] === a) || x.label.split(' · ')[0].split(' ').includes(a)); if (rec.length !== 1) stop('id not unique for ' + a); ids[a] = rec[0].id; }
   fs.writeFileSync(path.join(D, 'ids.json'), JSON.stringify(ids, null, 1));
   // 6. form: slug + SEO + guarantee, only planned fields
   const formSet = a => { const c = B.content[a], core = l => c.title[l].replace(` WERA ${a}`, ''); return { 'modifications[0][alias][slug]': V.slugOf(c.title.ua), 'parent_common[i18n][3][seo_title]': `${core('ua')} — WERA ${a}`, 'parent_common[i18n][1][seo_title]': `${core('ru')} — WERA ${a}`, 'parent_common[guarantee_shop]': '2', 'parent_common[guarantee_length]': '12', 'parent_common[i18n][3][seo_description]': firstSentences(c.intro.ua, 160), 'parent_common[i18n][1][seo_description]': firstSentences(c.intro.ru, 160) }; };
