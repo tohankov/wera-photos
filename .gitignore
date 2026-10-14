@@ -1,3 +1,7 @@
 cache/
 __pycache__/
 CLAUDE.local.md
+
+# business data: backups, supplier price list, stock, competitor crawl — never publish
+backup/
+inventory/
