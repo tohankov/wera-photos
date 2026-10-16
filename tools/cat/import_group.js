@@ -46,7 +46,7 @@ const valsOf = (p, k) => (((p.characteristics || {})[k]) || []).map(x => x.value
     // shared characteristics (reused dictionaries) are UNIONS across groups: keep the values other groups gave the product, replace only this group's own values
     const groupVals = Object.fromEntries(G.chars.filter(c => c.book).map(c => [c.key, new Set([...G.items.flatMap(i => i.vals[c.key] || []), ...(c.newValues || [])])]));
     const want = (it, k) => { const c = G.chars.find(x => x.key === k); const mine = it.vals[k] || []; if (!c.book) return mine; const b = before.find(x => x.article === it.a); const other = b ? valsOf(b, k).filter(v => !groupVals[k].has(v)) : []; return [...new Set([...other, ...mine])]; };
-    const products = list.map(a => { const it = G.items.find(i => i.a === a); return { article: a, characteristics: Object.fromEntries(keys.map(k => [k, want(it, k)]).filter(([k, v]) => !G.chars.find(c => c.key === k).book || v.length).map(([k, v]) => [k, v.length ? v : ''])) }; });
+    const products = list.map(a => { const it = G.items.find(i => i.a === a); return { article: a, characteristics: Object.fromEntries(keys.map(k => [k, want(it, k)]).filter(([k, v]) => !G.chars.find(c => c.key === k).book || v.length || valsOf(before.find(x => x.article === a) || {}, k).length).map(([k, v]) => [k, v.length ? v : ''])) }; });
     const pf = path.join(__dirname, `${G.name}_payload.json`); fs.writeFileSync(pf, JSON.stringify({ products }));
     const dry = await call('horoshop_catalog_import', { productsFile: pf, dryRun: true });
     const off = (dry.willChange || []).filter(w => w.isNew || Object.keys(w.changes).some(k => k !== 'characteristics')); if (off.length || dry.summary.newProducts) stop('dryRun outside plan ' + JSON.stringify(off.slice(0, 3)));
