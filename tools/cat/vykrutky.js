@@ -34,7 +34,8 @@ function features(it) { const n = it.title; const f = [];
   if (/кульков/i.test(n)) f.push('Кулькова головка'); if (/Stubby|коротк/i.test(n)) f.push('Коротка (Stubby)'); if (/Lasertip/i.test(n)) f.push('Наконечник Lasertip'); if (/порожн/i.test(n)) f.push('Порожнистий стрижень'); return f; }
 const out = [], disputed = [];
 for (const it of I) { const s = it.secs[0], n = it.title; let vyd, p = null;
-  if (SETS.includes(s) || /^Набір|набір викруток|з набором (біт|насадок)/i.test(n)) vyd = 'Набір викруток';
+  if (/^(?:Коротка )?ручка-(?:тримач|б[іi]т)/i.test(n) && !/набор|набір/i.test(n)) vyd = 'Ручка-тримач';
+  else if (SETS.includes(s) || /^Набір|набір викруток|з набором (біт|насадок)/i.test(n)) vyd = 'Набір викруток';
   else if (HOLD.includes(s) || /ручка-б[іi]т|ручка-тримач|бітоутримувач|бітотримач/i.test(n)) vyd = 'Ручка-тримач';
   else if (ACC.includes(s) || /знімач|намагніч|фіксатор|підставка|лопат/i.test(n)) vyd = 'Приладдя для викруток';
   else { vyd = 'Викрутка'; p = profileOf(it); }

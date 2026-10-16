@@ -43,9 +43,11 @@ const valsOf = (p, k) => (((p.characteristics || {})[k]) || []).map(x => x.value
   if (mode === 'test' || mode === 'full') {
     const list = mode === 'test' ? [G.testArticle] : arts; const before = await exportChars(list); if (before.length !== list.length) stop(`backup export ${before.length}/${list.length}`);
     fs.writeFileSync(BK + `${G.name}_chars_before${mode === 'test' ? '_test' : ''}.json`, JSON.stringify(before));
-    // shared characteristics (reused dictionaries) are UNIONS across groups: keep the values other groups gave the product, replace only this group's own values
-    const groupVals = Object.fromEntries(G.chars.filter(c => c.book).map(c => [c.key, new Set([...G.items.flatMap(i => i.vals[c.key] || []), ...(c.newValues || [])])]));
-    const want = (it, k) => { const c = G.chars.find(x => x.key === k); const mine = it.vals[k] || []; if (!c.book) return mine; const b = before.find(x => x.article === it.a); const other = b ? valsOf(b, k).filter(v => !groupVals[k].has(v)) : []; return [...new Set([...other, ...mine])]; };
+    // shared characteristics (reused dictionaries) are UNIONS across groups: keep every value the product has, drop only values THIS group wrote earlier
+    // and no longer wants (cat/<name>_own.json records what the group wrote; a value equal to another group's value is never dropped on that ground alone)
+    const OWN = path.join(__dirname, `${G.name}_own.json`); const own = fs.existsSync(OWN) ? JSON.parse(fs.readFileSync(OWN, 'utf8')) : {};
+    const want = (it, k) => { const c = G.chars.find(x => x.key === k); const mine = it.vals[k] || []; if (!c.book) return mine; const b = before.find(x => x.article === it.a);
+      const prev = ((own[it.a] || {})[k]) || []; const other = b ? valsOf(b, k).filter(v => !(prev.includes(v) && !mine.includes(v))) : []; return [...new Set([...other, ...mine])]; };
     const products = list.map(a => { const it = G.items.find(i => i.a === a); return { article: a, characteristics: Object.fromEntries(keys.map(k => [k, want(it, k)]).filter(([k, v]) => !G.chars.find(c => c.key === k).book || v.length || valsOf(before.find(x => x.article === a) || {}, k).length).map(([k, v]) => [k, v.length ? v : ''])) }; });
     const pf = path.join(__dirname, `${G.name}_payload.json`); fs.writeFileSync(pf, JSON.stringify({ products }));
     const dry = await call('horoshop_catalog_import', { productsFile: pf, dryRun: true });
@@ -61,6 +63,7 @@ const valsOf = (p, k) => (((p.characteristics || {})[k]) || []).map(x => x.value
     console.log('verify', after.length, 'problems', bad.length); if (bad.length) { console.log(bad.slice(0, 20).join('\n')); fs.writeFileSync(path.join(__dirname, `${G.name}_problems.json`), JSON.stringify(bad, null, 1)); }
     fs.appendFileSync(BK + 'variants_log.jsonl', JSON.stringify({ at: new Date().toISOString(), task: `filters ${G.name} ${mode}: ${after.length} products, problems ${bad.length}` }) + '\n');
     if (bad.length) { S.close(); process.exit(2); }
+    for (const a of list) { const it = G.items.find(i => i.a === a); own[a] = Object.fromEntries(G.chars.filter(c => c.book).map(c => [c.key, it.vals[c.key] || []])); } fs.writeFileSync(OWN, JSON.stringify(own));
   }
   if (mode === 'verify') {
     const after = await exportChars(arts); const secs = {};
