@@ -18,3 +18,5 @@ module.exports = {
   required: it => { const r = ['vyd_instrumentu']; if (it.kind) r.push('profil', 'rozmir_robochoho_kintsia'); if (it.kind === 'blade') r.push('dovzhyna_robochoho_kintsia'); if (it.isZyk) r.push('pryvid'); return r; },
   filterOrder: ['Хіти продажів', 'Вид інструменту', 'Ціна', 'Профіль', 'Розмір робочого кінця', 'Довжина робочого кінця', 'Привід', 'Особливості викрутки'],
 };
+// sets get all values of their composition (cat/sets_fill.js)
+{ const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }

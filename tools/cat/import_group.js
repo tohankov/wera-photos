@@ -29,7 +29,11 @@ const valsOf = (p, k) => (((p.characteristics || {})[k]) || []).map(x => x.value
   if (mode === 'seed') {
     const seed = G.seed || arts[0]; const ch = Object.fromEntries(G.chars.filter(c => !c.book).map(c => [c.key, allVals(c)]));
     // reused dictionaries: new values of this group are appended in the group's order (existing values keep their place)
-    for (const c of G.chars.filter(c => c.book && c.newValues)) { const used = new Set(G.items.flatMap(i => i.vals[c.key] || [])); const nv = c.newValues.filter(v => used.has(v)); if (nv.length) ch[c.key] = nv; }
+    // shared characteristics on the seed product: existing values (other groups) are kept, the seeded values are recorded as this group's own so `full` drops the ones the product does not need
+    const OWN = path.join(__dirname, `${G.name}_own.json`); const own = fs.existsSync(OWN) ? JSON.parse(fs.readFileSync(OWN, 'utf8')) : {}; const sb = (await exportChars([seed]))[0] || {};
+    for (const c of G.chars.filter(c => c.book && c.newValues)) { const used = new Set(G.items.flatMap(i => i.vals[c.key] || [])); const nv = c.newValues.filter(v => used.has(v));
+      if (nv.length) { ch[c.key] = [...new Set([...valsOf(sb, c.key), ...nv])]; ((own[seed] = own[seed] || {})[c.key] = [...new Set([...((own[seed] || {})[c.key] || []), ...nv.filter(v => !valsOf(sb, c.key).includes(v))])]); } }
+    fs.writeFileSync(OWN, JSON.stringify(own));
     const r = await call('horoshop_catalog_import', { products: [{ article: seed, characteristics: ch }], dryRun: false }); console.log('seed', seed, r.status, r.updated);
     for (const c of G.chars.filter(c => c.book && c.newValues && c.ru)) { const d = await call('horoshop_admin_dictionary_values', { book: c.book }); const miss = (ch[c.key] || []).filter(v => !d.values.some(x => x.value === v)); console.log(c.key, 'reused dictionary', c.book, 'new values added', (ch[c.key] || []).length - miss.length, miss.length ? 'MISSING ' + miss : '');
       for (const v of d.values) { const ru = c.ru[v.value]; if (ru && ru !== v.value && (ch[c.key] || []).includes(v.value)) { const s = await call('horoshop_admin_dictionary_value_set', { book: c.book, valueId: v.id, titles: { ru }, dryRun: false }); if (!(s.changes || []).some(x => x.persisted)) console.log('  RU not saved', v.value); } } }

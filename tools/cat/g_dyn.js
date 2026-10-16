@@ -36,3 +36,5 @@ module.exports = {
     if (it.kind === 'nas') { r.push('typ_nasadky', 'pryvid'); if (it.sec >= 1210 && it.sec <= 1217) r.push('rozmir_nasadky'); } return r; },
   filterOrder: ['Хіти продажів', 'Вид інструменту', 'Ціна', 'Діапазон моменту', 'Налаштування моменту', 'Привід', 'Тип насадки', 'Розмір насадки', 'Профіль', 'Розмір наконечника', 'Особливості динамометра'],
 };
+// sets get all values of their composition (cat/sets_fill.js)
+{ const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
