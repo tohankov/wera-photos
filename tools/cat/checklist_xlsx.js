@@ -9,7 +9,9 @@ const LINKS = { bits: ['Профіль', 'Розмір', 'Довжина'], zykl
   bitsets: ['Профіль', 'Розмір'], trolley: ['Інструмент у ложементі'] };
 const ROOTS = [['bits', 1062, 'Біти (+1459 Мікробіти, 1078 Торцеві головки — наследуют)'], ['zyklop', 1270], ['vykrutky', 1098], ['lkeys', 1152], ['vde', 1224], ['dyn', 1195], ['joker', 1185], ['kk', 1057], ['holders', 1081], ['adapters', 1089], ['drills', 1090], ['bitsets', 1082], ['trolley', 1055]];
 const BITS_ORDER = ['Хіти продажів', 'Профіль', 'Ціна', 'Розмір', 'Довжина', 'Тип біти', 'Хвостовик', 'Особливості'];
-const order = g => g === 'bits' ? BITS_ORDER : G(g).filterOrder.filter(f => !SKC.some(c => c.title === f));
+// checklist only (the group file keeps its order): 1152 — «Вид інструменту» second, as in the other groups
+const second = (o, f) => o.includes(f) ? [o[0], f, ...o.slice(1).filter(x => x !== f)] : o;
+const order = g => { const o = g === 'bits' ? BITS_ORDER : G(g).filterOrder.filter(f => !SKC.some(c => c.title === f)); return g === 'lkeys' ? second(o, 'Вид інструменту') : o; };
 // set sections that get «… у складі»: mostly sets, at least two different profiles among their sets (1082 — on the root, its subsections inherit)
 const SETSEC = [[1055, 'trolley'], [1082, 'bitsets'], [1059, 'kk'], [1105, 'vykrutky'], [1115, 'vykrutky'], [1123, 'vykrutky'], [1129, 'vykrutky'], [1137, 'vykrutky'], [1146, 'vykrutky'], [1208, 'dyn'],
   [1230, 'vde'], [1239, 'vde'], [1246, 'vde'], [1271, 'zyklop'], [1274, 'zyklop'], [1282, 'zyklop'], [1295, 'zyklop'], [1307, 'zyklop']];
@@ -22,7 +24,7 @@ const withSklad = (g, id) => { const o = order(g), sk = skladIn(id).map(c => c.t
 const F = [];
 for (const [g, id, label] of ROOTS) { const set = SETSEC.find(s => s[0] === id);
   F.push({ 'Раздел': `${id} ${label || name(id)}`, 'URL': url(id), 'Где': id === 1062 ? 'уже настроено владельцем — не менять' : 'на разделе группы; подразделы наследуют (свой список у подраздела пустой)', 'Фильтры по порядку': (set ? withSklad(g, id) : order(g)).join(' → '),
-    'Характеристики со ссылкой на фильтр': LINKS[g].filter(x => !(set && x === 'Профіль')).join(', '), 'Примечание': g === 'vykrutky' ? '«Вид інструменту» перенесён на 2-е место (п. 7)' : set ? '«Профіль» заменён фильтрами «… у складі» (логика И): все товары раздела — наборы' : '' }); }
+    'Характеристики со ссылкой на фильтр': LINKS[g].filter(x => !(set && x === 'Профіль')).join(', '), 'Примечание': g === 'vykrutky' || g === 'lkeys' ? '«Вид інструменту» перенесён на 2-е место' : set ? '«Профіль» заменён фильтрами «… у складі» (логика И): все товары раздела — наборы' : '' }); }
 for (const [id, g] of SETSEC.filter(s => !ROOTS.some(r => r[1] === s[0]))) F.push({ 'Раздел': `${id} ${name(id)} (подраздел наборов группы ${ROOTS.find(r => r[0] === g)[1]})`, 'URL': url(id), 'Где': 'СВОЙ список фильтров на этом подразделе (заполненный список подраздела заменяет родительский — поэтому список полный)',
   'Фильтры по порядку': withSklad(g, id).join(' → '), 'Характеристики со ссылкой на фильтр': LINKS[g].filter(x => x !== 'Профіль').join(', ') || '—', 'Примечание': '«Профіль» заменён фильтрами «… у складі»: отметил PH у складі + PZ у складі → только наборы, где есть оба' });
 F.push({ 'Раздел': 'Оформление (все разделы)', 'URL': '', 'Где': 'Дизайн фильтра', 'Фильтры по порядку': 'вертикальный, размер M, сворачивание включено, по умолчанию развёрнуты ВСЕ группы, максимум 10 значений + «Показать еще»', 'Характеристики со ссылкой на фильтр': '', 'Примечание': '' });
@@ -60,6 +62,18 @@ for (const d of SK.disputed) D.push({ 'Группа': '«… у складі»',
 const wb = X.utils.book_new(); const add = (rows, n, cols) => { const ws = X.utils.json_to_sheet(rows); ws['!cols'] = cols.map(w => ({ wch: w })); X.utils.book_append_sheet(wb, ws, n); };
 add(F, 'Фильтры', [44, 48, 40, 120, 40, 50]); add(P, 'Характеристики страницы товара', [40, 48, 90, 60, 80]); add(C, 'Проверить на сайте', [40, 90, 110]); add(D, 'Спорные', [36, 14, 8, 26, 70, 80]);
 X.writeFile(wb, INV + 'filters_admin_checklist.xlsx'); console.log('Фильтры', F.length, 'Страница', P.length, 'Проверить', C.length, 'Спорные', D.length);
+// --- the same checklist as markdown for the repo (docs/filters_admin_checklist.md): sheets 1–3, disputed only as counts
+const esc = v => String(v == null ? '' : v).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+const lnk = v => /^https?:/.test(v) ? `[${decodeURI(v).replace(/^https?:\/\/[^/]+/, '')}](${v})` : esc(v);
+const tbl = (rows, cols) => [`| ${cols.join(' | ')} |`, `|${cols.map(() => '---').join('|')}|`, ...rows.map(r => `| ${cols.map(c => /URL|Ссылка/.test(c) ? lnk(r[c] || '') : esc(r[c])).join(' | ')} |`)].join('\n');
+const dn = {}; for (const d of D) dn[d['Группа']] = (dn[d['Группа']] || 0) + 1;
+const md = ['# Фильтры каталога — чек-лист для админки', '', `Сгенерировано \`tools/cat/checklist_xlsx.js\` (${new Date().toISOString().slice(0, 10)}); то же — \`inventory/filters_admin_checklist.xlsx\` (там же лист «Спорные» с товарами).`, '',
+  'Логика Хорошопа: значения внутри одного фильтра — ИЛИ, разные фильтры — И. Пустой список у подраздела наследуется от родителя; заполненный — заменяет родительский целиком. Ссылка с неподключённым фильтром отдаёт 404.', '',
+  '## 1. Фильтры по разделам', '', tbl(F, ['Раздел', 'URL', 'Где', 'Фильтры по порядку', 'Характеристики со ссылкой на фильтр', 'Примечание']), '',
+  '## 2. Характеристики для страницы товара', '', tbl(P, ['Раздел', 'URL', 'Поставить в «Характеристики для страницы товара»', 'Убрать / не ставить', 'Почему']), '',
+  '## 3. Проверить на сайте', '', 'Ссылки с `filter/…` заработают после включения фильтров в админке (до этого — 404). Количества — ожидаемые по записанным данным.', '', tbl(C, ['Группа', 'Ссылка', 'Что проверить']), '',
+  '## 4. Спорные (товары — в xlsx)', '', tbl(Object.entries(dn).map(([g, n]) => ({ 'Группа': g, 'Товаров': n })), ['Группа', 'Товаров']), ''].join('\n');
+fs.mkdirSync(path.join(__dirname, '../../docs'), { recursive: true }); fs.writeFileSync(path.join(__dirname, '../../docs/filters_admin_checklist.md'), md); console.log('md', md.length);
 // --- 1055 preview
 const TR = G('trolley'); const skl = Object.fromEntries(SK.items.map(i => [i.a, SKC.filter(c => i.vals[c.key].length).map(c => c.title.replace(' у складі', '')).join(', ')]));
 const R = TR.items.map(i => ({ 'Артикул': i.a, 'Название': i.title, 'Тип': i.kind === 'filled' ? 'с инструментом' : 'пустой', 'Вид інструменту': i.vals.vyd_instrumentu.join(', '), 'Комплектація': i.vals.komplektatsiia.join(', '),
