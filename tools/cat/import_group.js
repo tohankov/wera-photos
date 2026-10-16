@@ -4,8 +4,11 @@
 // setup: create missing dictionaries + params (dryRun first). seed: create every value in order on one product, RU per value, RU headings.
 // test: one product that already carries other characteristics — check they survive. full: backup -> dryRun (only characteristics) -> import -> verify.
 // verify: completeness per leaf section from a fresh export -> inventory/filters_progress.json + disputed xlsx.
-const fs = require('fs'), path = require('path'), X = require('xlsx'); const S = require('../lib/session.js').open(); const { cmp } = require('../lib/valsort.js');
-const G = require(path.resolve(process.argv[2])); const mode = process.argv[3]; const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', INV = 'C:/Users/Techlight/Desktop/wera-photos/inventory/';
+const fs = require('fs'), path = require('path'), X = require('xlsx'); const S = require('../lib/session.js').open(); const { cmp, fixZero } = require('../lib/valsort.js');
+const G = require(path.resolve(process.argv[2]));
+// size «0» is written as "0" + NBSP (the dictionary value; a plain "0" is hidden on the product page and would become a second value)
+for (const it of G.items) for (const k of ['rozmir', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia']) if (it.vals[k]) it.vals[k] = it.vals[k].map(fixZero);
+const mode = process.argv[3]; const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', INV = 'C:/Users/Techlight/Desktop/wera-photos/inventory/';
 const STATE = path.join(__dirname, `${G.name}_state.json`); const st = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : { books: {}, params: {} };
 const saveState = () => fs.writeFileSync(STATE, JSON.stringify(st, null, 1));
 const sleep = ms => new Promise(r => setTimeout(r, ms)); const call = async (t, a) => { await sleep(1000); const r = await S.call(t, a); return r; };

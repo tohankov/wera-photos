@@ -14,7 +14,7 @@ const uniq = a => [...new Set(a)];
 // planned values (UA text; import mirrors it to every language, RU is set on the dictionary afterwards)
 function plan() {
   const P = {};
-  for (const v of items) { P[v.a] = { profil: [v.profile[0]], rozmir: [v.size], dovzhyna: [v.length], typ_bity: [v.type[0]], khvostovyk: [v.shank[0]] }; if (v.features.length) P[v.a].osoblyvosti = v.features.map(f => f[0]); }
+  for (const v of items) { P[v.a] = { profil: [v.profile[0]], rozmir: [require('../lib/valsort.js').fixZero(v.size)], dovzhyna: [v.length], typ_bity: [v.type[0]], khvostovyk: [v.shank[0]] }; if (v.features.length) P[v.a].osoblyvosti = v.features.map(f => f[0]); }
   // accessories in 1459 carry every value the bits of 1459 have (decision 15.10: visible under any filter in 1459)
   const in1459 = items.filter(v => v.secs.includes(1459)); const order = (k, vals) => L[Object.keys(C).find(x => C[x] === k)].map(e => e[0]).filter(x => vals.includes(x));
   const all = k => order(k, uniq(in1459.flatMap(v => P[v.a][k] || [])));

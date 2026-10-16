@@ -2,7 +2,7 @@
 // all groups (bits included) assign to the shared characteristics. node cat/shared_audit.js [fix]  (fix: dryRun -> import of actual ∪ expected)
 const fs = require('fs'), path = require('path'); const S = require('../lib/session.js').open(); const sleep = ms => new Promise(r => setTimeout(r, ms));
 const call = async (t, a) => { await sleep(1000); return S.call(t, a); }; const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/';
-const GROUPS = ['zyklop', 'vykrutky', 'lkeys', 'vde', 'dyn', 'joker', 'kk', 'holders', 'adapters', 'drills', 'bitsets'].filter(g => fs.existsSync(path.join(__dirname, `g_${g}.js`)));
+const GROUPS = ['zyklop', 'vykrutky', 'lkeys', 'vde', 'dyn', 'joker', 'kk', 'holders', 'adapters', 'drills', 'bitsets', 'trolley'].filter(g => fs.existsSync(path.join(__dirname, `g_${g}.js`)));
 const exp = {}, src = {}; const add = (g, a, k, vs) => { ((exp[a] = exp[a] || {})[k] = exp[a][k] || new Set()); for (const v of vs) exp[a][k].add(v); (src[a] = src[a] || new Set()).add(g); };
 const SHARED = new Set(['vyd_instrumentu', 'profil', 'pryvid', 'osoblyvosti_vykrutky', 'rozmir_nakonechnyka']);
 for (const g of GROUPS) { const G = require(`./g_${g}.js`); for (const it of G.items) { src[it.a] = (src[it.a] || new Set()).add(g); for (const c of G.chars.filter(c => SHARED.has(c.key))) add(g, it.a, c.key, it.vals[c.key] || []); } }

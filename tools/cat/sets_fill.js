@@ -3,7 +3,7 @@
 // cat/member_vals.json — every product of every group, bits included). Only values that already exist in the characteristic's dictionary
 // are taken (cat/dicts_snapshot.json), so dictionary order stays ascending; the rest are counted as `outside`. No composition -> disputed.
 //   fill(name, items, chars) -> { items, disputed, report }      node cat/sets_fill.js build   (rebuild member_vals.json)
-const fs = require('fs'), path = require('path');
+const fs = require('fs'), path = require('path'); const { fixZero } = require('../lib/valsort.js');
 const J = f => { const p = path.join(__dirname, f); return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null; };
 const ALT = { rozmir_nakonechnyka: ['rozmir', 'rozmir_robochoho_kintsia'], rozmir_robochoho_kintsia: ['rozmir_nakonechnyka', 'rozmir'], typ_bit_u_nabori: ['typ_bity', 'osoblyvosti'] };
 const ALT_ONLY = { osoblyvosti: ['Алмазне покриття', 'Нержавіюча сталь'] }; // from bit features only these describe the bit type
@@ -29,7 +29,7 @@ function fill(name, items, chars) {
     const mem = comp.flatMap(g => g.items.map(x => (x.art && M[x.art]) ? (x.art === it.a ? null : M[x.art]) : fromText(g.head, x.size))).filter(m => m && !m.nonProduct);
     const vals = { ...it.vals }; let added = 0;
     for (const c of chars.filter(c => c.key !== 'vyd_instrumentu')) { const dict = D[c.key] ? new Set(D[c.key].values) : null; const got = new Set(vals[c.key] || []);
-      for (const m of mem) for (const k of [c.key, ...(ALT[c.key] || [])]) for (const v of (m.vals[k] || [])) { if (got.has(v)) continue;
+      for (const m of mem) for (const k of [c.key, ...(ALT[c.key] || [])]) for (const v of (m.vals[k] || []).map(fixZero)) { if (got.has(v)) continue;
         if (ALT_ONLY[k] && k !== c.key && !ALT_ONLY[k].includes(v)) continue; if (dict && !dict.has(v)) { if (k === c.key) rep.outside[c.key + ': ' + v] = (rep.outside[c.key + ': ' + v] || 0) + 1; continue; } got.add(v); added++; }
       vals[c.key] = [...got]; }
     const unknown = comp.flatMap(g => g.items.filter(x => !(x.art && M[x.art]) && !fromText(g.head, x.size)).map(x => x.art || x.size));
