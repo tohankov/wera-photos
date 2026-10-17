@@ -7,4 +7,4 @@ const fs = require('fs'), path = require('path'); const S = require('../lib/sess
     const p = r.response.products || []; out.push(...p); if (p.length < 100) break; }
   fs.writeFileSync(path.join(__dirname, 'catalog_mod.json'), JSON.stringify(out));
   const diff = out.filter(p => ['ua', 'ru'].some(l => (p.mod_title || {})[l] && p.mod_title[l] !== (p.title || {})[l]));
-  console.log('products', out.length, 'mod_title differs', diff.length); S.close(); process.exit(0); })().catch(e => { console.error(e); S.close(); process.exit(1); });
+  console.log('products', out.length, 'mod_title differs', diff.length, 'mod_title empty', out.filter(p => !(p.mod_title || {}).ua || !(p.mod_title || {}).ru).length); S.close(); process.exit(0); })().catch(e => { console.error(e); S.close(); process.exit(1); });
