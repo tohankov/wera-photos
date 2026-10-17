@@ -11,7 +11,7 @@ const RULES = [
   // «мм» with a space; Latin «mm» after a number -> «мм»
   ['mm', '«мм» с пробелом', t => t.replace(/(\d|″) ?(?:мм|mm)(?![a-zа-яіїє])/gi, '$1 мм')],
   // space after a profile: PH2 -> PH 2, TX20 -> TX 20, HEX3,0 -> HEX 3,0, PZ/S2 -> PZ/S 2; TORX PLUS: 20IP -> 20 IP, 30IPR -> 30 IPR
-  ['prof', 'пробел после профиля', t => t.replace(new RegExp(String.raw`(^|[^A-Za-z/])(${PROF})(\d)`, 'g'), '$1$2 $3').replace(/(\d)(IPR?)(?![A-Za-z])/g, '$1 $2')],
+  ['prof', 'пробел после профиля', t => t.replace(new RegExp(String.raw`(^|[^A-Za-z/])(${PROF})(\d)`, 'g'), '$1$2 $3').replace(/(\d)(IPR?)(?![A-Za-wyz])/g, '$1 $2')],   // «27IPRx89»: a size separator x may follow
   // × between sizes (Cyrillic х / Latin x): no spaces between two numbers («20×70 мм»), spaced « × » after «мм» or before a profile
   ['x', '«×» между размерами', t => t
     .replace(new RegExp(String.raw`(${SIZE_L}|\bIPR?)\s?[xхX×]\s?(?=\d|#)`, 'g'), '$1×')

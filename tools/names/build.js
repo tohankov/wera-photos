@@ -28,7 +28,9 @@ const R = C.map(p => { const a = p.article, mu = apply(lat(p.title.ua, 'ua'), a)
 // correct titles per WERA series: model code present, size in our format, proper ending
 const good = {}; for (const x of R) if (x.d && x.d.model && x.d.series && S.hasModel(x.ua, x.d.model) && S.hasModel(x.ru, x.d.model) && sizeChunk(x.ua) && sizeChunk(x.ru) && x.tailOk) (good[x.d.series] = good[x.d.series] || []).push(x);
 for (const g of Object.values(good)) g.sort((a, b) => (a.hit.length - b.hit.length) || (a.a < b.a ? -1 : 1));
-const tpl = (q, x, lang) => { const qt = q[lang], qc = sizeChunk(qt), xc = sizeChunk(x[lang]); if (!qc || !xc) return null; const qn = nums(qc), xn = nums(xc); if (qn.length !== xn.length) return null;
+const tpl = (q, x, lang) => { const qt = q[lang], qc = sizeChunk(qt); let xc = sizeChunk(x[lang]);
+  // TORX PLUS: the reference carries IP / IPR in the series code only («867/4 IP 25×50 мм») — the size takes the same form («15 IP×89» -> «15×89»)
+  if (xc && !/IP/.test(qc) && /IP/.test(xc) && /\bIPR? $/.test(qt.slice(0, qt.lastIndexOf(qc)))) { const own = xc; xc = xc.replace(/ ?IPR?/g, ''); x[lang] = x[lang].replace(own, xc); } if (!qc || !xc) return null; const qn = nums(qc), xn = nums(xc); if (qn.length !== xn.length) return null;
   // the size chunk is the product's own (profile, numbers, inch marks) — only the wording around it comes from the reference
   return qt.slice(0, qt.lastIndexOf(qc)) + xc + qt.slice(qt.lastIndexOf(qc) + qc.length).replace(new RegExp(String.raw`WERA ${q.a}$`), `WERA ${x.a}`); };
 // words compared by stem (6 letters, ё = е): «хвостовик» = «хвостовиком»; «дюймова» is not lost when the size carries ″
@@ -43,12 +45,17 @@ for (const x of R) { const p = x.p; let why = '';
   if (x.d && x.d.model && x.d.series && !S.hasModel(x.ua, x.d.model) && good[x.d.series]) { const q = good[x.d.series][0]; const nu = tpl(q, x, 'ua'), nr = tpl(q, x, 'ru');
     if (nu && nr) { const lost = [...words(x.ua)].filter(w => !words(nu).has(w) && !/^(торсій|біти|біта|біт$)/.test(w)); const lostR = [...words(x.ru)].filter(w => !words(nr).has(w) && !/^(торсио|бита|биты)/.test(w));
       if (lost.length || lostR.length) why = `шаблон серии ${x.d.series} (${q.a}) убирает слова: ${[...lost, ...lostR].join(', ')} — проверить`;
-      x.ua = nu; x.ru = nr; x.hit.push('tpl'); x.tplFrom = q.a; } }
+      // «Hex-Plus» only when this article's own datasheet (title / «№ артикула») names it — page 2 of many datasheets carries Hex-Plus as a legend
+      const hp = /Hex-Plus/i.test(x.d.title + ' ' + x.d.series); const noHp = (t, o) => !hp && /Hex-Plus/.test(t) && !/Hex-Plus/.test(o) ? t.replace(/Hex-Plus /, '') : t;
+      x.ua = noHp(nu, x.ua); x.ru = noHp(nr, x.ru); x.hit.push('tpl'); x.tplFrom = q.a; } }
   // 4. double-ended bit
   if (DBL.test(x.ua) && DBL.test(x.ru)) { x.ua = dbl(x.ua); x.ru = dbl(x.ru); x.hit.push('dbl'); x.mdbl = true; }
   // 3. series code from the datasheet before the size
   if (!x.tplFrom && x.d && x.d.model && /^\d/.test(x.d.model) && !S.hasModel(x.ua, x.d.model) && !S.hasModel(x.ru, x.d.model) && SERIES_TYPES.some(([u, r]) => u.test(x.ua) && r.test(x.ru))) {
-    const nu = insModel(x.ua, x.d.model), nr = insModel(x.ru, x.d.model); if (nu && nr) { x.ua = nu; x.ru = nr; x.hit.push('series'); } }
+    // the profile word before the model code, as in the neighbouring series («Біта TORX® 867/1 TX 55×35 мм», «Біта торсійна Pozidriv 855/1 TZ PZ 1×25 мм»); not on double-ended bits
+    const pw = t => { const c = sizeChunk(t).match(/^(TX|PH|PZ) /); const w = c && { TX: 'TORX®', PH: 'Phillips', PZ: 'Pozidriv' }[c[1]];
+      return !w || x.mdbl || new RegExp(w.replace('®', '')).test(t) ? x.d.model : w + ' ' + x.d.model; };
+    const nu = insModel(x.ua, pw(x.ua)), nr = insModel(x.ru, pw(x.ru)); if (nu && nr) { x.ua = nu; x.ru = nr; x.hit.push('series'); } }
   // checks
   if (!x.tailOk) why = why || 'конец названия не «WERA <артикул>» (старый артикул в скобках / слова после артикула / бренд в середине)';
   for (const [u, r] of CONFLICT) if (u.test(p.title.ua) && r.test(p.title.ru)) why = why || `тип товара в UA («${p.title.ua.split(' ').slice(0, 2).join(' ')}») и RU («${p.title.ru.split(' ').slice(0, 2).join(' ')}») расходится`;
