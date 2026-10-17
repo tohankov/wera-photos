@@ -4,6 +4,7 @@
 //   modtitle: the same titles into the modification title (mod_title — what the storefront h1 and the admin list show); only the languages whose live
 //   mod_title is still the old title (an empty mod_title falls back to the product title and is left empty; any other text is skipped and reported)
 //   words: owner-approved word rules (names/preview.json review: current title after mechanics -> proposed), into title AND mod_title like both
+//   set:   names/set_plan.json {article: {oldTitle: {ua, ru}, oldMod: {ua, ru}, ua, ru}} — title AND mod_title; live title and mod_title must be exactly the old ones
 //   both:  the rule from CLAUDE.md — title AND mod_title (UA/RU) in one import; live title must be the old one, mod_title the old one or empty
 // Per batch: live export (backup/) -> dryRun: ONLY gtin / title.ua / title.ru may change, to exactly the planned values, else STOP -> import ->
 // export after: the target field reads back as planned and every other exported field (slug, link, price, presence, parent, alt_parent…) is unchanged, else STOP.
@@ -23,12 +24,13 @@ else if (MODE === 'both') { const w = require('./mech_written.json'); plan = Obj
 else if (MODE === 'words') { plan = Object.fromEntries(require('./preview.json').review.map(r => [r['Артикул'], { oldUa: r['Текущее UA (после механики)'], oldRu: r['Текущее RU (после механики)'], ua: r['Предлагаемое UA'], ru: r['Предлагаемое RU'] }]));
   // mechanics changed after the title run: the site holds what that run wrote
   const w = require('./mech_written.json'), m = require('./mech_plan.json'); for (const [k, v] of Object.entries(plan)) if (w[k] && (w[k].ua !== m[k].ua || w[k].ru !== m[k].ru)) { v.oldUa = w[k].ua; v.oldRu = w[k].ru; } }
-else stop('mode ean|title|modtitle|both|words');
-const TWO = MODE === 'both' || MODE === 'words';   // title and mod_title together
+else if (MODE === 'set') plan = require('./set_plan.json');
+else stop('mode ean|title|modtitle|both|words|set');
+const TWO = MODE === 'both' || MODE === 'words' || MODE === 'set';   // title and mod_title together
 const FIELDS = ['article', 'parent_article', 'title', 'slug', 'link', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'gtin', 'mod_title'];
 const exportOf = async arts => { const out = []; for (let i = 0; i < arts.length; i += 100) { const r = await call('horoshop_catalog_export', { expr: { article: arts.slice(i, i + 100) }, includedParams: FIELDS, limit: 100, allowLarge: true });
   if (!r.response) stop('export failed: ' + JSON.stringify(r).slice(0, 200)); out.push(...r.response.products); } return out; };
-const OWN = { ean: 'gtin', title: 'title', modtitle: 'mod_title', both: 'title', words: 'title' }[MODE]; const send = {};
+const OWN = { ean: 'gtin', title: 'title', modtitle: 'mod_title', both: 'title', words: 'title', set: 'title' }[MODE]; const send = {};
 const target = MODE === 'ean' ? ['gtin'] : TWO ? ['title.ua', 'title.ru', 'mod_title.ua', 'mod_title.ru'] : [`${OWN}.ua`, `${OWN}.ru`];
 const get = (p, f) => f.split('.').reduce((o, k) => (o || {})[k], p);
 const want = (a, f) => MODE === 'ean' ? plan[a].gtin : plan[a][f.split('.')[1]];
@@ -41,8 +43,9 @@ const checked = (a, f) => MODE !== 'modtitle' || f.split('.')[1] in send[a];
     const live = Object.fromEntries(before.map(p => [p.article, p])); const go = [];
     for (const a of batch) { const p = live[a]; if (!p) { my.skipped[a] = 'нет в выгрузке'; continue; }
       if (MODE === 'ean' && p.gtin) { my.skipped[a] = 'штрихкод уже есть: ' + p.gtin; continue; }
-      if (TWO && ['ua', 'ru'].some(l => (p.mod_title || {})[l] && p.mod_title[l] !== p.title[l])) { my.skipped[a] = 'mod_title отличается от названия'; continue; }
-      if ((MODE === 'title' || TWO) && (p.title.ua !== plan[a].oldUa || p.title.ru !== plan[a].oldRu)) { my.skipped[a] = 'название на сайте изменилось после выгрузки'; continue; }
+      if (MODE === 'set') { const o = plan[a]; if (['ua', 'ru'].some(l => (p.title || {})[l] !== o.oldTitle[l] || (p.mod_title || {})[l] !== o.oldMod[l])) { my.skipped[a] = 'название на сайте изменилось после выгрузки'; continue; } }
+      else if (TWO && ['ua', 'ru'].some(l => (p.mod_title || {})[l] && p.mod_title[l] !== p.title[l])) { my.skipped[a] = 'mod_title отличается от названия'; continue; }
+      if ((MODE === 'title' || (TWO && MODE !== 'set')) && (p.title.ua !== plan[a].oldUa || p.title.ru !== plan[a].oldRu)) { my.skipped[a] = 'название на сайте изменилось после выгрузки'; continue; }
       if (MODE === 'modtitle') { const m = p.mod_title || {}; const old = { ua: plan[a].oldUa, ru: plan[a].oldRu }; send[a] = {};
         for (const l of ['ua', 'ru']) { if (m[l] === old[l]) send[a][l] = plan[a][l]; else if (m[l] && m[l] !== plan[a][l]) my.skipped[a] = `mod_title ${l} отличается от названия: ${m[l]}`; }
         if (my.skipped[a] || !Object.keys(send[a]).length) { if (!my.skipped[a]) my.done.push(a); continue; } }
