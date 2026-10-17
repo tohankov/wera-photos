@@ -53,7 +53,7 @@ function makeBuilder(dir) {
     return arts.map(a => {
       const c = content[a], f = facts(a), sec = c.parent ? { parent: c.parent, alt: c.alt || [] } : CL[a].section;
       const lm = c.noTable ? {} : linkMap(a, {});
-      const p = { article: a, title: c.title, description: { ua: description(a, 'ua', lm), ru: description(a, 'ru', lm) }, price: P[a].price, brand: 'WERA', parent: { id: sec.parent }, presence: 'В наявності', display_in_showcase: 1,
+      const p = { article: a, title: c.title, mod_title: c.title, description: { ua: description(a, 'ua', lm), ru: description(a, 'ru', lm) }, price: P[a].price, brand: 'WERA', parent: { id: sec.parent }, presence: 'В наявності', display_in_showcase: 1,
         images: { override: true, links: [`https://raw.githubusercontent.com/tohankov/wera-photos/main/images/${NAME}/${a}.jpg`] } };
       if (sec.alt && sec.alt.length) p.alt_parent = sec.alt.map(id => ({ id }));
       if (f.ean) p.gtin = f.ean;

@@ -18,8 +18,8 @@ function defer(a, reason) { const d = JSON.parse(fs.readFileSync(DEF, 'utf8')); 
 function stop(msg) { report.stopped = msg; save(); log('STOP', msg); S.close(); process.exit(2); }
 const call = async (tool, args) => { const r = await S.call(tool, args); if (r && r.raw && r.isError) throw new Error(tool + ': ' + r.raw.slice(0, 300)); return r; };
 // fields the import dryRun is allowed to report for one new product, derived from its own payload
-const plannedKeys = p => Object.keys(p).filter(k => k !== 'article').flatMap(k => k === 'title' || k === 'description' ? [k + '.ru', k + '.ua'] : k === 'parent' ? ['parent.id'] : [k]).sort().join(',');
-const exportArgs = arts => ({ expr: { article: arts }, includedParams: ['article', 'parent_article', 'title', 'slug', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description'], limit: 200, allowLarge: true });
+const plannedKeys = p => Object.keys(p).filter(k => k !== 'article').flatMap(k => k === 'title' || k === 'mod_title' || k === 'description' ? [k + '.ru', k + '.ua'] : k === 'parent' ? ['parent.id'] : [k]).sort().join(',');
+const exportArgs = arts => ({ expr: { article: arts }, includedParams: ['article', 'parent_article', 'title', 'mod_title', 'slug', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description'], limit: 200, allowLarge: true });
 const { metaOf } = require('./meta.js'); const firstSentences = (s, max) => metaOf(s, max); // whole phrases, never cut inside a word
 
 (async () => {
