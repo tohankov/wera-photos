@@ -7,6 +7,7 @@ function expected() { const W = require('./mech_written.json'), M = require('./m
   for (const [a, w] of Object.entries(W)) set(a, { ua: w.oldUa, ru: w.oldRu }, w.ua, w.ru, 'mech');
   for (const a of (st.both || {}).done || []) set(a, { ua: M[a].oldUa, ru: M[a].oldRu }, M[a].ua, M[a].ru, 'mech');
   for (const a of (st.words || {}).done || []) { const r = P[a]; set(a, { ua: r['Текущее UA (после механики)'], ru: r['Текущее RU (после механики)'] }, r['Предлагаемое UA'], r['Предлагаемое RU'], 'words'); }
+  if ((st.set_ipr || {}).done) { const SP = require('./set_plan_ipr.json'); for (const x of st.set_ipr.done) set(x, SP[x].oldTitle, SP[x].ua, SP[x].ru, 'set'); }   // 17.10: IPR 40/45, Belt mod_title
   if ((st.set || {}).done) { const SP = require('./set_plan.json'); for (const a of st.set.done) set(a, SP[a].oldTitle, SP[a].ua, SP[a].ru, 'set'); }
   return out; }
 module.exports = { expected };
