@@ -4,10 +4,11 @@
 //   desc: the descriptions «own» kept (inventory/seo_own_descriptions.xlsx stays as their archive) — seo_description UA/RU cleared.
 //   h1:   products whose own h1_title differs from the live mod_title (old-format names on the storefront) — h1_title UA/RU cleared, the h1 is then mod_title.
 //         plan reads the whole catalog live; the list goes to inventory/h1_own.xlsx.
+//   h1all: every product that still has an own h1_title (the ones equal to mod_title, owner 18.10.2026) — h1_title UA/RU cleared, so the h1 always comes from mod_title.
 // Per batch: live export (backup/seo_clear[_<job>]_b<N>_before.json) -> dryRun: only the job's fields may change, to "" -> import -> export after: those fields
 // empty, every other exported field unchanged.
 const fs = require('fs'), path = require('path'), X = require('xlsx'); const S = require('../lib/session.js').open();
-const A = process.argv.slice(2); const JOB = ['own', 'desc', 'h1'].includes(A[0]) ? A.shift() : 'own'; const MODE = A[0] || 'plan', SIZE = +A[1] || 100;
+const A = process.argv.slice(2); const JOB = ['own', 'desc', 'h1', 'h1all'].includes(A[0]) ? A.shift() : 'own'; const MODE = A[0] || 'plan', SIZE = +A[1] || 100;
 const SFX = JOB === 'own' ? '' : '_' + JOB; const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', INV = path.join(__dirname, '../../inventory/');
 const SF = path.join(__dirname, `seo_clear${SFX}_state.json`), PF = path.join(__dirname, `seo_clear${SFX}_plan.json`);
 const FIELDS = ['article', 'title', 'mod_title', 'slug', 'link', 'price', 'presence', 'parent', 'alt_parent', 'gtin', 'seo_title', 'seo_description', 'seo_keywords', 'h1_title'];
@@ -28,6 +29,11 @@ const loadPlan = () => { const p = require(PF); return JOB === 'own' ? Object.fr
     console.log('products', C.length, 'clear title', C.length, 'clear description', Object.values(plan).filter(x => x.desc).length, 'keep description', keep.length); S.close(); process.exit(0); }
   if (MODE === 'plan' && JOB === 'desc') { const own = require('./seo_clear_plan.json'); const plan = Object.fromEntries(Object.keys(own).filter(a => !own[a].desc).map(a => [a, ['seo_description']]));
     fs.writeFileSync(PF, JSON.stringify(plan)); console.log('descriptions to clear', Object.keys(plan).length); S.close(); process.exit(0); }
+  if (MODE === 'plan' && JOB === 'h1all') { const all = [];
+    for (let off = 0; ; off += 100) { const r = await call('horoshop_catalog_export', { includedParams: ['article', 'h1_title'], limit: 100, offset: off, allowLarge: true });
+      if (!r.response) stop('export failed ' + JSON.stringify(r).slice(0, 200)); all.push(...r.response.products); if (r.response.products.length < 100) break; }
+    const plan = Object.fromEntries(all.filter(p => ['ua', 'ru'].some(l => (p.h1_title || {})[l])).map(p => [p.article, ['h1_title']]));
+    fs.writeFileSync(PF, JSON.stringify(plan)); console.log('catalog', all.length, 'own h1 to clear', Object.keys(plan).length); S.close(); process.exit(0); }
   if (MODE === 'plan' && JOB === 'h1') { const all = [];
     for (let off = 0; ; off += 100) { const r = await call('horoshop_catalog_export', { includedParams: ['article', 'title', 'mod_title', 'h1_title', 'parent', 'link'], limit: 100, offset: off, allowLarge: true });
       if (!r.response) stop('export failed ' + JSON.stringify(r).slice(0, 200)); all.push(...r.response.products); if (r.response.products.length < 100) break; }
