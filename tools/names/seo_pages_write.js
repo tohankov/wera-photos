@@ -27,8 +27,9 @@ const P = {
   1054: [['Мапа сайту | TL-Shop', 'Мапа сайту TL-Shop: усі розділи каталогу інструменту WERA та інформаційні сторінки.'],
          ['Карта сайта | TL-Shop', 'Карта сайта TL-Shop: все разделы каталога инструмента WERA и информационные страницы.']],
   // category whose name already has «Wera»: the category template would repeat WERA
-  1269: [['Сумки для інструментів Wera 2go — купити | TL-Shop', 'Сумки для інструментів Wera 2go — купити в TL-Shop, офіційного дистриб\'ютора в Україні. Гарантія виробника 12 міс., доставка Новою поштою або самовивіз у Полтаві.'],
-         ['Сумки для инструментов Wera 2go — купить | TL-Shop', 'Сумки для инструментов Wera 2go — купить в TL-Shop, официального дистрибьютора в Украине. Гарантия производителя 12 мес., доставка Новой почтой или самовывоз в Полтаве.']] };
+  1269: [['Сумки для інструментів Wera 2go — купити в інтернет-магазині | TL-Shop',   // seo_title since 19.10.2026 (names/seo_wera_shop.js)
+         'Сумки для інструментів Wera 2go — купити в TL-Shop, офіційного дистриб\'ютора в Україні. Гарантія виробника 12 міс., доставка Новою поштою або самовивіз у Полтаві.'],
+         ['Сумки для инструментов Wera 2go — купить в интернет-магазине | TL-Shop', 'Сумки для инструментов Wera 2go — купить в TL-Shop, официального дистрибьютора в Украине. Гарантия производителя 12 мес., доставка Новой почтой или самовывоз в Полтаве.']] };
 (async () => { if (UPD) { const bk = 'C:/Users/Techlight/Desktop/wera-photos/backup/seo_pages_before_update.json', live = {};
     for (const id of Object.keys(P)) { await new Promise(r => setTimeout(r, 1200)); const r = await S.call('horoshop_admin_page_get', { id: +id, allowLarge: true }); if (!r || r.error) { console.log('STOP read', id); process.exit(2); } live[id] = r.languages; }
     if (WRITE && !fs.existsSync(bk)) fs.writeFileSync(bk, JSON.stringify(live));

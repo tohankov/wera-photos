@@ -1,3 +1,4 @@
+// SUPERSEDED for the titles 31 / 23 / 25: since 19.10.2026 they are «… — купити в інтернет-магазині WERA | TL-Shop» (names/seo_wera_shop.js) — do not rerun this file as is.
 // Store SEO templates (admin «SEO шаблоны», entity seo_templates) — owner decision 18.10.2026. node names/seo_templates_write.js [write]
 // Backup of all 17 templates before: backup/seo_templates_before.json. Only UA (i18n 3) and RU (i18n 1) change; {site} stays as it is.
 // Delivery wording «… або самовивіз у Полтаві» (owner, 18.10.2026): the templates as they were before it — backup/seo_templates_before_delivery.json.
