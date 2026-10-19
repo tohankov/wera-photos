@@ -1,9 +1,9 @@
 // PREVIEW ONLY: the titles longer than 150 characters (Google Merchant title limit; Хорошоп leaves such products out of the feed) -> a variant ≤150 in the same
 // title format (type, series / model, features, size, «WERA article»), nothing about type, series, size or the article dropped. node gm/long_titles.js <export json>
-// -> inventory/gm_long_titles.xlsx; prints was -> proposed with lengths. Not written to the site until the owner's «ок» (then names/write.js set, title + mod_title).
+// -> inventory/gm_long_titles.xlsx + gm/titles_new.json; prints was -> proposed with lengths. Owner's «ок» 19.10.2026 with one change: no «під замовлення» / «под заказ» in the torque screwdriver titles (written by gm/titles_plan.js + names/write.js set).
 const path = require('path'), X = require('xlsx');
-const TQ = (m, r, ext, ch, short) => [`Динамометрична викрутка Kraftform ${m}, заводська уставка моменту ${r.replace('дюйм фунт-сила', 'дюйм фунт-сила')} під замовлення${ext ? ', пістолетна ручка' : ''}, ${ch ? 'швидкозатискний патрон' : short ? 'Rapidaptor' : 'патрон Rapidaptor'}`,
-  `Динамометрическая отвёртка Kraftform ${m}, заводская уставка момента ${r} под заказ${ext ? ', пистолетная ручка' : ''}, ${ch ? 'быстрозажимной патрон' : short ? 'Rapidaptor' : 'патрон Rapidaptor'}`];
+const TQ = (m, r, ext, ch, short) => [`Динамометрична викрутка Kraftform ${m}, заводська уставка моменту ${r.replace('дюйм фунт-сила', 'дюйм фунт-сила')}${ext ? ', пістолетна ручка' : ''}, ${ch ? 'швидкозатискний патрон' : short ? 'Rapidaptor' : 'патрон Rapidaptor'}`,
+  `Динамометрическая отвёртка Kraftform ${m}, заводская уставка момента ${r}${ext ? ', пистолетная ручка' : ''}, ${ch ? 'быстрозажимной патрон' : short ? 'Rapidaptor' : 'патрон Rapidaptor'}`];
 const P = {
   '05075692001': ['Динамометричний ключ Click-Torque C 3 Lock, регульований, реверсна тріскачка, функція відключення Torque Lock, 40-200 Нм', 'Динамометрический ключ Click-Torque C 3 Lock, регулируемый, реверсная трещотка, функция отключения Torque Lock, 40-200 Нм'],
   '05075691001': ['Динамометричний ключ Click-Torque Lock A 6, регульований, функція Torque Lock, реверсна тріскачка, права затяжка, 2,5-25 Нм', 'Динамометрический ключ Click-Torque Lock A 6, регулируемый, функция Torque Lock, реверсная трещотка, правая затяжка, 2,5-25 Нм'],
@@ -25,5 +25,6 @@ for (const p of all.filter(p => +p.display_in_showcase === 1 && (p.mod_title.ua.
   rows.push({ 'Артикул': p.article, 'Было UA': p.mod_title.ua, 'Было UA, симв.': p.mod_title.ua.length, 'Стало UA': ua, 'Стало UA, симв.': ua.length, 'Было RU': p.mod_title.ru, 'Было RU, симв.': p.mod_title.ru.length, 'Стало RU': ru, 'Стало RU, симв.': ru.length }); }
 const wb = X.utils.book_new(), ws = X.utils.json_to_sheet(rows); ws['!cols'] = [14, 80, 8, 80, 8, 80, 8, 80, 8].map(w => ({ wch: w })); X.utils.book_append_sheet(wb, ws, 'Названия >150');
 X.writeFile(wb, path.join(__dirname, '../../inventory/gm_long_titles.xlsx'));
+require('fs').writeFileSync(path.join(__dirname, 'titles_new.json'), JSON.stringify(Object.fromEntries(rows.filter(r => r['Стало UA']).map(r => [r['Артикул'], { ua: r['Стало UA'], ru: r['Стало RU'] }])), null, 1));   // input of gm/titles_plan.js
 console.log('titles', rows.length, 'no proposal', rows.filter(r => !r['Стало UA']).length, 'still >150', rows.filter(r => r['Стало UA, симв.'] > 150 || r['Стало RU, симв.'] > 150).map(r => r['Артикул']));
 for (const r of rows) console.log(`${r['Артикул']} | ${r['Стало UA']} (${r['Стало UA, симв.']}) | ${r['Стало RU']} (${r['Стало RU, симв.']})`);

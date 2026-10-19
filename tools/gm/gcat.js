@@ -1,5 +1,6 @@
 // PREVIEW ONLY: our catalog categories -> Google product category (google_product_category, the official taxonomy with ids:
 // https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt, RU names from taxonomy-with-ids.ru-RU.txt, both saved in gm/data/; there is no uk-UA file).
+// Owner 19.10.2026: taps -> 1184 Taps & Dies; L-keys -> 1632 Wrenches (the taxonomy has no Hex Keys category).
 // Rules on the category's own title, then its path; the first match wins. Where the category mixes kinds of products a second variant is given.
 // node gm/gcat.js <catalog export json (parent, display_in_showcase)> -> inventory/gm_google_categories.xlsx + a summary by Google category.
 const fs = require('fs'), path = require('path'), X = require('xlsx');
@@ -14,7 +15,9 @@ const R = [  // [test on title, test on path (or null), main id, alternative id,
   [/візок|ложемент/i, null, '3280', '500103', 'візок — шафи для інструментів; ложементи — вкладки'],
   [/підставк/i, null, '3974', '500103'],
   [/ремкомплект|запчастин/i, null, '3650', null],
-  [/свердл|мітчик/i, null, '1540', '1184', 'свердла — 1540, мітчики — 1184'],
+  [/свердла та мітчики/i, null, '1540', '1184', 'змішаний розділ: свердла — 1540, мітчики — 1184'],
+  [/мітчик/i, null, '1184', null, 'мітчики (власник, 19.10.2026)'],
+  [/свердл|зенкер/i, null, '1540', null, 'свердла, зенкери'],
   [/бітотрим|ручки-тримач/i, null, '3944', '6471'],
   [/перехідник|адаптер/i, null, '3944', '5571'],
   [/набір|набори|набор/i, null, '6965', null],
@@ -28,7 +31,7 @@ const R = [  // [test on title, test on path (or null), main id, alternative id,
   [/Joker/i, null, '1632', null],
   [/приладдя|подовжувач/i, /Zyklop/, '3650', '5571', 'подовжувачі, адаптери, ручки до тріскачок'],
   [/тріскачк|Zyklop/i, null, '1632', null, 'тріскачки (у батьківському розділі є й головки)'],
-  [/Г-подібн/i, null, '1632', '1439', 'Г-подібні (шестигранні / TORX) ключі'],
+  [/Г-подібн/i, null, '1632', null, 'Г-подібні ключі: категорії Hex Keys в таксономії Google немає (власник: тоді 1632)'],
   [/ключ|Joker/i, null, '1632', null],
   [/приладдя/i, /Викрутки/, '3650', null],
   [/вставк/i, null, '1203', '1540', 'змінні вставки до ручок-тримачів'],

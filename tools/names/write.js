@@ -12,7 +12,9 @@
 const fs = require('fs'), path = require('path'), X = require('xlsx'); const S = require('../lib/session.js').open();
 const MODE = process.argv[2], SIZE = +process.argv[3] || 200, SEC = +process.argv[4] || 480, t0 = Date.now();
 const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', INV = path.join(__dirname, '../../inventory/'), SF = path.join(__dirname, 'write_state.json');
-const st = fs.existsSync(SF) ? JSON.parse(fs.readFileSync(SF, 'utf8')) : {}; const my = st[MODE] = st[MODE] || { done: [], skipped: {}, batches: 0 };
+// SETPLAN=<json> with mode set: another plan file of the same shape, with its own state key and backup names (set_<file name>)
+const KEY = MODE === 'set' && process.env.SETPLAN ? 'set_' + path.basename(process.env.SETPLAN, '.json') : MODE;
+const st = fs.existsSync(SF) ? JSON.parse(fs.readFileSync(SF, 'utf8')) : {}; const my = st[KEY] = st[KEY] || { done: [], skipped: {}, batches: 0 };
 const save = () => fs.writeFileSync(SF, JSON.stringify(st));
 const sleep = ms => new Promise(r => setTimeout(r, ms)); const call = async (t, a) => { await sleep(1500); return S.call(t, a); };
 const stop = m => { save(); console.log('STOP', m); S.close(); process.exit(2); };
@@ -24,7 +26,7 @@ else if (MODE === 'both') { const w = require('./mech_written.json'); plan = Obj
 else if (MODE === 'words') { plan = Object.fromEntries(require('./preview.json').review.map(r => [r['Артикул'], { oldUa: r['Текущее UA (после механики)'], oldRu: r['Текущее RU (после механики)'], ua: r['Предлагаемое UA'], ru: r['Предлагаемое RU'] }]));
   // mechanics changed after the title run: the site holds what that run wrote
   const w = require('./mech_written.json'), m = require('./mech_plan.json'); for (const [k, v] of Object.entries(plan)) if (w[k] && (w[k].ua !== m[k].ua || w[k].ru !== m[k].ru)) { v.oldUa = w[k].ua; v.oldRu = w[k].ru; } }
-else if (MODE === 'set') plan = require('./set_plan.json');
+else if (MODE === 'set') plan = require(process.env.SETPLAN ? path.resolve(process.env.SETPLAN) : './set_plan.json');
 else stop('mode ean|title|modtitle|both|words|set');
 const TWO = MODE === 'both' || MODE === 'words' || MODE === 'set';   // title and mod_title together
 const FIELDS = ['article', 'parent_article', 'title', 'slug', 'link', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'gtin', 'mod_title'];
@@ -39,7 +41,7 @@ const checked = (a, f) => MODE !== 'modtitle' || f.split('.')[1] in send[a];
   const done = new Set(my.done); let todo = Object.keys(plan).filter(a => !done.has(a) && !my.skipped[a]); let wrote = 0;
   while (todo.length && (Date.now() - t0) / 1000 < SEC) {
     const batch = todo.slice(0, SIZE); todo = todo.slice(SIZE); const n = ++my.batches;
-    const before = await exportOf(batch); fs.writeFileSync(BK + `names_${MODE}_b${n}_before.json`, JSON.stringify(before));
+    const before = await exportOf(batch); fs.writeFileSync(BK + `names_${KEY}_b${n}_before.json`, JSON.stringify(before));
     const live = Object.fromEntries(before.map(p => [p.article, p])); const go = [];
     for (const a of batch) { const p = live[a]; if (!p) { my.skipped[a] = 'нет в выгрузке'; continue; }
       if (MODE === 'ean' && p.gtin) { my.skipped[a] = 'штрихкод уже есть: ' + p.gtin; continue; }
@@ -59,7 +61,7 @@ const checked = (a, f) => MODE !== 'modtitle' || f.split('.')[1] in send[a];
       for (const [k, v] of Object.entries(w.changes)) if (v.to !== want(w.article, k)) stop(`dryRun ${w.article} ${k}: ${v.to} ≠ plan ${want(w.article, k)}`); }
     if (dry.willChange.length !== go.length) console.log(`batch ${n}: dryRun changes ${dry.willChange.length} of ${go.length} (the rest already as planned)`);
     const r = await call('horoshop_catalog_import', { productsFile: pf, dryRun: false }); if ((r.errors || []).length) stop('import errors ' + JSON.stringify(r.errors).slice(0, 300));
-    const after = await exportOf(go); fs.writeFileSync(BK + `names_${MODE}_b${n}_after.json`, JSON.stringify(after));
+    const after = await exportOf(go); fs.writeFileSync(BK + `names_${KEY}_b${n}_after.json`, JSON.stringify(after));
     const bad = []; for (const a of go) { const b = live[a], p = after.find(x => x.article === a); if (!p) { bad.push(a + ' missing after'); continue; }
       for (const f of target) if (checked(a, f) && get(p, f) !== want(a, f)) bad.push(`${a} ${f}: «${get(p, f)}» ≠ plan «${want(a, f)}»`);
       for (const f of FIELDS) { if (TWO && f === 'mod_title') continue; if (f === OWN) { if (MODE === 'modtitle') for (const l of ['ua', 'ru']) if (!(l in send[a]) && get(b, f + '.' + l) !== get(p, f + '.' + l)) bad.push(`${a} mod_title ${l} changed unexpectedly`); continue; } if (JSON.stringify(b[f]) !== JSON.stringify(p[f])) bad.push(`${a} ${f} changed: ${JSON.stringify(b[f]).slice(0, 80)} → ${JSON.stringify(p[f]).slice(0, 80)}`); } }
