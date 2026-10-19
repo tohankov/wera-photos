@@ -3,6 +3,9 @@
 //  Values are only added (existing ones kept). Ambiguous datasheet text -> disputed, not written. The 6 handles/removers of vk_fix_1019 are not touched (owner).
 //   node cat/feat_1020.js plan <live.json>   -> cat/feat_1020_plan.json + inventory/feat_1020.xlsx (было -> стало, quote, disputed)
 //   node cat/feat_1020.js backup | dry | write | ru | verify
+// Owner decisions on the 26 disputed (20.10.2026) — none written: magnetic wall racks and the Kompakt 20 A/20/22/25/26 and 20/25/26/28 RA ring — no;
+//  12 Rapidaptor-only — wera.de de/en checked: only «hebt den Bit vom Magneten ab» / «lifts the bit off the magnet» (Rapidaptor text), no «mit Magnet / magnetic / Dauermagnet»;
+//  05059303001 has no wera.de page (404) — no. Sources: inventory/feat_1020.xlsx, sheet «Спірні».
 const fs = require('fs'), path = require('path'); const MODE = process.argv[2]; const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', INV = 'C:/Users/Techlight/Desktop/wera-photos/inventory/';
 const PLAN = path.join(__dirname, 'feat_1020_plan.json'); const sleep = ms => new Promise(r => setTimeout(r, ms)); let S = null;
 const call = async (t, a) => { S = S || require('../lib/session.js').open(); for (let k = 0; k < 20; k++) { await sleep(1000); const r = await S.call(t, a); const m = JSON.stringify(r || '').match(/[Rr]etry after (\d+)/);
