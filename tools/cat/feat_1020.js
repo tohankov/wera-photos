@@ -6,8 +6,10 @@
 // Owner decisions on the 26 disputed (20.10.2026) — none written: magnetic wall racks and the Kompakt 20 A/20/22/25/26 and 20/25/26/28 RA ring — no;
 //  12 Rapidaptor-only — wera.de de/en checked: only «hebt den Bit vom Magneten ab» / «lifts the bit off the magnet» (Rapidaptor text), no «mit Magnet / magnetic / Dauermagnet»;
 //  05059303001 has no wera.de page (404) — no. Sources: inventory/feat_1020.xlsx, sheet «Спірні».
+// Owner 20.10.2026 (later): the Rapidaptor sentence «hebt den Bit vom Magneten ab» / «lifts the bit off the magnet» on wera.de IS a direct statement of a magnet ->
+//  «З магнітом» for the 11 with that sentence (05059303001 stays without):  node cat/feat_1020.js rapidplan <live.json> rapid, then backup|dry|write|verify with the extra arg «rapid».
 const fs = require('fs'), path = require('path'); const MODE = process.argv[2]; const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', INV = 'C:/Users/Techlight/Desktop/wera-photos/inventory/';
-const PLAN = path.join(__dirname, 'feat_1020_plan.json'); const sleep = ms => new Promise(r => setTimeout(r, ms)); let S = null;
+const TAG = process.argv.includes('rapid') ? 'feat_1020_rapid' : 'feat_1020'; const PLAN = path.join(__dirname, TAG + '_plan.json'); const sleep = ms => new Promise(r => setTimeout(r, ms)); let S = null;
 const call = async (t, a) => { S = S || require('../lib/session.js').open(); for (let k = 0; k < 20; k++) { await sleep(1000); const r = await S.call(t, a); const m = JSON.stringify(r || '').match(/[Rr]etry after (\d+)/);
   if (m) { console.log('429, wait', +m[1] + 5, 's'); await sleep((+m[1] + 5) * 1000); continue; } return r; } throw new Error('429 loop'); };
 const stop = m => { console.log('STOP', m); if (S) S.close(); process.exit(2); };
@@ -16,6 +18,7 @@ const SKIP = new Set(['05008881001', '05008880001', '05027456001', '05051278001'
 const ROOTS = { vk: 1098, kk: 1057, vde: 1224 };
 // magnet: explicit WERA phrases about the tool / its bit holder; «без магніту» excluded; magnetic wall racks (the magnet holds the rack, not the bit) -> disputed
 const MAG_T = /з магнітом|із сильним магнітом|з сильним магнітом/i, MAG_D = /постоянн\S* магнит|с магнитом|сильный магнит|магнитн\S* (битодержател|держател\S* бит)|битодержател\S* с магнитом|магнитное, для насадок/i;
+const RAPID = ['05023461001', '05057473001', '05023471001', '05071117001', '05071116001', '05057483001', '05057482001', '05057480001', '05051465001', '05004171001', '05051530001'];
 const RACK = /Магнітний тримач для розміщення|Магнітний тримач та набір/i, NOMAG = /без магніт|без магнит/i;
 const MAG_Q = /приподним\S* насадку с магнита/i; // Rapidaptor text fragment only -> disputed
 // locking ring for the bit: explicit; «стопорное кольцо» that releases the telescopic blade (Kompakt 20/22/25/26/28 RA) -> disputed
@@ -23,6 +26,10 @@ const RING_T = /стопорним кільцем/i, RING_D = /(со|с пруж
 const FIELDS = ['article', 'parent', 'alt_parent', 'title', 'mod_title', 'price', 'display_in_showcase', 'characteristics'];
 const vals = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua);
 (async () => {
+  if (MODE === 'rapidplan') { const L = JSON.parse(fs.readFileSync(process.argv[3], 'utf8')); const plan = [];
+    for (const a of RAPID) { const p = L.find(x => x.article === a); if (!p) stop('no ' + a); const had = vals(p, K); if (had.includes(MAG)) { console.log(a, 'already'); continue; }
+      plan.push({ article: a, characteristics: { [K]: [...had, MAG] } }); console.log(a, had.join('; ') || '—', '->', [...had, MAG].join('; '), '|', p.title.ua.slice(0, 70)); }
+    fs.writeFileSync(PLAN, JSON.stringify(plan, null, 1)); console.log('plan', plan.length, PLAN); return; }
   if (MODE === 'plan') { const L = JSON.parse(fs.readFileSync(process.argv[3], 'utf8')); const t = require('../sections/tree_now.json'); const kids = {}; for (const p of t) (kids[p.parent] = kids[p.parent] || []).push(p.id);
     const sub = r => { const s = new Set([r]), q = [r]; while (q.length) for (const k of kids[q.shift()] || []) { s.add(k); q.push(k); } return s; }; const G = Object.fromEntries(Object.entries(ROOTS).map(([k, r]) => [k, sub(r)]));
     const secs = p => [p.parent && p.parent.id, ...(p.alt_parent || []).map(x => x.id)].map(Number); const name = Object.fromEntries(t.map(p => [p.id, p.title.ua]));
@@ -53,7 +60,7 @@ const vals = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua)
   const plan = JSON.parse(fs.readFileSync(PLAN, 'utf8')); const ARTS = plan.map(x => x.article);
   const exp = async arts => { const out = []; for (let i = 0; i < arts.length; i += 100) { const r = await call('horoshop_catalog_export', { expr: { article: arts.slice(i, i + 100) }, includedParams: FIELDS, limit: 100, allowLarge: true }); if (!r.response) stop('export ' + JSON.stringify(r).slice(0, 300)); out.push(...r.response.products); } return out; };
   if (MODE === 'backup') { const b = await exp(ARTS); if (b.length !== ARTS.length) stop('backup count ' + b.length); const d = await call('horoshop_admin_dictionary_values', { book: BOOK, allowLarge: true });
-    const f = BK + `feat_1020_before_${Date.now()}.json`; fs.writeFileSync(f, JSON.stringify({ products: b, dict394: d.values })); console.log('backup', f, b.length, 'products, dict', d.values.length); }
+    const f = BK + `${TAG}_before_${Date.now()}.json`; fs.writeFileSync(f, JSON.stringify({ products: b, dict394: d.values })); console.log('backup', f, b.length, 'products, dict', d.values.length); }
   if (MODE === 'dry' || MODE === 'write') { const d = await call('horoshop_catalog_import', { products: plan, dryRun: true }); const bad = [];
     for (const w of d.willChange || []) for (const k of Object.keys(w.changes || w.fields || {})) if (!/^characteristics/.test(k)) bad.push(w.article + ':' + k);
     for (const c of d.characteristics || []) for (const k of Object.keys(c.write || {})) if (k !== K) bad.push(c.article + ': char ' + k);
@@ -63,7 +70,7 @@ const vals = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua)
   if (MODE === 'ru') { const d = await call('horoshop_admin_dictionary_values', { book: BOOK, allowLarge: true });
     for (const v of d.values.filter(v => RU[v.value])) { const x = await call('horoshop_admin_dictionary_value_set', { book: BOOK, valueId: v.id, titles: { ru: RU[v.value] }, dryRun: true }); console.log(v.id, v.value, 'dry', JSON.stringify(x).slice(0, 300));
       if ((x.willChange || x.changes || []).length) { const w = await call('horoshop_admin_dictionary_value_set', { book: BOOK, valueId: v.id, titles: { ru: RU[v.value] }, dryRun: false }); console.log('  write', JSON.stringify(w).slice(0, 300)); } } }
-  if (MODE === 'verify') { const before = JSON.parse(fs.readFileSync(BK + fs.readdirSync(BK).filter(x => /^feat_1020_before_\d+\.json$/.test(x)).sort().pop(), 'utf8')).products;
+  if (MODE === 'verify') { const before = JSON.parse(fs.readFileSync(BK + fs.readdirSync(BK).filter(x => new RegExp('^' + TAG + '_before_\\d+\\.json$').test(x)).sort().pop(), 'utf8')).products;
     const after = await exp(ARTS); const B = Object.fromEntries(before.map(p => [p.article, p])); const P = Object.fromEntries(plan.map(x => [x.article, x])); const bad = []; const ids = l => (l || []).map(x => +x.id).sort((a, b) => a - b).join(',');
     for (const p of after) { const b = B[p.article], x = P[p.article];
       for (const f of ['title', 'mod_title']) if (JSON.stringify(p[f]) !== JSON.stringify(b[f])) bad.push(p.article + ' ' + f);
@@ -72,6 +79,6 @@ const vals = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua)
         if (JSON.stringify([...vals(p, k)].sort()) !== JSON.stringify([...want].sort())) bad.push(`${p.article} ${k}: ${vals(p, k).join(', ')}`); }
       for (const v of (p.characteristics || {})[K] || []) if (RU[v.value.ua] && v.value.ru !== RU[v.value.ua]) bad.push(`${p.article} RU ${v.value.ua} = ${v.value.ru}`);
       if (p.price !== b.price || +p.display_in_showcase !== +b.display_in_showcase) bad.push(p.article + ' price/visibility'); }
-    const f = BK + `feat_1020_after_${Date.now()}.json`; fs.writeFileSync(f, JSON.stringify(after)); console.log('verify', after.length, 'problems', bad.length); bad.forEach(x => console.log(' ', x)); }
+    const f = BK + `${TAG}_after_${Date.now()}.json`; fs.writeFileSync(f, JSON.stringify(after)); console.log('verify', after.length, 'problems', bad.length); bad.forEach(x => console.log(' ', x)); }
   if (S) S.close();
 })();
