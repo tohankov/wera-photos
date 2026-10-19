@@ -34,6 +34,7 @@ function fromWera(head, z, hint) { z = String(z).replace(/\s+/g, ' ').trim(); le
   if ((m = z.match(/^# ?(\d) x \d/)) && /\b(PZ|PH)\/S\b/.test(head)) return [['PlusMinus (PH/PZ + шліц)', head.match(/\b(PZ|PH)\/S\b/)[1] + '/S ' + m[1]]];   // PlusMinus «PZ/S # 1»
   if ((m = z.match(/^(\d+(?:[.,]\d+)?) мм x \d+(?:[.,]\d+)? мм$/)) && (/Г-образн|^\d*950|^3950/i.test(head) || hint === 'HEX (шестигранник)')) return [['HEX (шестигранник)', d1(m[1])]];   // L-keys «1.5 мм x 90 мм»
   if ((m = z.match(/^TX ?(\d+) x TX ?(\d+) x/))) return [[TX, m[1]], [TX, m[2]]];
+  if ((m = z.match(/^# ?(\d) x # ?(\d) x/))) return [['Квадрат (Robertson)', '#' + m[1]], ['Квадрат (Robertson)', '#' + m[2]]];   // 68 «# 1 x # 2 x 175 мм»
   if ((m = z.match(/^(PH|PZ) ?(0{0,3}|\d+) x \d/))) return [[m[1] === 'PH' ? 'PH (Phillips)' : 'PZ (Pozidriv)', m[2]]];
   if ((m = z.match(/^TX ?(\d+)( BO)? x \d/))) return [[m[2] || /\bBO\b|отверст/i.test(head) ? TXBO : TX, m[1]]];
   if ((m = z.match(/^(\d+) IP x \d/))) return [['IP (TORX PLUS®)', m[1]]];
@@ -72,7 +73,7 @@ function build(L) {
   // pairs of a set from its WERA composition, nested sets opened; profiles as the components carry them (TX BO stays TX BO here)
   const cp = a => { const pairs = [], unk = [];
     for (const x of expand(a).filter(x => !x.nonProduct && !x.set)) { const lp = x.art && byA[x.art] ? v(byA[x.art], 'profil').filter(y => PR[y]) : (((M[x.art] || {}).vals || x.vals || {}).profil || []).filter(y => PR[y]);
-      let w = fromWera(x.head, x.size, lp.length === 1 ? lp[0] : null);
+      let w = x.art && WERA_DE[x.art] ? WERA_DE[x.art].pairs.slice() : fromWera(x.head, x.size, lp.length === 1 ? lp[0] : null);   // nested set without sizes in its datasheet: wera.de
       if (!w.length && lp.length === 1) { const lv = x.art && byA[x.art] ? { rozmir_nakonechnyka: v(byA[x.art], 'rozmir_nakonechnyka'), rozmir: v(byA[x.art], 'rozmir'), rozmir_robochoho_kintsia: v(byA[x.art], 'rozmir_robochoho_kintsia') } : x.vals;
         const ss = [...new Set(sizesOf(lv))]; if (lp[0] === 'SL (шліц)') { for (const s of ss) { const sl = x.art && slot(x.art, s); if (sl) w.push([lp[0], sl.v]); else unk.push(`${x.art || ''} ${x.size} (SL без товщини)`); } }
         else w = ss.map(s => [lp[0], sizePart(lp[0], s)]); }
@@ -93,7 +94,7 @@ function build(L) {
         if (w.length === 1 && r.pairs.length === 1 && PR[w[0][0]] && PR[w[0][0]][0] === PR[pr][0] && w[0][1] !== r.pairs[0][1] && pr !== 'SL (шліц)') { r.note.push(`на сайті «${fmt(pr, r.pairs[0][1], 'ua', 0, RU)}», у datasheet WERA «${fmt(pr, w[0][1], 'ua', 0, RU)}» — беру datasheet`); r.pairs = [[pr, w[0][1]]]; r.src += ', виправлено за datasheet'; }
         else if (w.length > 1 && w.every(q => PR[q[0]] && PR[q[0]][0] === PR[pr][0])) { r.pairs = w; r.note = []; r.src = 'datasheet WERA (комбінований робочий кінець)'; } } }
     else if (hasComp(p.article)) { r.src = 'склад з datasheet WERA'; const c = cp(p.article); r.pairs.push(...c.pairs); const unk = c.unk;
-      const c0 = x => PR[CANON[x] || x][0]; const got = new Set(r.pairs.map(q => c0(q[0]))); const miss = scr.filter(x => !got.has(c0(x))); if (miss.length) { r.status = 'частково'; r.note.push('профілю немає в парах зі складу: ' + miss.join(', ')); }
+      const c0 = x => PR[CANON[x] || x][0]; const got = new Set(r.pairs.map(q => c0(q[0]))); const miss = scr.filter(x => !got.has(c0(x)) && !((PROFIL_FIX[p.article] || {}).remove || []).includes(x)); if (miss.length) { r.status = 'частково'; r.note.push('профілю немає в парах зі складу: ' + miss.join(', ')); }
       if (unk.length) { r.note.push(`компоненти без пари профіль+розмір (${unk.length}): ${unk.slice(0, 5).join('; ')}`); if (!r.pairs.length) r.status = 'спірний'; else if (r.status === 'ok') r.status = 'частково'; } }
     else if (!scr.length) { r.status = 'спірний'; r.note.push('профілю немає — пару не скласти'); }
     else { const ds = dsLine(p.article), z = ds.replace(/^.*?, (?=(?:PH|PZ|TX|#|\d))/, ''); const w = ds ? fromWera(ds, z) : [];
@@ -104,6 +105,7 @@ function build(L) {
     r.pairs.sort((x, y) => PR[x[0]][2] - PR[y[0]][2] || pcmp(x[0], x[1], y[1]));
     r.short = r.pairs.map(q => fmt(q[0], q[1], 'ua', 0, RU)); r.shortRu = r.pairs.map(q => fmt(q[0], q[1], 'ru', 0, RU));
     r.full = r.pairs.map(q => fmt(q[0], q[1], 'ua', 1, RU)); r.fullRu = r.pairs.map(q => fmt(q[0], q[1], 'ru', 1, RU));
+    if (EMPTY392.includes(r.a)) { r.pairs = r.short = r.shortRu = r.full = r.fullRu = []; r.status = 'ok'; r.note = ['порожньо за рішенням власника 19.10.2026']; r.src = '—'; }
     rows.push(r); }
   // not a tool (handle, holder, extension) in a tool section: CLAUDE.md gives it all values of its section — here the section's pairs that match
   // the profiles and sizes it carries today
@@ -132,15 +134,40 @@ const FIX_SIZES = { '05004186001': [['PH (Phillips)', '1'], [TX, '10'], [TX, '25
   '05004182001': [...['2,5', '3,0', '4,0', '5,0', '6,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25']],
   // Bicycle Set 8: rows not in the catalog — 8767 B TX 25, TX 30 x 107 mm; 8740 B (hex) 4, 5, 6 x 107 mm, 8, 10 x 100 mm
   '05004176001': [...['4,0', '5,0', '6,0', '8,0', '10,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25'], [TX, '30']] };
+// owner 19.10.2026: sets whose datasheet has no sizes — the composition from the set's page on wera.de («Werkzeuge in diesem Set»), fetched 19.10.2026
+const HX = 'HEX (шестигранник)'; const hexMM = ['1,5', '2,0', '2,5', '3,0', '4,0', '5,0', '6,0', '8,0', '10,0'].map(s => [HX, s]); const txL = ['8', '9', '10', '15', '20', '25', '27', '30', '40'].map(s => [TX, s]);
+const WERA_DE = {
+  '05022699001': { url: 'https://www.wera.de/de/werkzeuge/3950-9-hex-plus-multicolour-hf-stainless-1-winkelschluesselsatz-metrisch-edelstahl-mit-haltefunktion', pairs: hexMM },
+  '05022860001': { url: 'https://www.wera.de/de/werkzeuge/3950-9-hex-plus-multicolour-imperial-stainless-1-winkelschluesselsatz-zoellig-edelstahl', pairs: ['5/64″', '3/32″', '1/8″', '5/32″', '3/16″', '7/32″', '1/4″', '5/16″', '3/8″'].map(s => [HX, s]) },
+  '05022210001': { url: 'https://www.wera.de/de/werkzeuge/950-9-hex-plus-multicolour-hf-1-winkelschluesselsatz-metrisch-blacklaser-mit-haltefunktion', pairs: hexMM },
+  '05022089001': { url: 'https://www.wera.de/de/werkzeuge/950-9-hex-plus-multicolour-1-winkelschluesselsatz-metrisch-blacklaser', pairs: hexMM },
+  '05022689001': { url: 'https://www.wera.de/de/werkzeuge/3967-9-tx-sxl-multicolour-hf-stainless-1-winkelschluesselsatz-mit-haltefunktion-edelstahl', pairs: txL },
+  // 9740 foam inlay: 950/9 Hex-Plus Multicolour 1 (05022089001) + 967/9 TX XL Multicolour 1 (05024480001: TX 8…40 on its own wera.de page)
+  '05150140001': { url: 'https://www.wera.de/de/werkzeuge/9740-schaumstoffeinlage-winkelschluessel-set-1 + https://www.wera.de/de/05024480001', pairs: [...hexMM, ...txL] } };
+// owner 19.10.2026: profile corrections from the WERA composition
+const PROFIL_FIX = {
+  '05006631001': { remove: ['Квадрат (Robertson)'], add: ['PlusMinus (PH/PZ + шліц)'], why: 'у складі WERA «Kraftform Kompakt VDE 3065 iS PZ/S # 1, # 2» — PlusMinus, не квадрат' },
+  '05135961001': { remove: ['Квадрат (Robertson)'], add: ['PlusMinus (PH/PZ + шліц)'], why: 'у складі WERA «165 iSS PZ/S # 1, # 2» — PlusMinus, не квадрат' },
+  '05059299001': { remove: ['SL (шліц)'], add: [], why: 'datasheet WERA с. 4 «Содержимое» і wera.de: 816 R, PH 1–3, PZ 1–3, TX BO 15–30, липучки — шліцевих біт немає' },
+  '05150140001': { remove: [], add: [TX], why: 'у складі WERA 967/9 TX XL Multicolour 1 (TX 8…40)' } };
+const NOSIZE_RU = ' (размер не указан)';
+const NOSIZE = prof => `${{ [TX]: 'TX', [TXBO]: 'TX BO', 'PlusMinus (PH/PZ + шліц)': 'PlusMinus' }[prof] || PR[prof][0]} (розмір не вказано)`;
+// owner 19.10.2026: 05133126001 — «Профіль і розмір» stays empty (no slot thickness anywhere)
+const EMPTY392 = ['05133126001'];
+Object.assign(module.exports, { WERA_DE, PROFIL_FIX, NOSIZE, NOSIZE_RU, EMPTY392 });
 function buildSklad(L, ctx) { const { cp, v } = ctx; const items = require('./g_sklad.js').items; const byA = Object.fromEntries(L.map(p => [p.article, p])); const out = [];
-  for (const it of items) { const p = byA[it.a]; if (!p) continue; const c = hasComp(it.a) ? cp(it.a) : { pairs: [], unk: [] }; const pairs = [...c.pairs, ...(FIX_SIZES[it.a] || [])];
+  for (const it of items) { const p = byA[it.a]; if (!p) continue; const c = hasComp(it.a) ? cp(it.a) : { pairs: [], unk: [] }; const pairs = [...c.pairs, ...(FIX_SIZES[it.a] || []), ...((WERA_DE[it.a] || {}).pairs || [])];
     // no composition sizes: a one-profile set takes the sizes its group already wrote from WERA (L-key sets: «Розмір ключа»)
     if (!pairs.length) { const pr = [...new Set(v(p, 'profil').filter(x => PR[x]).map(x => CANON[x] || x))]; const own = ['rozmir_kliucha', 'rozmir_nakonechnyka', 'rozmir', 'rozmir_robochoho_kintsia'].flatMap(k => v(p, k));
       if (pr.length === 1 && own.length) { const raw = pr[0] === TX && v(p, 'profil').includes(TXBO) && /\bBO\b/.test(p.title.ua) ? TXBO : pr[0]; pairs.push(...own.map(s => [raw, sizePart(raw, s.replace(/ /g, '').replace(/ мм$/, ''))])); } }
     const r = { a: it.a, title: p.title.ua, p, vis: +p.display_in_showcase, secs: [p.parent.id, ...(p.alt_parent || []).map(x => x.id)].map(Number), now: {}, next: {}, status: {}, unk: c.unk };
     for (const [k, prof] of SK) { r.now[k] = v(p, k); const seen = new Set(); const take = SKIN[k] || [prof];
       r.next[k] = pairs.filter(q => take.includes(q[0]) && !seen.has(q[1]) && seen.add(q[1])).sort((x, y) => pcmp(prof, x[1], y[1])).map(q => skFmt(prof, q[1]));
-      r.status[k] = r.now[k].length && r.next[k].length ? 'ok' : r.now[k].length ? 'розміру немає' : r.next[k].length ? 'новий профіль зі складу' : ''; }
+      if (((PROFIL_FIX[it.a] || {}).remove || []).includes(prof)) { r.next[k] = []; r.status[k] = r.now[k].length ? 'профіль прибрано (немає у складі WERA)' : ''; continue; }
+      r.status[k] = r.now[k].length && r.next[k].length ? 'ok' : r.now[k].length ? 'розміру немає' : r.next[k].length ? 'новий профіль зі складу' : '';
+      // owner 19.10.2026: profile in the set, sizes neither in the datasheet nor on wera.de -> «PH (розмір не вказано)», last in the list, set in disputed
+      if (r.status[k] === 'розміру немає') { r.next[k] = [NOSIZE(prof)]; r.status[k] = 'розмір не вказано'; } }
+    if (WERA_DE[it.a]) r.src = WERA_DE[it.a].url;
     out.push(r); }
   return out; }
 module.exports.buildSklad = buildSklad; module.exports.SK = SK; module.exports.SKT = SKT;
@@ -155,3 +182,45 @@ if (require.main === module) { const { rows } = build(JSON.parse(fs.readFileSync
   const st = {}; for (const r of rows) st[r.status] = (st[r.status] || 0) + 1; console.log('products', rows.length, st);
   console.log('lost sizes on', rows.filter(r => r.lost.length).length, 'gained on', rows.filter(r => r.gained.length).length);
   for (const r of rows.filter(r => r.status !== 'ok' || r.note.length || r.lost.length || r.gained.length).slice(0, 400)) console.log(r.status, r.a, r.title.slice(0, 50), '|', r.short.join(', ').slice(0, 120), '|', r.note.join(' / ').slice(0, 250), r.lost.length ? '| LOST ' + r.lost.join(',') : '', r.gained.length ? '| GAINED ' + r.gained.join(',') : ''); }
+// For the group generators (cat/g_vykrutky, g_kk, g_dyn, g_sklad): what is written on the site (cat/pr_size_values.json, pr_size_write.js snapshot) is the
+// source; a product that is not in it (new product, new set) gets its values computed by the same rules (composition from cat/member_vals.json, no live export).
+const SNAP = process.env.PR_SIZE_NOSNAP ? null : (() => { try { return require('./pr_size_values.json'); } catch (e) { return null; } })();   // PR_SIZE_NOSNAP=1: compute everything (self-check)
+let STAT = null; const stat = () => STAT || (STAT = build([]));
+const short = pairs => { const seen = new Set(); return pairs.map(([q, s]) => [CANON[q] || q, s]).filter(q => PR[q[0]] && !seen.has(key(...q)) && seen.add(key(...q)))
+  .sort((x, y) => PR[x[0]][2] - PR[y[0]][2] || pcmp(x[0], x[1], y[1])).map(q => fmt(q[0], q[1], 'ua', 0, {})); };
+// «Профіль і розмір» of one product: its profiles (dictionary values) and bare sizes as the generator computed them
+function tipValues(a, profiles, sizes) {
+  if (SNAP && SNAP.values.rozmir_nakonechnyka[a]) return SNAP.values.rozmir_nakonechnyka[a];
+  if (EMPTY392.includes(a) || !sizes.length) return [];
+  if (hasComp(a)) return short(stat().cp(a).pairs);
+  const pr = [...new Set(profiles.filter(x => PR[x]).map(x => CANON[x] || x))];
+  // the first line of the WERA datasheet wins: combination ends («PH 1 x 0.6 мм x 4 мм x 175 мм»), a size the catalog has wrong (Pentalobe «PL 1.4»)
+  const ds = dsLine(a), w = ds ? fromWera(ds, ds.replace(/^.*?, (?=(?:PH|PZ|TX|PL|#|\d|m |F ))/, ''), pr.length === 1 ? pr[0] : null) : [];
+  if (w.length && w.every(q => pr.includes(CANON[q[0]] || q[0])) && pr.every(x => w.some(q => (CANON[q[0]] || q[0]) === x)) && (w.length > 1 || pr[0] !== 'SL (шліц)')) return short(w);
+  if (pr.length !== 1) return [];   // several profiles without a composition or a datasheet pair: not paired
+  return short(sizes.map(s => { s = String(s).replace(/ /g, '').trim(); if (pr[0] !== 'SL (шліц)') return [pr[0], sizePart(pr[0], s)]; const sl = slot(a, s); return sl ? [pr[0], sl.v] : null; }).filter(Boolean)); }
+// «… у складі» of one set: profiles it has (as g_sklad found them) -> sizes from the composition; a profile without sizes -> «PH (розмір не вказано)»
+function skladValues(a, key, has) {
+  if (SNAP && SNAP.values[key] && SNAP.values[key][a]) return SNAP.values[key][a];
+  const prof = SK.find(x => x[0] === key)[1]; if (((PROFIL_FIX[a] || {}).remove || []).includes(prof)) return [];
+  const pairs = [...(hasComp(a) ? stat().cp(a).pairs : []), ...(FIX_SIZES[a] || []), ...((WERA_DE[a] || {}).pairs || [])]; const take = SKIN[key] || [prof]; const seen = new Set();
+  const vals = pairs.filter(q => take.includes(q[0]) && !seen.has(q[1]) && seen.add(q[1])).sort((x, y) => pcmp(prof, x[1], y[1])).map(q => skFmt(prof, q[1]));
+  return vals.length ? vals : has ? [NOSIZE(prof)] : []; }
+Object.assign(module.exports, { tipValues, skladValues, SNAP });
+// A non-tool (handle, holder, extension) of a generator section carries the section's values (CLAUDE.md filters rule): the pairs of its section peers
+// that match the profiles and sizes it carries. items: [{a, secs, kind, vals:{profil, rozmir_nakonechnyka}}] after tipValues; changes items in place.
+function fillPeers(items, sizesOf) { for (const it of items.filter(i => !i.kind && !(i.vals.rozmir_nakonechnyka || []).length && (sizesOf(i) || []).length && !(SNAP && SNAP.values.rozmir_nakonechnyka[i.a]))) {
+    const pr = new Set((it.vals.profil || []).filter(x => PR[x]).map(x => PR[CANON[x] || x][0])); const sz = new Set(sizesOf(it).map(s => normSize(s)));
+    const peers = items.filter(q => q !== it && q.kind && (q.secs || []).some(s => (it.secs || []).includes(s)));
+    it.vals.rozmir_nakonechnyka = [...new Set(peers.flatMap(q => q.vals.rozmir_nakonechnyka || []))].filter(x => { const m = x.match(/^(\S+(?: BO)?) (.+)$/); return m && pr.has(m[1]) && sz.has(normSize(m[2])); }); } }
+module.exports.fillPeers = fillPeers;
+// Generators: profile corrections from the WERA composition (PROFIL_FIX), and the whole «Профіль і розмір» step of a group with that characteristic
+// (bo: the screwdriver group — TX BO -> TX + «З отвором (TX BO)»). Call after sets_fill; changes items in place.
+const BOFEAT = 'З отвором (TX BO)';
+function fixProfiles(items) { for (const it of items) { const f = PROFIL_FIX[it.a]; if (f && it.vals.profil) it.vals.profil = [...new Set([...it.vals.profil.filter(x => !f.remove.includes(x)), ...f.add])]; } }
+function finishGroup(items, { bo } = {}) { fixProfiles(items); const sizes = new Map();
+  for (const it of items) { const prof = it.vals.profil || []; sizes.set(it, it.vals.rozmir_nakonechnyka || []);
+    if (bo && prof.includes(TXBO)) { it.vals.profil = [...new Set(prof.map(x => x === TXBO ? TX : x))]; it.vals.osoblyvosti_vykrutky = [...new Set([...(it.vals.osoblyvosti_vykrutky || []), BOFEAT])]; }
+    it.vals.rozmir_nakonechnyka = tipValues(it.a, prof, sizes.get(it)); }
+  fillPeers(items, i => sizes.get(i)); }
+Object.assign(module.exports, { fixProfiles, finishGroup, BOFEAT });

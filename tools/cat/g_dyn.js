@@ -27,14 +27,16 @@ module.exports = {
     { key: 'typ_nasadky', title: 'Тип насадки', titleRu: 'Тип насадки', order: 'given', values: NAS, ru: NAS_RU },
     { key: 'rozmir_nasadky', title: 'Розмір насадки', titleRu: 'Размер насадки', order: 'given', values: NSIZE },
     { key: 'profil', title: 'Профіль', book: 382 },
-    { key: 'rozmir_nakonechnyka', title: 'Розмір наконечника', book: 392 },
+    { key: 'rozmir_nakonechnyka', title: 'Профіль і розмір', book: 392 },   // «PH 2», «TX 20» since 19.10.2026 (cat/pr_size.js)
     { key: 'osoblyvosti_dynamometra', title: 'Особливості динамометра', titleRu: 'Особенности динамометра', order: 'given', values: FEAT, ru: FEAT_RU },
   ],
   items, disputed,
   required: it => { const r = ['vyd_instrumentu']; if (it.kind === 'ind') r.push('diapazon_momentu', 'nalashtuvannia_momentu', 'profil', 'rozmir_nakonechnyka');
     if (it.kind === 'key' || it.kind === 'drv') r.push('diapazon_momentu', 'nalashtuvannia_momentu', 'pryvid');
     if (it.kind === 'nas') { r.push('typ_nasadky', 'pryvid'); if (it.sec >= 1210 && it.sec <= 1217) r.push('rozmir_nasadky'); } return r; },
-  filterOrder: ['Хіти продажів', 'Вид інструменту', 'Ціна', 'Діапазон моменту', 'Налаштування моменту', 'Привід', 'Тип насадки', 'Розмір насадки', 'Профіль', 'Розмір наконечника', 'Особливості динамометра'],
+  filterOrder: ['Хіти продажів', 'Вид інструменту', 'Ціна', 'Діапазон моменту', 'Налаштування моменту', 'Привід', 'Тип насадки', 'Розмір насадки', 'Профіль', 'Профіль і розмір', 'Особливості динамометра'],
 };
 // sets get all values of their composition (cat/sets_fill.js)
 { const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
+// «Профіль і розмір» from the written values / the WERA composition, profile corrections (cat/pr_size.js, 19.10.2026)
+require('./pr_size.js').finishGroup(module.exports.items);

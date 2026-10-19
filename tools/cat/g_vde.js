@@ -20,3 +20,5 @@ module.exports = {
 };
 // sets get all values of their composition (cat/sets_fill.js)
 { const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
+// profile corrections from the WERA composition (cat/pr_size.js PROFIL_FIX, 19.10.2026)
+require('./pr_size.js').fixProfiles(module.exports.items);

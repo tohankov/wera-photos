@@ -56,3 +56,5 @@ if (require.main === module) {
   for (const i of items) console.log(i.a, i.kind, i.vals.vyd_instrumentu[0], '|', i.vals.instrument_u_lozhementi.join(', '), '|', i.vals.profil.map(p => p.split(' ')[0]).join(','), '|', i.vals.pryvid.join(','), '|', i.src.slice(0, 50), i.note ? '| ' + i.note.slice(0, 80) : '');
   console.log(disputed);
 }
+// profile corrections from the WERA composition (cat/pr_size.js PROFIL_FIX, 19.10.2026)
+require('./pr_size.js').fixProfiles(module.exports.items);

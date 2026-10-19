@@ -8,7 +8,9 @@ const L = require('./sets_list.json'); const T = require('../sections/tree_now.j
 const P = [['sklad_ph', 'PH (Phillips)', 'PH у складі', 'PH в составе'], ['sklad_pz', 'PZ (Pozidriv)', 'PZ у складі', 'PZ в составе'], ['sklad_tx', 'TX (TORX®)', 'TX у складі', 'TX в составе'],
   ['sklad_sl', 'SL (шліц)', 'SL у складі', 'SL в составе'], ['sklad_hex', 'HEX (шестигранник)', 'HEX у складі', 'HEX в составе'], ['sklad_kvadrat', 'Квадрат (Robertson)', 'Квадрат у складі', 'Квадрат в составе'],
   ['sklad_tx_bo', 'TX BO (TORX® з отвором)', 'TX BO у складі', 'TX BO в составе'], ['sklad_plusminus', 'PlusMinus (PH/PZ + шліц)', 'PlusMinus у складі', 'PlusMinus в составе']];
-const YES = 'Так', YES_RU = 'Да';
+// since 19.10.2026 the value is not «Так» but the sizes of that profile in the set («PH 1», «PH 2»…; «PH (розмір не вказано)» when WERA gives none):
+// PH 1 in one filter + PZ 2 in another = AND. Written values: cat/pr_size_values.json; a new set: computed from the composition (cat/pr_size.js skladValues).
+const PS = require('./pr_size.js'); const SNAP = PS.SNAP || {};
 // the set's «Профіль» as its group writes it (sets_fill applied), and its sections
 const GROUPS = ['zyklop', 'vykrutky', 'lkeys', 'vde', 'dyn', 'joker', 'kk', 'bitsets', 'trolley']; const own = {}, secs = {}, title = {}, vyd = {};
 for (const g of GROUPS) { if (!fs.existsSync(path.join(__dirname, `g_${g}.js`))) continue; for (const i of require(`./g_${g}.js`).items) { own[i.a] = [...new Set([...(own[i.a] || []), ...((i.vals || {}).profil || [])])]; secs[i.a] = [...new Set([...(secs[i.a] || []), ...(i.secs || [])])]; title[i.a] = i.title; vyd[i.a] = [...new Set([...(vyd[i.a] || []), ...((i.vals || {}).vyd_instrumentu || [])])]; } }
@@ -21,12 +23,12 @@ for (const a of sets) { const comp = hasComp(a); const leaf = comp ? expand(a).f
   // disputed only for real sets of tools (a repair kit or an accessory caught by the word «комплект» has no profiles to expect)
   if (!comp && !(own[a] || []).length) { if ((vyd[a] || []).some(v => /^Набір/.test(v)) && /набір|\bset\b/i.test(title[a] || '') && !(vyd[a] || []).some(v => /^(Ремкомплект|Приладдя)/.test(v))) disputed.push({ a, sec: (secs[a] || [])[0], what: '… у складі', why: 'состав не найден в datasheet WERA', title: title[a] }); }
   for (const v of prof) if (!P.some(p => p[1] === v)) rare[v] = (rare[v] || 0) + 1;
-  items.push({ a, title: title[a], secs: secs[a] || [], kind: 'set', fromComp: comp, vals: Object.fromEntries(P.map(([k, v]) => [k, prof.has(v) ? [YES] : []])) }); }
+  items.push({ a, title: title[a], secs: secs[a] || [], kind: 'set', fromComp: comp, vals: Object.fromEntries(P.map(([k, v]) => [k, PS.skladValues(a, k, prof.has(v))])) }); }
 // a composition row is a named WERA set without article that matches more than one set in the catalog -> disputed, not guessed
 disputed.push({ a: '05134544001', sec: 1274, what: '… у складі', why: 'в datasheet WERA состав «Tool-Check PLUS, 39 предметов» без артикула; в каталоге два таких набора (05049055001, 05049060001 Imperial) — какой именно, не указано', title: title['05134544001'] || 'Набір на радість колінам і рукам 1 з набором Tool-Check PLUS, 40 предметів' });
 module.exports = {
   name: 'sklad', root: 0, seed: (items.find(i => P.every(([k]) => i.vals[k].length)) || items.find(i => i.vals.sklad_ph.length)).a, testArticle: '05051012001',
-  chars: P.map(([key, , t, tr]) => ({ key, title: t, titleRu: tr, order: 'given', values: [YES], ru: { [YES]: YES_RU } })),
+  chars: P.map(([key, , t, tr]) => ({ key, title: t, titleRu: tr, order: 'given', values: (SNAP.dict || {})[key] || [], ru: SNAP.ru || {} })),
   items, disputed, rare,
   required: () => [],
   filterOrder: P.map(p => p[2]),

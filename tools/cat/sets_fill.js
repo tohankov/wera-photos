@@ -12,6 +12,7 @@ const PFX = { PH: 'PH (Phillips)', PZ: 'PZ (Pozidriv)', TX: 'TX (TORX®)', IP: '
 const dec1 = v => { v = String(v).replace('.', ','); return /,/.test(v) ? v : v + ',0'; };
 function fromText(head, size) { const z = String(size).trim().replace(/(\d)\.(\d)/g, '$1,$2'); let m, prof, sz, len; const typ = [];
   if ((m = z.match(/^(PH|PZ|TX|IP) ?(\d+) x (\d+(?:,\d+)?) мм$/))) { prof = PFX[m[1]]; sz = m[2]; len = m[3]; }
+  else if ((m = z.match(/^# ?(\d) x (\d+(?:,\d+)?) мм$/)) && /\b(PZ|PH)\/S\b/.test(head)) { prof = 'PlusMinus (PH/PZ + шліц)'; sz = m[1]; len = m[2]; }   // «65 iS PZ/S # 1» is PlusMinus (19.10.2026)
   else if ((m = z.match(/^# ?(\d) x (\d+(?:,\d+)?) мм$/))) { prof = 'Квадрат (Robertson)'; sz = m[1]; len = m[2]; }
   else if (!/футляр|сумк|чехол|витрин|подколен|тестер|индикатор/i.test(head) && (m = z.match(/^(\d+(?:,\d+)?) мм x (\d+(?:,\d+)?) мм x (\d+(?:,\d+)?) мм$/)) && +m[1].replace(',', '.') <= 2.5 && +m[2].replace(',', '.') <= 20) { prof = 'SL (шліц)'; sz = dec1(m[2]); len = m[3]; }   // thickness x width x length — only slotted blades
   else if (/^840\b|^3840\b|шестигран/i.test(head) && (m = z.match(/^(\d+(?:,\d+)?) mm x (\d+(?:,\d+)?) мм$/))) { prof = 'HEX (шестигранник)'; sz = dec1(m[1]); len = m[2]; }
