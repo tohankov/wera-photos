@@ -36,7 +36,12 @@ const GROUPS = {
   dyn: { root: 1195, name: 'Динамометричний інструмент', order: ['vyd_instrumentu', 'diapazon_momentu', 'nalashtuvannia_momentu', 'pryvid', 'typ_nasadky', 'rozmir_nasadky', 'profil', 'rozmir_nakonechnyka', 'osoblyvosti_dynamometra'], link: ['diapazon_momentu', 'pryvid'] },
   trolley: { root: 1055, name: 'Інструментальний візок та ложементи', order: ['vyd_instrumentu', 'komplektatsiia', 'instrument_u_lozhementi', 'profil', 'pryvid'], link: ['instrument_u_lozhementi'] },
   vykrutky: { root: 1098, name: 'Викрутки', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka'] },
-  rest: { roots: [1267, 1269, 1056, 1313, 1268], name: 'Інші розділи', order: ['vyd_instrumentu', 'profil', 'pryvid'], link: [] } };
+  rest: { roots: [1267, 1269, 1056, 1313, 1268], name: 'Інші розділи', order: ['vyd_instrumentu', 'profil', 'pryvid'], link: [] },
+  novynky: { root: 1267, name: 'Новинки і лімітовані серії', order: ['vyd_instrumentu', 'profil', 'pryvid'], link: [] },
+  bags: { root: 1269, name: 'Сумки для інструментів Wera 2go', order: ['vyd_instrumentu'], link: [] },
+  bike: { root: 1056, name: 'Інструменти для велосипедів та електробайків', order: ['vyd_instrumentu', 'profil', 'pryvid'], link: [] },
+  impact: { root: 1313, name: 'Ударні гвинтоверти', order: ['vyd_instrumentu', 'profil', 'pryvid'], link: [] },
+  hammers: { root: 1268, name: 'Молотки та приладдя', order: ['vyd_instrumentu'], link: [] } };
 const G = GROUPS[GK]; if (!G) throw new Error('group?');
 const byId = Object.fromEntries(MT.map(t => [t.id, t])); const kids = {}; { const st = []; for (const t of MT) { while (st.length && st[st.length - 1].depth >= t.depth) st.pop(); if (st.length) (kids[st[st.length - 1].id] = kids[st[st.length - 1].id] || []).push(t.id); st.push(t); } }
 const sub = r => { const s = [r], q = [r]; while (q.length) for (const k of kids[q.shift()] || []) { s.push(k); q.push(k); } return s; };
