@@ -63,6 +63,11 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   const setSec = ps.filter(isSet).length * 2 >= ps.length; row.kind = setSec ? 'набори' : 'товари';
   const cand = setSec ? [...ALLK.filter(k => !SETSIZE.has(k)).slice(0, 1), ...SKLAD, ...ALLK.filter(k => !SETSIZE.has(k)).slice(1)] : ALLK;
   const use = [], drop = []; if (ps.length <= 2) drop.push(`розділ з ${ps.length} товар(ами) — фільтри не потрібні`); else for (const k of cand) { const u = useful(ps, k); if (u.use) use.push(k); else if (u.n) { drop.push(`${TITLE[k]}: ${u.why}`); if (!SKLAD.includes(k)) single.push({ path: t.path, char: TITLE[k], why: u.why, n: ps.length }); } }
+  // «Профіль» next to «Профіль і розмір» repeats it (the owner's «Викрутки» have no «Профіль»)
+  { const i = use.indexOf('profil'); if (i >= 0 && use.includes('rozmir_nakonechnyka')) { use.splice(i, 1); drop.push('Профіль: є «Профіль і розмір»'); } }
+  // «Вид інструменту»: only when the second kind is at least a fifth of the section (19 screwdrivers + 2 handles is not a choice)
+  { const i = use.indexOf('vyd_instrumentu'); if (i >= 0) { const c = {}; for (const p of ps) for (const x of v(p, 'vyd_instrumentu')) c[x] = (c[x] || 0) + 1; const s = Object.values(c).sort((a, b) => b - a);
+    if (!(s[1] >= Math.max(2, ps.length * 0.2))) { use.splice(i, 1); drop.push(`Вид інструменту: майже всі одного виду (${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => x.join(' ')).join(', ')})`); } } }
   // «Розмір робочого кінця» / «Розмір» (bare sizes) duplicate a main size filter of the section: not both
   for (const k of ['rozmir_robochoho_kintsia', 'rozmir']) { const i = use.indexOf(k); if (i >= 0 && use.some(x => x !== k && SIZE.includes(x) && x !== 'rozmir_nasadky')) { use.splice(i, 1); drop.push(`${TITLE[k]}: дублює основний розмір розділу`); } }
   // set sections: a bare size / profile is not a filter there (sizes are in «… у складі»)
@@ -101,7 +106,7 @@ for (const p of L.filter(p => vis(p) && inG.has(+p.parent.id))) { const n = p.ti
     for (const [rn, rf, w] of want) if (rn.test(n) && !/без магніт/i.test(n) && !f.some(x => rf.test(x))) issues.push(`у назві ${w}, в «Особливостях» немає`); }
   if (issues.length) nameChk.push({ a: p.article, title: n, profil: pr.join(', '), feat: f.join(', '), issue: issues.join('; ') }); }
 const empty = secRows.filter(r => r.shows === 'порожньо' && r.status === 200).map(r => r.path);
-const out = { group: GK, name: G.name, roots, rootList, link, card, own: own.map(id => ({ id, path: plans[id].path, setSec: plans[id].setSec, list: plans[id].list })), plans, empty, orphan, counts: { sections: SECS.length, listing: ids.length, own: own.length, missing: missing.length, single: single.length, acc: acc.length, name: nameChk.length, orphan: orphan.length, empty: empty.length } };
+const out = { group: GK, name: G.name, roots, titles: TITLE, single: single.length, rootList, link, card, own: own.map(id => ({ id, path: plans[id].path, setSec: plans[id].setSec, list: plans[id].list })), plans, empty, orphan, counts: { sections: SECS.length, listing: ids.length, own: own.length, missing: missing.length, single: single.length, acc: acc.length, name: nameChk.length, orphan: orphan.length, empty: empty.length } };
 fs.writeFileSync(path.join(__dirname, `night_plan_${GK}.json`), JSON.stringify(out, null, 1));
 const F = `C:/Users/Techlight/Desktop/wera-photos/inventory/night_${GK}.xlsx`; const wb = fs.existsSync(F) ? X.readFile(F) : X.utils.book_new();
 const put = (n, data) => { if (wb.Sheets[n]) { delete wb.Sheets[n]; wb.SheetNames = wb.SheetNames.filter(x => x !== n); } X.utils.book_append_sheet(wb, X.utils.json_to_sheet(data.length ? data : [{ '—': 'немає' }]), n); };
