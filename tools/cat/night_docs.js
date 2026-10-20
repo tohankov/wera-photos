@@ -9,7 +9,7 @@ const has = (id, k) => L.some(p => vis(p) && secs(p).includes(+id) && ((p.charac
 const head = ['Хіти продажів', 'Ціна'];
 let checks = 0; const stop = m => { console.log('STOP', m); process.exit(2); };
 const out = [];
-out.push('# Фильтры каталога — план для админки (21.10.2026)', '',
+out.push('# Фильтры каталога — план для админки (22.10.2026)', '',
   'Что сделать в админке, раздел за разделом, в порядке меню каталога. Ночью данные характеристик приведены к правилам; план посчитан по свежей выгрузке и витрине (`tools/cat/night_audit.js`; подробно — `inventory/night_<группа>.xlsx`, лист «Розділи»: что сейчас на витрине, что по плану и почему фильтр не ставим).', '',
   '**Как ставить (для всех групп):**',
   '- «Фільтри» — на разделе группы; подразделы наследуют, пока их список пустой. Заполненный список подраздела заменяет родительский целиком — поэтому для таких подразделов ниже дан ПОЛНЫЙ список.',
@@ -48,6 +48,17 @@ const vkBlock = lvl => { const plan = P('vykrutky'); const T = plan.titles; cons
 for (const g of ORDER) { n++; if (Array.isArray(g)) { out.push(`## ${n}. ${g[0]}`, ''); for (const s of g[1]) out.push(...groupBlock(s, '###')); }
   else if (g === 'vykrutky') out.push(...vkBlock(`## ${n}.`));
   else out.push(...groupBlock(g, `## ${n}.`)); }
+// owner 22.10.2026 (item 10 of docs/preview_vid.md): sections of «Викрутки», Kraftform Kompakt, «Діелектричні» with products of 2+ kinds after the kinds
+// by the WERA composition — the FULL «Фільтри» list (as an own list of the section), the count per kind
+{ const v = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua); const rows = [];
+  for (const g of ['vykrutky', 'kk', 'vde']) { const plan = P(g); const nm = k => plan.titles[k] || k;
+    for (const [id, pl] of Object.entries(plan.plans)) { const ps = L.filter(p => vis(p) && secs(p).includes(+id)); const c = {}; for (const p of ps) for (const x of v(p, 'vyd_instrumentu')) c[x] = (c[x] || 0) + 1;
+      if (Object.keys(c).length < 2) continue; const list = pl.tiny ? null : (pl.inherits ? plan.rootList.filter(k => pl.present.includes(k)) : pl.list);
+      for (const k of list || []) { checks++; if (!has(id, k)) stop(`${pl.path}: ${k} not filled`); }
+      const why = list && !list.includes('vyd_instrumentu') ? ` «Вид інструменту» не ставится: другого вида ${ps.length - Math.max(...Object.values(c))} из ${ps.length}.` : '';
+      rows.push(`- **${pl.path}** — товаров: ${ps.length}; ${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => `${x[0]} ${x[1]}`).join(', ')}.` + (list ? `\n  Фільтри: ${[...head, ...list.map(nm)].join(' → ')}${pl.inherits ? ' (совпадает с разделом группы — можно оставить пустым)' : ''}.${why}` : '\n  1–2 товара — своего списка не надо.')); } }
+  out.push('## Смешанные разделы «Викрутки», Kraftform Kompakt, «Діелектричні» (22.10.2026)', '',
+    'Разделы, где после записи видов по составу WERA (22.10) лежат товары разных видов. Список «Фільтри» — полный, его можно ставить как свой список подраздела. «Вид інструменту» — если второй вид или все товары не основного вида ≥ 20 % раздела (и не меньше 2 товаров); «Особливості викрутки» — где у товаров есть особенности (в т. ч. новое «З індикатором напруги»). Количество по видам — после записи; товар с двумя видами считается в обоих.', '', ...rows, ''); }
 out.push('---', '', `Проверка плана: каждая характеристика каждого списка заполнена у товаров своего раздела (${checks} проверок, 0 ошибок).`, '');
 fs.writeFileSync(path.join(__dirname, '../../docs/admin_plan_filters.md'), out.join('\n'));
 console.log('written docs/admin_plan_filters.md', out.length, 'lines, checks', checks);

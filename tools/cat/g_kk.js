@@ -1,6 +1,6 @@
 // Group definition «Kraftform Kompakt» (1057) for cat/import_group.js.
 const { out, disputed } = require('./kk.js');
-const VYD_NEW = ['Змінний робочий кінець Vario', 'Ударно-поворотна викрутка', 'Набір інструментів'], VYD_RU = { 'Змінний робочий кінець Vario': 'Сменный рабочий конец Vario', 'Ударно-поворотна викрутка': 'Ударно-поворотная отвёртка', 'Набір інструментів': 'Набор инструментов' };
+const VYD_NEW = ['Викрутка з набором біт', 'Підставка / тримач', 'Змінний робочий кінець Vario', 'Ударно-поворотна викрутка', 'Набір інструментів'], VYD_RU = { 'Викрутка з набором біт': 'Отвёртка с набором бит', 'Підставка / тримач': 'Подставка / держатель', 'Змінний робочий кінець Vario': 'Сменный рабочий конец Vario', 'Ударно-поворотна викрутка': 'Ударно-поворотная отвёртка', 'Набір інструментів': 'Набор инструментов' };
 const FEAT_NEW = ['З тріскачкою', 'Магазин біт у ручці', 'Патрон Rapidaptor', 'ESD', 'Нержавіюча сталь', 'Дюймовий (Imperial)', 'Гнучкий стрижень', 'З магнітом'];
 const FEAT_RU = { 'З тріскачкою': 'С трещоткой', 'Магазин біт у ручці': 'Магазин бит в рукоятке', 'Патрон Rapidaptor': 'Патрон Rapidaptor', 'Нержавіюча сталь': 'Нержавеющая сталь', 'Дюймовий (Imperial)': 'Дюймовый (Imperial)', 'Гнучкий стрижень': 'Гибкий стержень', 'З магнітом': 'С магнитом' };
 const items = out.map(v => ({ a: v.a, title: v.title, secs: v.secs, kind: v.kind, vals: { vyd_instrumentu: v.vyd[0] === 'Ударно-поворотна викрутка' && /набором/i.test(v.title) ? ['Набір інструментів'] : v.vyd,   // owner 21.10.2026: a set is never a single kind (impact driver + bits = «Набір інструментів»)
@@ -21,3 +21,5 @@ module.exports = {
 { const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
 // «Профіль і розмір» from the written values / the WERA composition, profile corrections (cat/pr_size.js, 19.10.2026)
 require('./pr_size.js').finishGroup(module.exports.items);
+// owner 22.10.2026: kinds by the WERA composition («Викрутка з набором біт», «Набір з тріскачкою» …, cat/vyd_final.json), «З індикатором напруги» on sets with a tester
+require('./vyd_comp.js').finishKinds(module.exports.items);

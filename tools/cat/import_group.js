@@ -6,6 +6,8 @@
 // verify: completeness per leaf section from a fresh export -> inventory/filters_progress.json + disputed xlsx.
 const fs = require('fs'), path = require('path'), X = require('xlsx'); const S = require('../lib/session.js').open(); const { cmp, fixZero } = require('../lib/valsort.js');
 const G = require(path.resolve(process.argv[2]));
+// «Вид інструменту» is shared by every group a product sits in: the kind written for the groups «Викрутки», Kompakt, «Діелектричні» (cat/vyd_final.json, owner 22.10.2026) wins in every group
+require('./vyd_comp.js').finishKinds(G.items, false);
 // size «0» is written as "0" + NBSP (the dictionary value; a plain "0" is hidden on the product page and would become a second value)
 // («Профіль і розмір», rozmir_nakonechnyka, has «PH 0» since 19.10.2026 — no NBSP there)
 for (const it of G.items) for (const k of ['rozmir', 'rozmir_robochoho_kintsia']) if (it.vals[k]) it.vals[k] = it.vals[k].map(fixZero);

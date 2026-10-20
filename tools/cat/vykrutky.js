@@ -41,7 +41,7 @@ for (const it of I) { const s = it.secs[0], n = it.title; let vyd, p = null;
   else if (SETS.includes(s) || /^Набір|набір викруток|з набором (біт|насадок)/i.test(n)) vyd = VC.supports(it.a, 'Набір викруток') === false ? 'Набір інструментів' : 'Набір викруток';
   else if (HOLD.includes(s) || /ручка-б[іi]т|ручка-тримач|бітоутримувач|бітотримач/i.test(n)) vyd = 'Ручка-тримач';
   else if (/^Знімач/i.test(n)) vyd = 'Знімач';   // owner 21.10.2026: removers 1429 / 1529 ESD — own kind, blade length from the datasheet («1 мм x 3.5 мм x 50 мм»)
-  else if (ACC.includes(s) || /знімач|намагніч|фіксатор|підставка|лопат/i.test(n)) vyd = 'Приладдя для викруток';
+  else if (ACC.includes(s) || /знімач|намагніч|фіксатор|підставка|лопат/i.test(n)) vyd = 'Приладдя';   // owner 22.10.2026: «Приладдя для викруток» merged into «Приладдя» (stands -> «Підставка / тримач», cat/vyd_comp.js)
   else { vyd = 'Викрутка'; p = profileOf(it); }
   const v = { a: it.a, title: n, secs: it.secs, sec: s, vyd: [vyd], kind: vyd === 'Викрутка', profile: p ? [PROF[p]] : [], size: [], len: [], feat: vyd === 'Викрутка' ? features(it) : [] };
   if (it.a === '05004182001') v.vyd = ['Набір інструментів'];   // owner 21.10.2026: Bicycle Set 15 — tyre levers with bit holders + 4-in-1 bits

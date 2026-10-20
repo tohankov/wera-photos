@@ -52,7 +52,7 @@ const secs = p => [p.parent && p.parent.id, ...(p.alt_parent || []).map(x => x.i
 const v = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua);
 const listing = id => SC[id] && SC[id].ua.status === 200 && SC[id].ua.products.length > 0;
 const prodIn = id => L.filter(p => vis(p) && secs(p).includes(id));
-const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').some(x => /^Набір|Набор/.test(x));
+const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').some(x => /^Набір|Набор|^Викрутка з набором біт$/.test(x));   // 22.10.2026: a handle + bits is a set
 // characteristics a section's products carry, in the group's order, then the others met there
 const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.includes(k))])];
 function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n && !G.order.includes(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: 0, use: false, why: `чужа характеристика, лише у ${n} з ${ps.length}` }; const vals = new Set(ps.flatMap(p => v(p, k))); if (!n) return { n, d: 0, use: false, why: 'немає значень' };
@@ -69,9 +69,10 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   // «Профіль» next to «Профіль і розмір» repeats it (the owner's «Викрутки» have no «Профіль»)
   { const i = use.indexOf('profil'); if (i >= 0 && use.includes('rozmir_nakonechnyka')) { use.splice(i, 1); drop.push('Профіль: є «Профіль і розмір»'); } }
   // «Вид інструменту»: only when the second kind is at least a fifth of the section (19 screwdrivers + 2 handles is not a choice),
-  // or the owner kept it (VYD_KEEP)
+  // or the products outside the main kind are at least a fifth (22.10.2026: «Набори Kraftform Kompakt» 57 + 14 + 11), or the owner kept it (VYD_KEEP)
   { const i = use.indexOf('vyd_instrumentu'); if (i >= 0) { const c = {}; for (const p of ps) for (const x of v(p, 'vyd_instrumentu')) c[x] = (c[x] || 0) + 1; const s = Object.values(c).sort((a, b) => b - a);
-    if (!(s[1] >= Math.max(2, ps.length * 0.2) || VYD_KEEP.has(+id))) { use.splice(i, 1); drop.push(`Вид інструменту: майже всі одного виду (${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => x.join(' ')).join(', ')})`); } } }
+    const main = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0], rest = ps.filter(p => !v(p, 'vyd_instrumentu').includes(main)).length;
+    if (!(s[1] >= Math.max(2, ps.length * 0.2) || rest >= Math.max(2, ps.length * 0.2) || VYD_KEEP.has(+id))) { use.splice(i, 1); drop.push(`Вид інструменту: майже всі одного виду (${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => x.join(' ')).join(', ')})`); } } }
   // «Розмір робочого кінця» / «Розмір» (bare sizes) duplicate a main size filter of the section: not both
   for (const k of ['rozmir_robochoho_kintsia', 'rozmir']) { const i = use.indexOf(k); if (i >= 0 && use.some(x => x !== k && SIZE.includes(x) && x !== 'rozmir_nasadky')) { use.splice(i, 1); drop.push(`${TITLE[k]}: дублює основний розмір розділу`); } }
   // set sections: a bare size / profile is not a filter there (sizes are in «… у складі»)

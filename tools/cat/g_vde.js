@@ -1,7 +1,7 @@
 // Group definition «Діелектричні інструменти» (1224) for cat/import_group.js.
 const { out, disputed } = require('./vde.js');
-const VYD_NEW = ['Викрутка', 'Змінна вставка', 'Набір викруток', 'Ручка-тримач', 'Торцева головка', 'Викруткова головка', 'Тріскачка', 'Набір головок', 'Приладдя', 'Ріжковий ключ', 'Набір ключів', 'Індикатор напруги'];
-const VYD_RU = { 'Змінна вставка': 'Сменная вставка', 'Ріжковий ключ': 'Рожковый ключ', 'Набір ключів': 'Набор ключей', 'Індикатор напруги': 'Индикатор напряжения' };
+const VYD_NEW = ['Викрутка з набором біт', 'Підставка / тримач', 'Викрутка', 'Змінна вставка', 'Набір викруток', 'Ручка-тримач', 'Торцева головка', 'Викруткова головка', 'Тріскачка', 'Набір головок', 'Приладдя', 'Ріжковий ключ', 'Набір ключів', 'Індикатор напруги'];
+const VYD_RU = { 'Викрутка з набором біт': 'Отвёртка с набором бит', 'Підставка / тримач': 'Подставка / держатель', 'Змінна вставка': 'Сменная вставка', 'Ріжковий ключ': 'Рожковый ключ', 'Набір ключів': 'Набор ключей', 'Індикатор напруги': 'Индикатор напряжения' };
 const PROF_NEW = ['Внутрішній квадрат (шафовий)', 'Тригранник (шафовий)', 'Подвійна борідка (шафова)'], PROF_RU = { 'Внутрішній квадрат (шафовий)': 'Внутренний квадрат (шкафной)', 'Тригранник (шафовий)': 'Трёхгранник (шкафной)', 'Подвійна борідка (шафова)': 'Двойная бородка (шкафная)' };
 const items = out.map(v => ({ a: v.a, title: v.title, secs: v.secs, kind: v.kind, isZyk: v.drv.length > 0, vals: { vyd_instrumentu: v.vyd, profil: v.profile, rozmir_robochoho_kintsia: v.size, dovzhyna_robochoho_kintsia: v.len, pryvid: v.drv, osoblyvosti_vykrutky: v.feat } }));
 module.exports = {
@@ -38,3 +38,5 @@ const sizeOf = x => num(x.replace(/^(PH\/S|PZ\/S|PH|PZ|TX|IP|IPR|HEX|Квадр�
         if ((it.vals.rozmir_robochoho_kintsia || []).every(x => cov.has(num(x)))) it.vals.rozmir_robochoho_kintsia = []; }
       continue; }
     const r = P.tipValues(it.a, it.vals.profil || [], it.vals.rozmir_robochoho_kintsia || []); if (r.length) { it.vals.rozmir_nakonechnyka = r; it.vals.rozmir_robochoho_kintsia = []; it.tip = true; } } }
+// owner 22.10.2026: kinds by the WERA composition («Викрутка з набором біт», «Набір з тріскачкою» …, cat/vyd_final.json), «З індикатором напруги» on sets with a tester
+require('./vyd_comp.js').finishKinds(module.exports.items);

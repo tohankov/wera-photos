@@ -10,7 +10,7 @@ const L = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); const SRC = requ
 const T = require('../sections/tree_now.json'); const name = Object.fromEntries(T.map(p => [p.id, p.title.ua]));
 const v = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua);
 const SPECIAL = new Set(['Ложемент', 'Інструментальний візок', 'Ремкомплект / запчастина']);
-const isSetVal = x => /^Набір/.test(x);
+const isSetVal = x => /^Набір|^Викрутка з набором біт$/.test(x);   // «Викрутка з набором біт» (22.10.2026) is a set: a handle + bits
 const setTitle = s => /набір|набор|предмет|комплект|\bset\b/i.test(s);
 // a single kind must match the product name in the WERA datasheet (first line) — checked only for kinds with a clear word
 const KIND = { 'Викрутка': /отв[её]р?т?к|screwdriver|торцовый ключ для электронщ/i, 'Тріскачка': s => has.ratchet(s), 'Торцева головка': /голов|торцов/i, 'Торцева головка подовжена': /голов|торцов/i,
@@ -23,7 +23,9 @@ const KIND = { 'Викрутка': /отв[её]р?т?к|screwdriver|торцо�
 const rows = [];
 for (const p of L) { const vy = v(p, 'vyd_instrumentu'); if (!vy.length) continue; const a = p.article, t = p.title.ua;
   const isSet = C.isSet(a), compText = C.compText(a), text = C.text(a), first = C.first(a);
-  for (const val of vy) { if (SPECIAL.has(val)) continue; const r = { a, title: t, sec: name[p.parent.id], all: vy.join(' + '), val, src: (SRC[a] || []).filter(s => s.v.includes(val)).map(s => s.g).join(', ') || 'інший скрипт (біти / rest)', set: isSet ? 'набір (склад у даташиті)' : setTitle(t) || setTitle(first) ? 'набір (назва)' : 'одиночний' };
+  for (const val of vy) { if (SPECIAL.has(val)) continue;
+    // owner's decisions (22.10.2026) and «Викрутка з набором біт» — checked by the composition classifier (the handle is often the product itself)
+    if (C.KIND_OWNER[a] && C.KIND_OWNER[a][0] === val) continue; if (val === 'Викрутка з набором біт' && C.kind(a, t, vy).to.includes(val)) continue; const r = { a, title: t, sec: name[p.parent.id], all: vy.join(' + '), val, src: (SRC[a] || []).filter(s => s.v.includes(val)).map(s => s.g).join(', ') || 'інший скрипт (біти / rest)', set: isSet ? 'набір (склад у даташиті)' : setTitle(t) || setTitle(first) ? 'набір (назва)' : 'одиночний' };
     if (isSetVal(val)) { const need = NEED[val]; if (!need) { r.res = 'спірне'; r.why = 'невідоме значення'; rows.push(r); continue; }
       if (isSet) { if (need[1](compText)) continue; if (need[1](text)) { r.res = 'спірне'; r.why = `у складі немає, але текст даташиту згадує: ${need[0]}`; r.quote = compText.slice(0, 400); rows.push(r); continue; }
         r.res = 'помилка'; r.why = `у складі WERA немає: ${need[0]}`; r.quote = compText.slice(0, 400); }
