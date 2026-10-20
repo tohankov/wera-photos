@@ -20,7 +20,9 @@ const plan = [], heads = [], sets = [];
 for (const p of L) { const s = secs(p), a = p.article; const inZ = s.some(x => Z.has(x)), inV = s.some(x => V.has(x)); if ((!inZ && !inV) || SKIP.has(a)) continue;
   const vyd = v(p, 'vyd_instrumentu'), prof = v(p, 'profil');
   if (vyd.includes('Викруткова головка')) { if (prof.some(x => /XZN/.test(x))) { heads.push({ a, title: p.title.ua, grp: inZ ? 'Zyklop' : 'VDE', prof: prof.join('; '), old: '', neu: '', res: 'XZN — як є (рішення власника)' }); continue; }
-    const key = inZ ? 'rozmir_holovky' : 'rozmir_robochoho_kintsia'; const old = v(p, key); const r = P.tipValues(a, prof, old);
+    const key = inZ ? 'rozmir_holovky' : 'rozmir_robochoho_kintsia'; const old = v(p, key);
+    if (!old.length && v(p, 'rozmir_nakonechnyka').length) { heads.push({ a, title: p.title.ua, grp: inZ ? 'Zyklop' : 'VDE', sec: name[p.parent.id], prof: prof.join('; '), old: '', neu: v(p, 'rozmir_nakonechnyka').join('; '), res: 'уже переведено' }); continue; }
+    const r = P.tipValues(a, prof, old);
     const row = { a, title: p.title.ua, grp: inZ ? 'Zyklop' : 'VDE', sec: name[p.parent.id], prof: prof.join('; '), old: old.join('; '), neu: r.join('; ') };
     const same = r.length === old.length && r.every((x, i) => sizeOf(x) === num(old[i]) || sizeOf(x).replace(/″$/, '') === num(old[i]).replace(/″$/, ''));
     if (!r.length) row.res = 'НЕ ПИШУ: немає пари профіль+розмір';
@@ -36,7 +38,7 @@ for (const p of L) { const s = secs(p), a = p.article; const inZ = s.some(x => Z
   const unc = bareOld.filter(x => !cov.has(num(x)));
   if (miss.length) row.res = 'НЕ ПИШУ: значень немає в довіднику — ' + miss.join(', ');
   else if (unc.length) row.res = 'НЕ ПИШУ: голі розміри в «Розмір головки» не покриті складом — ' + unc.join(', ');
-  else { const ch = {}; if (neu.join('|') !== had.join('|')) ch.rozmir_nakonechnyka = neu; if (bareOld.length) ch.rozmir_holovky = old.filter(x => !bare(x));
+  else { const ch = {}; if ([...neu].sort().join('|') !== [...had].sort().join('|')) ch.rozmir_nakonechnyka = neu;   // the export order is not the dictionary order: compare as sets if (bareOld.length) ch.rozmir_holovky = old.filter(x => !bare(x));
     row.neu = neu.join('; '); row.rh = (ch.rozmir_holovky || old).join('; '); row.res = Object.keys(ch).length ? 'пишу' : 'без змін'; if (Object.keys(ch).length) plan.push({ article: a, characteristics: ch }); }
   sets.push(row); }
 // a head section where some head needs a new dictionary value waits as a whole (owner's decision): no half-converted section filter
