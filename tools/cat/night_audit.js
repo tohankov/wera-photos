@@ -27,6 +27,12 @@ const GROUPS = {
   lkeys: { root: 1152, name: 'Г-подібні ключі', order: ['vyd_instrumentu', 'profil', 'rozmir_kliucha', 'dovzhyna_kliucha', 'pokryttia', 'osoblyvosti_kliucha'], link: ['profil', 'rozmir_kliucha'] },
   kk: { root: 1057, name: 'Інструменти серії Kraftform Kompakt', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka'] },
   bits: { root: 1061, name: 'Біти та бітотримачі', order: ['vyd_instrumentu', 'profil', 'rozmir', 'dovzhyna', 'typ_bity', 'khvostovyk', 'osoblyvosti', 'dovzhyna_bitotrymacha', 'osoblyvosti_bitotrymacha', 'pryiednannia_do_instrumenta', 'pryiednannia_nasadky', 'diametr_sverdla', 'rizba', 'typ_bit_u_nabori'], link: ['profil', 'rozmir', 'dovzhyna'], subRoots: [1062, 1081, 1082, 1089, 1090, 1460] },
+  biti: { root: 1062, name: 'Біти', order: ['profil', 'rozmir', 'dovzhyna', 'typ_bity', 'khvostovyk', 'osoblyvosti', 'vyd_instrumentu'], link: ['profil', 'rozmir', 'dovzhyna'] },
+  holders: { root: 1081, name: 'Бітотримачі', order: ['vyd_instrumentu', 'dovzhyna_bitotrymacha', 'osoblyvosti_bitotrymacha'], link: ['osoblyvosti_bitotrymacha'] },
+  bitsets: { root: 1082, name: 'Набори з бітами', order: ['vyd_instrumentu', 'typ_bit_u_nabori', 'dovzhyna', 'rozmir', 'profil'], link: [] },
+  adapters: { root: 1089, name: 'Перехідники та адаптери', order: ['vyd_instrumentu', 'pryiednannia_do_instrumenta', 'pryiednannia_nasadky'], link: ['pryiednannia_do_instrumenta', 'pryiednannia_nasadky'] },
+  drills: { root: 1090, name: 'Свердла та мітчики', order: ['vyd_instrumentu', 'diametr_sverdla', 'rizba'], link: ['diametr_sverdla', 'rizba'] },
+  stands: { root: 1460, name: 'Підставки для біт', order: ['vyd_instrumentu'], link: [], card: ['vyd_instrumentu'] },   // TL64 carries the bit values only for the filters of «Мікробіти»
   dyn: { root: 1195, name: 'Динамометричний інструмент', order: ['vyd_instrumentu', 'diapazon_momentu', 'nalashtuvannia_momentu', 'pryvid', 'typ_nasadky', 'rozmir_nasadky', 'profil', 'rozmir_nakonechnyka', 'osoblyvosti_dynamometra'], link: ['diapazon_momentu', 'pryvid'] },
   trolley: { root: 1055, name: 'Інструментальний візок та ложементи', order: ['vyd_instrumentu', 'komplektatsiia', 'instrument_u_lozhementi', 'profil', 'pryvid'], link: ['instrument_u_lozhementi'] },
   vykrutky: { root: 1098, name: 'Викрутки', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka'] },
@@ -43,6 +49,7 @@ const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').so
 // characteristics a section's products carry, in the group's order, then the others met there
 const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.includes(k))])];
 function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n && !G.order.includes(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: 0, use: false, why: `чужа характеристика, лише у ${n} з ${ps.length}` }; const vals = new Set(ps.flatMap(p => v(p, k))); if (!n) return { n, d: 0, use: false, why: 'немає значень' };
+  if ((SETSIZE.has(k) || SIZE.includes(k) || k === 'vyd_instrumentu') && n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів (решта — ручки/приладдя)` };
   if (vals.size === 1 && n === ps.length && !/^dovzhyna/.test(k)) return { n, d: 1, use: false, why: `у всіх одне значення «${[...vals][0]}»` }; return { n, d: vals.size, use: true }; }
 const secRows = [], missing = [], single = []; const plans = {};
 for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodIn(id); const hid = L.filter(p => !vis(p) && secs(p).includes(id)).length;
@@ -65,13 +72,15 @@ const orderKey = k => { const i = [...G.order, ...SKLAD].indexOf(k); return i < 
 const nSet = ids.filter(id => plans[id].setSec).length;
 for (const k of keysAll.sort((a, b) => orderKey(a) - orderKey(b))) { const u = ids.filter(id => plans[id].use.includes(k)).length, bad = ids.filter(id => !plans[id].use.includes(k) && plans[id].present.includes(k)).length;
   if (SKLAD.includes(k) ? nSet * 2 < ids.length : !G.order.includes(k)) continue; if (u >= 2 && u > bad) rootList.push(k); }
+// a group of one listing section (the group section itself lists the products): its list is that section's list
+if (ids.length === 1) { rootList.length = 0; const P1 = plans[ids[0]]; rootList.push(...(P1.setSec ? [...P1.use.filter(k => k === 'vyd_instrumentu'), ...P1.use.filter(k => SKLAD.includes(k)), ...P1.use.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : P1.use)); }
 // set keys go after «Вид інструменту»: in the group list only when most listing sections are set sections
 const own = []; for (const id of ids) { const P0 = plans[id]; const inh = rootList.filter(k => P0.present.includes(k)); const want = [...P0.use].sort((a, b) => (P0.setSec && SKLAD.includes(a) !== SKLAD.includes(b) ? 0 : 0) || orderKey(a) - orderKey(b));
   // set sections: «Вид інструменту», then «… у складі», then the rest
   const ordered = P0.setSec ? [...want.filter(k => k === 'vyd_instrumentu'), ...want.filter(k => SKLAD.includes(k)), ...want.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : want;
   P0.list = ordered; P0.inherits = P0.tiny || JSON.stringify([...inh].sort()) === JSON.stringify([...want].sort()); if (!P0.inherits) own.push(id); }
 // product page: what the group's products carry (main section in the group), «… у складі» never
-const mains = L.filter(p => vis(p) && inG.has(+p.parent.id)); const card = ALLK.filter(k => mains.filter(p => v(p, k).length).length >= Math.max(1, mains.length * 0.02)).sort((a, b) => orderKey(a) - orderKey(b));
+const mains = L.filter(p => vis(p) && inG.has(+p.parent.id)); const card = G.card || ALLK.filter(k => mains.filter(p => v(p, k).length).length >= Math.max(1, mains.length * 0.02)).sort((a, b) => orderKey(a) - orderKey(b));
 const link = G.link.filter(k => rootList.includes(k));
 // products visible but in no section that lists products (only in a parent that shows tiles)
 const orphan = L.filter(p => vis(p) && secs(p).some(s => inG.has(s)) && !secs(p).some(s => listing(s))).map(p => ({ a: p.article, title: p.title.ua, sections: secs(p).map(s => (byId[s] || { path: s }).path).join(' | ') }));
@@ -82,8 +91,8 @@ const acc = []; for (const p of L.filter(p => vis(p) && secs(p).some(s => inG.ha
 const nameChk = []; const FEAT = { osoblyvosti_vykrutky: 1, osoblyvosti_kliucha: 1, osoblyvosti_haikovoho_kliucha: 1, osoblyvosti_bitotrymacha: 1, osoblyvosti: 1, osoblyvosti_dynamometra: 1 };
 const PROFT = [[/\bPH\b(?!\/S)/, /^PH /], [/\bPZ\b(?!\/S)/, /^PZ /], [/\bTX\b(?! BO)|TORX®(?! PLUS| BO)/, /^TX /], [/\bSL\b|шліц/i, /^SL /], [/\bHEX\b|шестигран(?!н\S* стриж)/i, /^HEX/], [/квадрат/i, /^Квадрат/]];
 for (const p of L.filter(p => vis(p) && inG.has(+p.parent.id))) { const n = p.title.ua; const pr = v(p, 'profil'); const fk = Object.keys(FEAT).filter(k => G.order.includes(k)); const f = [...fk.flatMap(k => v(p, k)), ...v(p, 'pokryttia')]; const issues = [];
-  if (pr.length && !isSet(p)) for (const [re, pv] of PROFT) if (re.test(n) && !(pr.some(x => /PlusMinus/.test(x)) && /PH|PZ|SL|шліц/.test(re.source)) && !(/квадрат/.test(re.source) && /внутрішній квадрат/i.test(n)) && !pr.some(x => pv.test(x)) && !/(для|під|на) (біт|бит|насад)/i.test(n)) issues.push(`у назві ${re.source.slice(0, 12)}, профілю немає (${pr.join(', ')})`);
-  if (fk.length) { const want = [[/\bHF\b|фіксуюч/i, /HF|фіксуюч/i, 'HF'], [/\bESD\b/, /ESD/, 'ESD'], [/магніт/i, /магніт/i, 'магніт'], [/Stubby/i, /Stubby|Коротк/i, 'Stubby'], [/нержав/i, /нержав/i, 'нержавіюча сталь']];
+  if (pr.length && !isSet(p)) for (const [re, pv] of PROFT) if (re.test(n) && !(pr.some(x => /PlusMinus/.test(x)) && /PH|PZ|SL|шліц/.test(re.source)) && !(/квадрат/.test(re.source) && /внутрішній квадрат/i.test(n)) && !pr.some(x => pv.test(x)) && !/(для|під|на) (біт|бит|насад)|шестигранн\S* (привод|хвостовик)/i.test(n)) issues.push(`у назві ${re.source.slice(0, 12)}, профілю немає (${pr.join(', ')})`);
+  if (fk.length && !(GK === 'bits' && isSet(p))) { const want = [[/\bHF\b|фіксуюч/i, /HF|фіксуюч/i, 'HF'], [/\bESD\b/, /ESD/, 'ESD'], [/(?<!не)магніт/i, /магніт/i, 'магніт'], [/Stubby/i, /Stubby|Коротк/i, 'Stubby'], [/нержав/i, /нержав/i, 'нержавіюча сталь']];
     for (const [rn, rf, w] of want) if (rn.test(n) && !/без магніт/i.test(n) && !f.some(x => rf.test(x))) issues.push(`у назві ${w}, в «Особливостях» немає`); }
   if (issues.length) nameChk.push({ a: p.article, title: n, profil: pr.join(', '), feat: f.join(', '), issue: issues.join('; ') }); }
 const empty = secRows.filter(r => r.shows === 'порожньо' && r.status === 200).map(r => r.path);
