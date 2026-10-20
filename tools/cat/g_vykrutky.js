@@ -24,3 +24,6 @@ module.exports = {
 { const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
 // «Профіль і розмір» from the written values / the WERA composition; TX BO -> TX + «З отвором (TX BO)»; profile corrections (cat/pr_size.js, 19.10.2026)
 P.finishGroup(module.exports.items, { bo: true });
+// owner 21.10.2026 (item 6): a bit set in a screwdriver section carries «Довжина стрижня» = the bit length of its WERA composition (only lengths that exist
+// in the dictionary; 30 / 44 / 89 мм would go to the end of the filter list — owner's decision pending)
+{ const SET_LEN = { '05057471001': ['25 мм'], '05135942001': ['25 мм'] }; for (const it of module.exports.items) if (SET_LEN[it.a]) it.vals.dovzhyna_stryzhnia = SET_LEN[it.a]; }

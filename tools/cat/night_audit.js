@@ -56,7 +56,8 @@ const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').so
 // characteristics a section's products carry, in the group's order, then the others met there
 const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.includes(k))])];
 function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n && !G.order.includes(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: 0, use: false, why: `чужа характеристика, лише у ${n} з ${ps.length}` }; const vals = new Set(ps.flatMap(p => v(p, k))); if (!n) return { n, d: 0, use: false, why: 'немає значень' };
-  if ((SETSIZE.has(k) || SIZE.includes(k) || k === 'vyd_instrumentu') && n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів (решта — ручки/приладдя)` };
+  // any filter but a feature («Особливості…», partial by nature) and «… у складі» needs at least half of the section (21.10.2026: «Привід» on 1 of 28 VDE sets)
+  if (!/^osoblyvosti/.test(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів` };
   if (vals.size === 1 && n === ps.length && !/^dovzhyna/.test(k)) return { n, d: 1, use: false, why: `у всіх одне значення «${[...vals][0]}»` }; return { n, d: vals.size, use: true }; }
 const secRows = [], missing = [], single = []; const plans = {};
 for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodIn(id); const hid = L.filter(p => !vis(p) && secs(p).includes(id)).length;

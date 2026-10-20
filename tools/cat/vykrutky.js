@@ -40,9 +40,11 @@ for (const it of I) { const s = it.secs[0], n = it.title; let vyd, p = null;
   // (05004184001 two tyre levers, 05136700001 two MC4 keys) — cat/vyd_comp.js
   else if (SETS.includes(s) || /^Набір|набір викруток|з набором (біт|насадок)/i.test(n)) vyd = VC.supports(it.a, 'Набір викруток') === false ? 'Набір інструментів' : 'Набір викруток';
   else if (HOLD.includes(s) || /ручка-б[іi]т|ручка-тримач|бітоутримувач|бітотримач/i.test(n)) vyd = 'Ручка-тримач';
+  else if (/^Знімач/i.test(n)) vyd = 'Знімач';   // owner 21.10.2026: removers 1429 / 1529 ESD — own kind, blade length from the datasheet («1 мм x 3.5 мм x 50 мм»)
   else if (ACC.includes(s) || /знімач|намагніч|фіксатор|підставка|лопат/i.test(n)) vyd = 'Приладдя для викруток';
   else { vyd = 'Викрутка'; p = profileOf(it); }
   const v = { a: it.a, title: n, secs: it.secs, sec: s, vyd: [vyd], kind: vyd === 'Викрутка', profile: p ? [PROF[p]] : [], size: [], len: [], feat: vyd === 'Викрутка' ? features(it) : [] };
+  if (vyd === 'Знімач') { const L = length(it); if (L) v.len = [L]; }
   if (v.kind) { const sz = p && size(it, p), L = length(it); if (sz) v.size = [sz]; if (L) v.len = [L];
     if (!p) disputed.push({ a: it.a, sec: s, what: 'Профіль', why: 'не определён по разделу/названию', title: n }); else if (!sz) disputed.push({ a: it.a, sec: s, what: 'Розмір наконечника', why: 'нет в таблице и названии', title: n });
     if (!L) disputed.push({ a: it.a, sec: s, what: 'Довжина стрижня', why: 'нет в таблице и названии', title: n }); }

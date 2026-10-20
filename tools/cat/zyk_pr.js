@@ -38,7 +38,7 @@ for (const p of L) { const s = secs(p), a = p.article; const inZ = s.some(x => Z
   const unc = bareOld.filter(x => !cov.has(num(x)));
   if (miss.length) row.res = 'НЕ ПИШУ: значень немає в довіднику — ' + miss.join(', ');
   else if (unc.length) row.res = 'НЕ ПИШУ: голі розміри в «Розмір головки» не покриті складом — ' + unc.join(', ');
-  else { const ch = {}; if ([...neu].sort().join('|') !== [...had].sort().join('|')) ch.rozmir_nakonechnyka = neu;   // the export order is not the dictionary order: compare as sets if (bareOld.length) ch.rozmir_holovky = old.filter(x => !bare(x));
+  else { const ch = {}; if ([...neu].sort().join('|') !== [...had].sort().join('|')) ch.rozmir_nakonechnyka = neu;   /* the export order is not the dictionary order: compare as sets */ if (bareOld.length) ch.rozmir_holovky = old.filter(x => !bare(x));
     row.neu = neu.join('; '); row.rh = (ch.rozmir_holovky || old).join('; '); row.res = Object.keys(ch).length ? 'пишу' : 'без змін'; if (Object.keys(ch).length) plan.push({ article: a, characteristics: ch }); }
   sets.push(row); }
 // a head section where some head needs a new dictionary value waits as a whole (owner's decision): no half-converted section filter
