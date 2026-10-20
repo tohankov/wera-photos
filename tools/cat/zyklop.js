@@ -50,6 +50,7 @@ for (const it of I) {
   // a «Тріскачка» whose datasheet names no ratchet (8000 E deblocker 05136400001) is an accessory
   if (vyd === 'Набір з тріскачкою' && VC.supports(it.a, vyd) === false) vyd = VC.isSet(it.a) ? ['Набір головок', 'Набір Г-подібних ключів', 'Набір викруток', 'Набір біт'].find(x => VC.supports(it.a, x) === true) || 'Набір інструментів' : 'Приладдя';
   if (vyd === 'Тріскачка' && VC.first(it.a) && !VC.has.ratchet(VC.first(it.a))) vyd = 'Приладдя';
+  if (it.a === '05133862001') vyd = 'Набір з тріскачкою';   // owner 21.10.2026: Koloss All Inclusive Set — ratchet + extension + deblocker + holster
   // drive
   let drv = []; const d = driveOfSec(sec); const tt = n.replace(/(\d) ?["”″]/g, '$1″');
   if (sec === 1271) drv = [DRV['3/8'], DRV.hex]; // datasheet 8009 Zyklop Pocket: 3/8″ ratchet + bit ratchet for 1/4″ bits
