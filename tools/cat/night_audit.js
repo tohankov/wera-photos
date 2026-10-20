@@ -57,7 +57,7 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   if (setSec) for (const k of SETSIZE) { if (ps.some(p => v(p, k).length)) drop.push(`${TITLE[k]}: у наборах — «… у складі»`); }
   plans[id] = { path: t.path, setSec, tiny: ps.length <= 2, use, drop, present: [...cand, ...SETSIZE].filter(k => ps.some(p => v(p, k).length)) };
   row.planned = use.map(k => TITLE[k]).join(', '); row.notUsed = drop.join('; ');
-  for (const p of ps) for (const k of use.filter(k => CORE.has(k) && G.order.includes(k))) if (!v(p, k).length) missing.push({ path: t.path, a: p.article, title: p.title.ua, char: TITLE[k], vyd: v(p, 'vyd_instrumentu').join(', ') }); }
+  for (const p of ps) for (const k of use.filter(k => CORE.has(k) && G.order.includes(k) && (k === 'vyd_instrumentu' || !isSet(p)))) if (!v(p, k).length) missing.push({ path: t.path, a: p.article, title: p.title.ua, char: TITLE[k], vyd: v(p, 'vyd_instrumentu').join(', ') }); }
 // the group list: per characteristic, in the group's order — taken when more listing sections use it than have it but do not use it
 const ids = Object.keys(plans).map(Number); const rootList = [];
 const keysAll = [...new Set(ids.flatMap(id => [...plans[id].use, ...plans[id].present]))];
@@ -81,7 +81,7 @@ const acc = []; for (const p of L.filter(p => vis(p) && secs(p).some(s => inG.ha
 // name <-> characteristics (profile tokens and features), only where the group has the characteristic
 const nameChk = []; const FEAT = { osoblyvosti_vykrutky: 1, osoblyvosti_kliucha: 1, osoblyvosti_haikovoho_kliucha: 1, osoblyvosti_bitotrymacha: 1, osoblyvosti: 1, osoblyvosti_dynamometra: 1 };
 const PROFT = [[/\bPH\b(?!\/S)/, /^PH /], [/\bPZ\b(?!\/S)/, /^PZ /], [/\bTX\b(?! BO)|TORX®(?! PLUS| BO)/, /^TX /], [/\bSL\b|шліц/i, /^SL /], [/\bHEX\b|шестигран(?!н\S* стриж)/i, /^HEX/], [/квадрат/i, /^Квадрат/]];
-for (const p of L.filter(p => vis(p) && inG.has(+p.parent.id))) { const n = p.title.ua; const pr = v(p, 'profil'); const fk = Object.keys(FEAT).filter(k => G.order.includes(k)); const f = fk.flatMap(k => v(p, k)); const issues = [];
+for (const p of L.filter(p => vis(p) && inG.has(+p.parent.id))) { const n = p.title.ua; const pr = v(p, 'profil'); const fk = Object.keys(FEAT).filter(k => G.order.includes(k)); const f = [...fk.flatMap(k => v(p, k)), ...v(p, 'pokryttia')]; const issues = [];
   if (pr.length && !isSet(p)) for (const [re, pv] of PROFT) if (re.test(n) && !(pr.some(x => /PlusMinus/.test(x)) && /PH|PZ|SL|шліц/.test(re.source)) && !(/квадрат/.test(re.source) && /внутрішній квадрат/i.test(n)) && !pr.some(x => pv.test(x)) && !/(для|під|на) (біт|бит|насад)/i.test(n)) issues.push(`у назві ${re.source.slice(0, 12)}, профілю немає (${pr.join(', ')})`);
   if (fk.length) { const want = [[/\bHF\b|фіксуюч/i, /HF|фіксуюч/i, 'HF'], [/\bESD\b/, /ESD/, 'ESD'], [/магніт/i, /магніт/i, 'магніт'], [/Stubby/i, /Stubby|Коротк/i, 'Stubby'], [/нержав/i, /нержав/i, 'нержавіюча сталь']];
     for (const [rn, rf, w] of want) if (rn.test(n) && !/без магніт/i.test(n) && !f.some(x => rf.test(x))) issues.push(`у назві ${w}, в «Особливостях» немає`); }
