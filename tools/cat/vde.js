@@ -46,6 +46,8 @@ for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd,
     if (kind === 'blade') { const L = length(it); if (L) v.len = [L]; else disputed.push({ a: it.a, sec: s, what: 'Довжина робочого кінця', why: 'нет в таблице и названии', title: n }); } }
   if (vyd === 'Ріжковий ключ') { const m = nn.match(/(\d+)-(\d+) мм/); if (m) v.size = [`${m[1]}–${m[2]} мм`]; }
   if (ZYK.includes(s) || /410 i VDE/.test(n)) v.drv = drive(n);
+  // owner 22.10.2026 (docs/fill_gaps.md): handles for Kraftform Kompakt VDE blades («Исключительно для сменных отверток VDE») — the drive like the torque handles
+  else if (s === 1231 && vyd === 'Ручка-тримач') v.drv = ['Kraftform Kompakt VDE (вставки)'];
   if (/звужен|завужен|extra slim/i.test(n)) v.feat.push('Звужений робочий кінець'); if (/нержав/i.test(n)) v.feat.push('Нержавіюча сталь');   // night 20.10.2026: name + WERA datasheet (night_vde2.js) if (/фіксуюч|\bHF\b/i.test(n)) v.feat.push('З фіксуючою функцією (HF)');
   out.push(v); }
 module.exports = { out, disputed };
