@@ -15,6 +15,8 @@ function feat(n) { const f = []; if (/кульков/i.test(n)) f.push('Куль
 const out = [], disputed = [];
 for (const it of I) { const n = norm(it.title); const isSet = /^Набір/i.test(n) || it.secs[0] === 1164 || it.secs[0] === 1165;
   const ps = profiles(n); const v = { a: it.a, title: it.title, secs: it.secs, kind: !isSet, vyd: [isSet ? 'Набір Г-подібних ключів' : 'Г-подібний ключ'], profile: ps.map(p => PROF[p]), size: [], len: [lengthOf(n)], coat: coat(n), feat: feat(n) };
+  // 950 SPKL 05022514001 (title without the series words): WERA datasheet «BlackLaser», «с шестигранным шариковым наконечником» (night 20.10 / owner 21.10.2026)
+  if (it.a === '05022514001') { v.coat = ['BlackLaser']; v.feat = [...new Set([...v.feat, 'Кулькова головка'])]; }
   if (!isSet) { if (ps.length !== 1) disputed.push({ a: it.a, sec: it.secs[0], what: 'Профіль', why: 'не определён однозначно (' + ps.join('/') + ')', title: it.title });
     else { const s = size(it, ps[0]); if (s) v.size = [s]; else disputed.push({ a: it.a, sec: it.secs[0], what: 'Розмір ключа', why: 'нет в таблице и названии', title: it.title }); } }
   else if (!ps.length) disputed.push({ a: it.a, sec: it.secs[0], what: 'Профіль', why: 'набор: профиль не указан в названии', title: it.title });

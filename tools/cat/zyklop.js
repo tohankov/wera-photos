@@ -32,6 +32,7 @@ function length(it) { const r = it.row || {}; const L = r['Загальна до
   const n = it.title.replace(/[хХ×]/g, 'x'); const m = n.match(/x ?(\d+(?:[.,]\d+)?) ?мм(?!.*x ?\d+ ?мм)/); if (m) return [mm(m[1]), 'название'];
   const f = path.join(__dirname, '../batch/ds', it.a + '.txt'); if (fs.existsSync(f)) { const h = fs.readFileSync(f, 'utf8').split('\n')[0]; const d = h.match(/ x (\d+(?:\.\d+)?) мм\s*$/); if (d) return [mm(d[1]), 'даташит']; }
   return [null, 'нет длины']; }
+const VC = require('./vyd_comp.js');
 const out = [], disputed = [];
 for (const it of I) {
   // leaf section of this group the item is shown in (main if inside the group, else the first alt inside)
@@ -44,6 +45,11 @@ for (const it of I) {
   else if (RSETS.includes(sec) || (sec === 1271) || (/набір/i.test(n) && [1276, 1277].includes(sec))) vyd = 'Набір з тріскачкою';
   else if (HSETS.includes(sec)) vyd = /неукомплект|тримач[^,]*неукомплект/i.test(n) || /^Пояс/i.test(n) ? 'Приладдя' : 'Набір головок';
   else if (ACC.includes(sec) || [1276, 1277].includes(sec)) vyd = 'Приладдя';
+  // owner 21.10.2026: the section rule is checked against the WERA datasheet (cat/vyd_comp.js). «Набір з тріскачкою» without a ratchet in the composition
+  // (Tool-Check Modular modules in «Набори Zyklop Mini»: 05049002001 handle + micro bits, 05049003001 L-keys) takes the kind its composition shows;
+  // a «Тріскачка» whose datasheet names no ratchet (8000 E deblocker 05136400001) is an accessory
+  if (vyd === 'Набір з тріскачкою' && VC.supports(it.a, vyd) === false) vyd = VC.isSet(it.a) ? ['Набір головок', 'Набір Г-подібних ключів', 'Набір викруток', 'Набір біт'].find(x => VC.supports(it.a, x) === true) || 'Набір інструментів' : 'Приладдя';
+  if (vyd === 'Тріскачка' && VC.first(it.a) && !VC.has.ratchet(VC.first(it.a))) vyd = 'Приладдя';
   // drive
   let drv = []; const d = driveOfSec(sec); const tt = n.replace(/(\d) ?["”″]/g, '$1″');
   if (sec === 1271) drv = [DRV['3/8'], DRV.hex]; // datasheet 8009 Zyklop Pocket: 3/8″ ratchet + bit ratchet for 1/4″ bits

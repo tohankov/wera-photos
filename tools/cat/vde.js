@@ -29,7 +29,8 @@ function length(it) { const r = it.row || {}; const L = r['Довжина роб
 function drive(n) { const d = []; if (/1\/4|¼/.test(n)) d.push('квадрат 1/4″'); if (/3\/8|⅜/.test(n)) d.push('квадрат 3/8″'); return d; }
 const out = [], disputed = [];
 for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd, kind = null;
-  if (/індикатор напруги/i.test(n)) vyd = 'Індикатор напруги';
+  // owner 21.10.2026: a set «Набір ізольованих викруток … + індикатор напруги» is a set of screwdrivers, not a voltage indicator (WERA: «Набор отвёрток … + тестер»)
+  if (/індикатор напруги/i.test(n) && !/^Набір/i.test(n)) vyd = 'Індикатор напруги';
   else if (/Joker/i.test(n) && /ріжков/i.test(n)) vyd = /^Набір/i.test(n) ? 'Набір ключів' : 'Ріжковий ключ';
   else if (/^Набір|набір|\bSet\b|у наборі/i.test(n) || [1230, 1239, 1246, 1263].includes(s)) vyd = /^Пояс/i.test(n) ? 'Приладдя' : (ZYK.includes(s) ? 'Набір головок' : 'Набір викруток');
   else if (/ручка-тримач|викрутка-тримач|ручка з тріскачкою|Т-подібна ізольована ручка/i.test(n) || s === 1231) vyd = 'Ручка-тримач';

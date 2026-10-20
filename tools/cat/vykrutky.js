@@ -1,5 +1,5 @@
 // Group «Викрутки» (1098): values from section, series table row, title. Reused: vyd_instrumentu, profil. New: rozmir_nakonechnyka, dovzhyna_stryzhnia, osoblyvosti_vykrutky.
-const I = require('./1098_items.json');
+const I = require('./1098_items.json'); const VC = require('./vyd_comp.js');
 const PROFSEC = { 1101: 'TX', 1116: 'TX', 1121: 'TX', 1128: 'TX', 1136: 'TX', 1145: 'TX', 1144: 'TXBO', 1102: 'TW', 1103: 'SQ', 1122: 'SQ', 1106: 'NUT', 1131: 'NUT', 1139: 'NUT', 1149: 'NUT',
   1107: 'PH', 1108: 'PH', 1117: 'PH', 1124: 'PH', 1132: 'PH', 1150: 'PH', 1151: 'SL', 1109: 'PZ', 1110: 'PZ', 1118: 'PZ', 1125: 'PZ', 1111: 'HEX', 1133: 'HEX', 1140: 'HEX', 1141: 'HEX', 1112: 'SL', 1113: 'SL', 1119: 'SL', 1126: 'SL', 1134: 'SL' };
 const SETS = [1099, 1105, 1115, 1123, 1129, 1137, 1146], HOLD = [1138, 1147], ACC = [1142];
@@ -36,7 +36,9 @@ function features(it) { const n = it.title; const f = [];
 const out = [], disputed = [];
 for (const it of I) { const s = it.secs[0], n = it.title; let vyd, p = null;
   if (/^(?:Коротка )?ручка-(?:тримач|б[іi]т)/i.test(n) && !/набор|набір/i.test(n)) vyd = 'Ручка-тримач';
-  else if (SETS.includes(s) || /^Набір|набір викруток|з набором (біт|насадок)/i.test(n)) vyd = 'Набір викруток';
+  // owner 21.10.2026: «Набір викруток» only when the WERA datasheet shows a screwdriver (or a handle + bits); else «Набір інструментів»
+  // (05004184001 two tyre levers, 05136700001 two MC4 keys) — cat/vyd_comp.js
+  else if (SETS.includes(s) || /^Набір|набір викруток|з набором (біт|насадок)/i.test(n)) vyd = VC.supports(it.a, 'Набір викруток') === false ? 'Набір інструментів' : 'Набір викруток';
   else if (HOLD.includes(s) || /ручка-б[іi]т|ручка-тримач|бітоутримувач|бітотримач/i.test(n)) vyd = 'Ручка-тримач';
   else if (ACC.includes(s) || /знімач|намагніч|фіксатор|підставка|лопат/i.test(n)) vyd = 'Приладдя для викруток';
   else { vyd = 'Викрутка'; p = profileOf(it); }
