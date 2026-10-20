@@ -19,7 +19,7 @@ const TITLE = { vyd_instrumentu: 'Вид інструменту', profil: 'Пр�
 const SKLAD = ['sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus'];
 const SETSIZE = new Set(['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir']);   // replaced by «… у складі» in set sections
 const CORE = new Set(['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'diapazon_momentu']);   // a product without it disappears when it is filtered
-const VYD_KEEP = new Set([1129]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds)
+const VYD_KEEP = new Set([1129, 1130, 1148]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds); owner 20.10 / 22.10.2026: both «Спеціальні викрутки … Kraftform Micro» (1130) and «… Micro ESD» (1148) — with «Вид»
 const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'rozmir_nasadky'];
 const GROUPS = {
   vde: { root: 1224, name: 'Діелектричні інструменти', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'dovzhyna_robochoho_kintsia', 'pryvid', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia'] },
@@ -71,7 +71,7 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   // «Вид інструменту»: only when the second kind is at least a fifth of the section (19 screwdrivers + 2 handles is not a choice),
   // or the products outside the main kind are at least a fifth (22.10.2026: «Набори Kraftform Kompakt» 57 + 14 + 11), or the owner kept it (VYD_KEEP)
   { const i = use.indexOf('vyd_instrumentu'); if (i >= 0) { const c = {}; for (const p of ps) for (const x of v(p, 'vyd_instrumentu')) c[x] = (c[x] || 0) + 1; const s = Object.values(c).sort((a, b) => b - a);
-    const main = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0], rest = ps.filter(p => !v(p, 'vyd_instrumentu').includes(main)).length;
+    const main = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0], rest = ps.filter(p => v(p, 'vyd_instrumentu').length && !v(p, 'vyd_instrumentu').includes(main)).length;   // a product without a kind is no choice
     if (!(s[1] >= Math.max(2, ps.length * 0.2) || rest >= Math.max(2, ps.length * 0.2) || VYD_KEEP.has(+id))) { use.splice(i, 1); drop.push(`Вид інструменту: майже всі одного виду (${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => x.join(' ')).join(', ')})`); } } }
   // «Розмір робочого кінця» / «Розмір» (bare sizes) duplicate a main size filter of the section: not both
   for (const k of ['rozmir_robochoho_kintsia', 'rozmir']) { const i = use.indexOf(k); if (i >= 0 && use.some(x => x !== k && SIZE.includes(x) && x !== 'rozmir_nasadky')) { use.splice(i, 1); drop.push(`${TITLE[k]}: дублює основний розмір розділу`); } }

@@ -42,7 +42,8 @@ function supports(a, val) { const need = NEED[val]; if (!need) return null; if (
 // ---- «Вид інструменту» of the groups «Викрутки», Kraftform Kompakt, «Діелектричні» by the WERA composition (owner 22.10.2026, docs/preview_vid.md decisions)
 // type of one composition row (RU datasheet head); Latin look-alikes («pучка», «Tрещотка») are normalised first
 function ctype(h) { const s = h.replace(/[pP](?=учк)/g, 'р').replace(/T(?=рещотк)/g, 'Т').replace(/\s+/g, ' ').trim();
-  if (!/[A-Za-zА-Яа-яЁёІіЇїЄє]{3}/.test(s)) return 'unknown';                                            // a broken row («, 1/4" x 300 мм»)
+  if (/^(x )?\d+(,\d+)?( ?- ?\d+(,\d+)?)? ?(нм|nm)(?![a-zа-я])/i.test(s)) return 'dyn';                            // a torque tool row without its name («x 4 нм x 192 мм», «1,2-3,0 Nm»: 7441, 7508 / 7516 VDE)
+  if (!/[A-Za-zА-Яа-яЁёІіЇїЄє]{3}/.test(s)) return 'unknown';                                           // a broken row («, 1/4" x 300 мм»)
   if (/\d+ предмет|набор(?! полосок)/i.test(s) && !/насадк|бит/i.test(s)) return 'set';                // a nested set (Tool Finder, Bit-Safe, «Набор отверток …»)
   if (/липуч|полос|футляр|чехол|сумк|подсумок|контейнер|коробк|органайзер|пояс|belt|holster|прокладк|витрин|пустая|неукомплект|подставк|держатель настенн|зажим для|магнит adk|маркер|открыв|поднос|переходник для 9549|шарнир для 9550|держатель для размещения/i.test(s)) return 'acc';
   if (/тестер|индикатор/i.test(s)) return 'tester';
@@ -61,6 +62,7 @@ function ctype(h) { const s = h.replace(/[pP](?=учк)/g, 'р').replace(/T(?=р
 // owner's product decisions (22.10.2026)
 const KIND_OWNER = { '05136072001': ['Викрутка з набором біт', '416 RA + 816 R + 14 біт + 2 × 869/4 M'], '05136078001': ['Набір викруток', 'рішення власника: залишити'], '05136079001': ['Набір викруток', 'рішення власника: залишити'],
   '05006632001': ['Набір інструментів', '9 торцевих головок Zyklop VDE 8790 A'], '05006610001': ['Набір інструментів', 'кліщі KNIPEX 08 26 185'],
+  '05006612001': ['Набір інструментів', 'кліщі KNIPEX VDE 13 96 200'],
   '05008101001': ['Викрутка', 'інструмент 338 — викрутка'], '05008102001': ['Викрутка', 'інструмент 338 — викрутка'], '05008100001': ['Набір викруток', '2 × 338'] };
 const STAND = /підставк|тримач для розміщення|магнітний тримач/i;   // stands and holders for screwdrivers / bits (and the Joker holder in «Викрутки → Приладдя»)
 // kind(a, title, now) -> { to: [values], rule, border, cnt, tester }   border: F = composition missing / not parsed -> kept as is
@@ -74,12 +76,14 @@ function kind(a, t, now) { const cmp = comp(a); const fst = first(a);
   if (KIND_OWNER[a]) return R(KIND_OWNER[a][0], 'рішення власника: ' + KIND_OWNER[a][1]);
   const accOnly = now.length && now.every(x => /^Приладдя/.test(x)) && !/^Набір/i.test(t);
   const isSet_ = !accOnly && (isSet(a) || now.some(x => /^Набір/.test(x)));
+  // owner 22.10.2026 (docs/report_1022.md item 3): a torque tool in the WERA composition — one kind «Набір з динамометричним інструментом» (the main tool, as with
+  // a ratchet; a torque wrench with a ratchet head is a torque tool), no second kind; checked before the ratchet and before an unparsed composition
+  if (isSet_ && cnt.dyn) return R('Набір з динамометричним інструментом', 'у складі динамометричний інструмент');
   if (isSet_ && cnt.ratchet) return R('Набір з тріскачкою', 'у складі тріскачка');   // even when other rows of the composition are not parsed
   if (isSet_) { if (!cmp.length || cnt.unknown || (cnt.set && prts.every(x => x.type === 'set' || x.type === 'acc'))) return R(merged, cmp.length ? 'склад у паспорті неповний / вкладені набори — як є' : 'складу в паспорті немає — як є', 'F');
-    const nh = cnt.handle || 0, nb = cnt.bit || 0, nd = cnt.driver || 0, nr = cnt.ratchet || 0, ndyn = cnt.dyn || 0;
+    const nh = cnt.handle || 0, nb = cnt.bit || 0, nd = cnt.driver || 0, nr = cnt.ratchet || 0;
     const tools = ['other', 'set', 'key', 'lkey', 'socket'].reduce((s, k) => s + (cnt[k] || 0), 0);
     if (nr) return R('Набір з тріскачкою', 'у складі тріскачка');
-    if (ndyn) return R(merged, 'у складі динамометричний інструмент — як є', 'F');
     if (tools && !nh && !nb && !nd && !tester) { for (const [k, v] of [['key', 'Набір ключів'], ['lkey', 'Набір Г-подібних ключів'], ['socket', 'Набір головок']]) if ((cnt[k] || 0) === tools) return R(v, 'тільки ' + k); }
     if (tools) return R('Набір інструментів', 'інструменти різних видів, тріскачки немає');
     if (nd) return R('Набір викруток', 'викрутки' + (nh || nb ? ' + ручка / біти' : '') + (tester ? ' + індикатор напруги' : ''));

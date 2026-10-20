@@ -2,14 +2,14 @@
 //  - «Вид інструменту» by the WERA composition (cat/vyd_comp.js kind()): «Викрутка з набором біт» = one or more handles + bits / Kompakt blades / Vario ends
 //    (869/4 nut bits are bits), no screwdrivers or other tools; «Набір викруток» = screwdrivers (+ stand / tester / bag); «Набір з тріскачкою» = a ratchet in the
 //    composition (ratchet-function handles 416 RA, 838 RA … are not ratchets); «Набір інструментів» = tools of different kinds, no ratchet; F (no / unparsed
-//    composition) and torque sets — as is; «Приладдя для викруток» -> «Приладдя»; stands / holders -> «Підставка / тримач»; owner's list KIND_OWNER;
+//    composition) — as is; a torque tool in the composition — only «Набір з динамометричним інструментом» (owner, docs/report_1022.md item 3); «Приладдя для викруток» -> «Приладдя»; stands / holders -> «Підставка / тримач»; owner's list KIND_OWNER;
 //  - «Довжина стрижня» is the blade length of a screwdriver only: a «Викрутка з набором біт» does not get it (bit length is not a blade length);
 //  - «Особливості викрутки»: + «З індикатором напруги» on every set with a voltage tester in the WERA composition (only added).
 // Sections (parent / alt_parent) are not touched.
-//   node cat/vyd_1022.js <live.json>  -> cat/vyd_final.json (kind per article for the generators, always); cat/vyd_1022_plan.json (night_write plan)
-//   and cat/vyd_1022_rows.json — only when something is to change (a rerun on the written site keeps the plan of 22.10)
+//   node cat/vyd_1022.js <live.json> [name=vyd_1022]  -> cat/vyd_final.json (kind per article for the generators, always); cat/<name>_plan.json (night_write plan)
+//   and cat/<name>_rows.json — only when something is to change (a rerun on the written site keeps the last plan); a new write — a new name (vyd_dyn: torque sets)
 const fs = require('fs'), path = require('path'); const C = require('./vyd_comp.js');
-const L = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); const MAP = require('../../inventory/sections_map.json');
+const L = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); const NAME = process.argv[3] || 'vyd_1022'; const MAP = require('../../inventory/sections_map.json');
 const v = (p, k) => ((p.characteristics || {})[k] || []).map(x => x.value.ua);
 const GROUPS = ['Викрутки', 'Інструменти серії Kraftform Kompakt', 'Діелектричні інструменти'];
 const secs = p => [...new Set([p.parent && +p.parent.id, ...(p.alt_parent || []).map(x => +x.id)].filter(Boolean))];
@@ -30,9 +30,9 @@ for (const p of ps) { const a = p.article, now = v(p, 'vyd_instrumentu'); const 
   if (Object.keys(ch).length) plan.push({ article: a, characteristics: ch }); }
 // a datasheet quote per changed product (composition heads or the first line)
 for (const r of rows) { const g = C.COMP[r.a] || []; r.quote = g.length ? g.map(x => `${x.items.reduce((s, i) => s + (i.qty || 1), 0)}× ${x.head.replace(/\s+/g, ' ').slice(0, 70)}`).join('; ') : 'паспорт: ' + C.first(r.a); }
-if (plan.length) fs.writeFileSync(path.join(__dirname, 'vyd_1022_plan.json'), JSON.stringify({ name: 'vyd_1022', keys: ['vyd_instrumentu', 'dovzhyna_stryzhnia', 'osoblyvosti_vykrutky'], products: plan }, null, 1));
+if (plan.length) fs.writeFileSync(path.join(__dirname, NAME + '_plan.json'), JSON.stringify({ name: NAME, keys: ['vyd_instrumentu', 'dovzhyna_stryzhnia', 'osoblyvosti_vykrutky'], products: plan }, null, 1));
 fs.writeFileSync(path.join(__dirname, 'vyd_final.json'), JSON.stringify(final, null, 0));
-if (plan.length) fs.writeFileSync(path.join(__dirname, 'vyd_1022_rows.json'), JSON.stringify(rows, null, 1));
+if (plan.length) fs.writeFileSync(path.join(__dirname, NAME + '_rows.json'), JSON.stringify(rows, null, 1));
 const c = {}; for (const r of rows) c[r.to] = (c[r.to] || 0) + 1;
 console.log('products', ps.length, '| plan', plan.length, '| vyd changes', plan.filter(x => x.characteristics.vyd_instrumentu).length, '| length off', plan.filter(x => x.characteristics.dovzhyna_stryzhnia).length, '| tester feature', plan.filter(x => x.characteristics.osoblyvosti_vykrutky).length);
 console.log(c);
