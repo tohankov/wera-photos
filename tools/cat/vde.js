@@ -45,7 +45,7 @@ for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd,
     if (kind === 'blade') { const L = length(it); if (L) v.len = [L]; else disputed.push({ a: it.a, sec: s, what: 'Довжина робочого кінця', why: 'нет в таблице и названии', title: n }); } }
   if (vyd === 'Ріжковий ключ') { const m = nn.match(/(\d+)-(\d+) мм/); if (m) v.size = [`${m[1]}–${m[2]} мм`]; }
   if (ZYK.includes(s) || /410 i VDE/.test(n)) v.drv = drive(n);
-  if (/звужен|завужен|extra slim/i.test(n)) v.feat.push('Звужений робочий кінець'); if (/фіксуюч|\bHF\b/i.test(n)) v.feat.push('З фіксуючою функцією (HF)');
+  if (/звужен|завужен|extra slim/i.test(n)) v.feat.push('Звужений робочий кінець'); if (/нержав/i.test(n)) v.feat.push('Нержавіюча сталь');   // night 20.10.2026: name + WERA datasheet (night_vde2.js) if (/фіксуюч|\bHF\b/i.test(n)) v.feat.push('З фіксуючою функцією (HF)');
   out.push(v); }
 module.exports = { out, disputed };
 if (require.main === module) { const c = k => { const m = {}; for (const v of out) for (const x of v[k]) m[x] = (m[x] || 0) + 1; return m; };
