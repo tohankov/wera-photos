@@ -19,10 +19,12 @@ const TITLE = { vyd_instrumentu: 'Вид інструменту', profil: 'Пр�
 const SKLAD = ['sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus'];
 const SETSIZE = new Set(['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir']);   // replaced by «… у складі» in set sections
 const CORE = new Set(['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'diapazon_momentu']);   // a product without it disappears when it is filtered
+const VYD_KEEP = new Set([1129]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds)
 const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'rozmir_nasadky'];
 const GROUPS = {
   vde: { root: 1224, name: 'Діелектричні інструменти', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'dovzhyna_robochoho_kintsia', 'pryvid', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia'] },
-  zyklop: { root: 1270, name: 'Тріскачки та приладдя Zyklop', order: ['vyd_instrumentu', 'pryvid', 'profil', 'rozmir_holovky', 'dovzhyna_holovky'], link: ['pryvid', 'rozmir_holovky'] },
+  // 21.10.2026: screwdriver heads and sets carry «Профіль і розмір» (cat/zyk_pr.js), «Розмір головки» — nut sockets
+  zyklop: { root: 1270, name: 'Тріскачки та приладдя Zyklop', order: ['vyd_instrumentu', 'pryvid', 'profil', 'rozmir_nakonechnyka', 'rozmir_holovky', 'dovzhyna_holovky'], link: ['pryvid', 'rozmir_nakonechnyka', 'rozmir_holovky'] },
   joker: { root: 1185, name: 'Гайкові ключі Joker', order: ['vyd_instrumentu', 'rozmir_pid_kliuch', 'systema_rozmiriv', 'osoblyvosti_haikovoho_kliucha'], link: ['rozmir_pid_kliuch'] },
   lkeys: { root: 1152, name: 'Г-подібні ключі', order: ['vyd_instrumentu', 'profil', 'rozmir_kliucha', 'dovzhyna_kliucha', 'pokryttia', 'osoblyvosti_kliucha'], link: ['profil', 'rozmir_kliucha'] },
   kk: { root: 1057, name: 'Інструменти серії Kraftform Kompakt', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka'] },
@@ -65,9 +67,10 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   const use = [], drop = []; if (ps.length <= 2) drop.push(`розділ з ${ps.length} товар(ами) — фільтри не потрібні`); else for (const k of cand) { const u = useful(ps, k); if (u.use) use.push(k); else if (u.n) { drop.push(`${TITLE[k]}: ${u.why}`); if (!SKLAD.includes(k)) single.push({ path: t.path, char: TITLE[k], why: u.why, n: ps.length }); } }
   // «Профіль» next to «Профіль і розмір» repeats it (the owner's «Викрутки» have no «Профіль»)
   { const i = use.indexOf('profil'); if (i >= 0 && use.includes('rozmir_nakonechnyka')) { use.splice(i, 1); drop.push('Профіль: є «Профіль і розмір»'); } }
-  // «Вид інструменту»: only when the second kind is at least a fifth of the section (19 screwdrivers + 2 handles is not a choice)
+  // «Вид інструменту»: only when the second kind is at least a fifth of the section (19 screwdrivers + 2 handles is not a choice),
+  // or the owner kept it (VYD_KEEP)
   { const i = use.indexOf('vyd_instrumentu'); if (i >= 0) { const c = {}; for (const p of ps) for (const x of v(p, 'vyd_instrumentu')) c[x] = (c[x] || 0) + 1; const s = Object.values(c).sort((a, b) => b - a);
-    if (!(s[1] >= Math.max(2, ps.length * 0.2))) { use.splice(i, 1); drop.push(`Вид інструменту: майже всі одного виду (${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => x.join(' ')).join(', ')})`); } } }
+    if (!(s[1] >= Math.max(2, ps.length * 0.2) || VYD_KEEP.has(+id))) { use.splice(i, 1); drop.push(`Вид інструменту: майже всі одного виду (${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => x.join(' ')).join(', ')})`); } } }
   // «Розмір робочого кінця» / «Розмір» (bare sizes) duplicate a main size filter of the section: not both
   for (const k of ['rozmir_robochoho_kintsia', 'rozmir']) { const i = use.indexOf(k); if (i >= 0 && use.some(x => x !== k && SIZE.includes(x) && x !== 'rozmir_nasadky')) { use.splice(i, 1); drop.push(`${TITLE[k]}: дублює основний розмір розділу`); } }
   // set sections: a bare size / profile is not a filter there (sizes are in «… у складі»)
@@ -77,10 +80,11 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   for (const p of ps) for (const k of use.filter(k => CORE.has(k) && G.order.includes(k) && (k === 'vyd_instrumentu' || !isSet(p)))) if (!v(p, k).length) missing.push({ path: t.path, a: p.article, title: p.title.ua, char: TITLE[k], vyd: v(p, 'vyd_instrumentu').join(', ') }); }
 // the group list: per characteristic, in the group's order — taken when more listing sections use it than have it but do not use it
 const ids = Object.keys(plans).map(Number); const rootList = [];
+// a set section has its own list anyway («… у складі» instead of profile/sizes): it does not vote against a profile/size key of the group list (21.10.2026)
 const keysAll = [...new Set(ids.flatMap(id => [...plans[id].use, ...plans[id].present]))];
 const orderKey = k => { const i = [...G.order, ...SKLAD].indexOf(k); return i < 0 ? 100 + ALLK.indexOf(k) : i; };
 const nSet = ids.filter(id => plans[id].setSec).length;
-for (const k of keysAll.sort((a, b) => orderKey(a) - orderKey(b))) { const u = ids.filter(id => plans[id].use.includes(k)).length, bad = ids.filter(id => !plans[id].use.includes(k) && plans[id].present.includes(k)).length;
+for (const k of keysAll.sort((a, b) => orderKey(a) - orderKey(b))) { const u = ids.filter(id => plans[id].use.includes(k)).length, bad = ids.filter(id => !plans[id].use.includes(k) && plans[id].present.includes(k) && !(plans[id].setSec && SETSIZE.has(k))).length;
   if (SKLAD.includes(k) ? nSet * 2 < ids.length : !G.order.includes(k)) continue; if (u >= 2 && u > bad) rootList.push(k); }
 // a group of one listing section (the group section itself lists the products): its list is that section's list
 if (ids.length === 1) { rootList.length = 0; const P1 = plans[ids[0]]; rootList.push(...(P1.setSec ? [...P1.use.filter(k => k === 'vyd_instrumentu'), ...P1.use.filter(k => SKLAD.includes(k)), ...P1.use.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : P1.use)); }

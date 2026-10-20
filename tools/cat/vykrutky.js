@@ -10,7 +10,8 @@ const norm = s => s.replace(/(\d), (\d)/g, '$1,$2').replace(/(\d)\.(\d)/g, '$1,$
 const fs = require('fs'), path = require('path'); const dsTitle = it => { const f = path.join(__dirname, '../batch/ds', it.a + '.txt'); return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n')[0] : ''; };
 function profileOf(it) { const n = norm(it.title), s = it.secs[0];
   if (/Pentalobe/i.test(n)) return 'PL'; if (/Microstix/i.test(n)) return 'MS'; if (/IPR/.test(n)) return 'IPR'; if (/TORX PLUS/.test(n)) return 'IP';
-  if (PROFSEC[s]) { if (PROFSEC[s] === 'TX' && /\bBO\b/.test(n)) return 'TXBO'; return PROFSEC[s]; }
+  // owner 21.10.2026: 2055 PZ / 1555 PZ ESD sit in the «Хрестові» (PH) sections — the title and the WERA datasheet say PZ
+  if (PROFSEC[s]) { if (PROFSEC[s] === 'TX' && /\bBO\b/.test(n)) return 'TXBO'; if (PROFSEC[s] === 'PH' && /\bPZ ?\d/.test(n)) return 'PZ'; return PROFSEC[s]; }
   if (/\bTX ?\d/.test(n)) return /\bBO\b/.test(n) ? 'TXBO' : 'TX'; if (/\bPH ?\d/.test(n)) return 'PH'; if (/\bPZ ?\d/.test(n)) return 'PZ'; if (/\bSL ?\d/.test(n) || /шліцев|шлицев/i.test(n)) return 'SL'; if (/HEX|шестигранн/i.test(n)) return 'HEX'; if (/квадрат/i.test(n) && /#/.test(n)) return 'SQ'; return null; }
 function size(it, p) { const r = it.row || {}; const n = norm(it.title); let m;
   const pr = r['Профіль'] && String(r['Профіль']);

@@ -40,6 +40,7 @@ for (const it of I) {
   if (SOCK[sec]) { vyd = SOCK[sec]; if (sec === 1308 && /Impaktor/i.test(n)) vyd = 'Торцева головка ударна Impaktor подовжена'; kind = 'SOCK'; }
   else if (SCREW[sec]) { vyd = 'Викруткова головка'; kind = SCREW[sec]; }
   else if (RATCH.includes(sec) || (/^(Тріскачка|Трещітка|Zyklop Hybrid 8006 C|Тріскачка з функцією)/i.test(n) && [1276, 1277].includes(sec))) vyd = 'Тріскачка';
+  else if (['05049005001', '05049004001'].includes(it.a)) vyd = 'Приладдя';   // owner 21.10.2026: adapter 9549 / hinge 9550 Tool-Check Modular in «Набори Zyklop Mini»
   else if (RSETS.includes(sec) || (sec === 1271) || (/набір/i.test(n) && [1276, 1277].includes(sec))) vyd = 'Набір з тріскачкою';
   else if (HSETS.includes(sec)) vyd = /неукомплект|тримач[^,]*неукомплект/i.test(n) || /^Пояс/i.test(n) ? 'Приладдя' : 'Набір головок';
   else if (ACC.includes(sec) || [1276, 1277].includes(sec)) vyd = 'Приладдя';

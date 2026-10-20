@@ -31,7 +31,8 @@ require('./pr_size.js').fixProfiles(module.exports.items);
 const SKK = ['sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus']; const D392 = require('./pr_size_values.json').dict.rozmir_nakonechnyka;
 const num = s => { const m = String(s).replace(/\u00a0/g, '').replace(/ мм$/, '').trim().replace(',', '.'); return /^\d+(\.\d+)?$/.test(m) ? String(parseFloat(m)) : m; };
 const sizeOf = x => num(x.replace(/^(PH\/S|PZ\/S|PH|PZ|TX|IP|IPR|HEX|Квадрат|Торцева|TRI-WING®) #?/, '').replace(/^SL [\d,]+×/, ''));
-{ const P = require('./pr_size.js'); for (const it of module.exports.items) { if (!(it.vals.vyd_instrumentu || []).some(x => x === 'Викрутка' || x === 'Змінна вставка')) { it.vals.rozmir_nakonechnyka = [];
+// owner 21.10.2026: Zyklop VDE screwdriver heads (Викруткова головка) too — 392 instead of 399 (XZN: no format A, tipValues gives nothing, 399 stays)
+{ const P = require('./pr_size.js'); for (const it of module.exports.items) { if (!(it.vals.vyd_instrumentu || []).some(x => x === 'Викрутка' || x === 'Змінна вставка' || x === 'Викруткова головка')) { it.vals.rozmir_nakonechnyka = [];
       const uni = new Set(SKK.flatMap(k => (P.SNAP && P.SNAP.values[k] && P.SNAP.values[k][it.a]) || []).filter(x => !/не вказано/.test(x)).map(x => x.replace(/^TX BO /, 'TX ')));
       if (uni.size && [...uni].every(x => D392.includes(x))) { it.vals.rozmir_nakonechnyka = D392.filter(x => uni.has(x)); const cov = new Set(it.vals.rozmir_nakonechnyka.map(sizeOf));
         if ((it.vals.rozmir_robochoho_kintsia || []).every(x => cov.has(num(x)))) it.vals.rozmir_robochoho_kintsia = []; }
