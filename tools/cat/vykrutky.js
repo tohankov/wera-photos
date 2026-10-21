@@ -44,6 +44,7 @@ for (const it of I) { const s = it.secs[0], n = it.title; let vyd, p = null;
   else if (ACC.includes(s) || /знімач|намагніч|фіксатор|підставка|лопат/i.test(n)) vyd = 'Приладдя';   // owner 22.10.2026: «Приладдя для викруток» merged into «Приладдя» (stands -> «Підставка / тримач», cat/vyd_comp.js)
   else { vyd = 'Викрутка'; p = profileOf(it); }
   const v = { a: it.a, title: n, secs: it.secs, sec: s, vyd: [vyd], kind: vyd === 'Викрутка', profile: p ? [PROF[p]] : [], size: [], len: [], feat: vyd === 'Викрутка' ? features(it) : [] };
+  if (VC.rapidaptor(it.a, n)) v.feat.push('Патрон Rapidaptor');   // owner 22.10.2026: a Rapidaptor chuck by the name, the datasheet or the WERA composition (sets, handles too)
   if (it.a === '05004182001') v.vyd = ['Набір інструментів'];   // owner 21.10.2026: Bicycle Set 15 — tyre levers with bit holders + 4-in-1 bits
   if (vyd === 'Знімач') { const L = length(it); if (L) v.len = [L]; }
   if (v.kind) { const sz = p && size(it, p), L = length(it); if (sz) v.size = [sz]; if (L) v.len = [L];

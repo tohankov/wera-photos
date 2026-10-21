@@ -1,6 +1,8 @@
 // Group «Kraftform Kompakt» (1057): values from section, series table row (Vario) and title.
 // Reused only: vyd_instrumentu, profil, rozmir_nakonechnyka, osoblyvosti_vykrutky.
-const I = require('./1057_items.json');
+const I = require('./1057_items.json'); const VC = require('./vyd_comp.js');
+// owner 22.10.2026: products of other groups are not touched — 05059293001 Kompakt 60 + torque screwdriver sits in «Набори з динамометричним інструментом» and the Kompakt root (tiles): no «Особливості викрутки» filter
+const RAP_SKIP = new Set(['05059293001']);
 const norm = s => s.replace(/ W[Ee][Rr][Aa] \S+$/, '').replace(/[​]/g, '').replace(/(\d)\.(\d)/g, '$1,$2').replace(/(\d) ?["”″]/g, '$1″');
 const dec = v => (/,/.test(v) ? v : v + ',0');
 const PROF = { SL: 'SL (шліц)', PH: 'PH (Phillips)', PZ: 'PZ (Pozidriv)', TX: 'TX (TORX®)', HEX: 'HEX (шестигранник)', SQ: 'Квадрат (Robertson)', TRI: 'TRI-WING®', TS: 'TORQ-SET® Mplus', SP: 'Spanner (натяжні гвинти)' };
@@ -24,7 +26,7 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title); let vyd, kind = 
   const v = { a: it.a, title: it.title, secs: it.secs, sec: s, kind, vyd: [vyd], profile: [], size: [], feat: [] };
   if (kind === 'end') { const r = vario(it, n); if (r && r.ok) { v.profile = r.prof; v.size = r.size; } else disputed.push({ a: it.a, sec: s, what: 'Профіль / Розмір наконечника', why: 'не разобран из названия', title: it.title }); }
   else v.profile = tokens(n).map(k => PROF[k]);
-  if (/\bRA\b|RA-R|RA S|тріскачк|тріщатк/i.test(n)) v.feat.push('З тріскачкою'); if (/магазин/i.test(n)) v.feat.push('Магазин біт у ручці'); if (/Rapidaptor/i.test(n)) v.feat.push('Патрон Rapidaptor');
+  if (/\bRA\b|RA-R|RA S|тріскачк|тріщатк/i.test(n)) v.feat.push('З тріскачкою'); if (/магазин/i.test(n)) v.feat.push('Магазин біт у ручці'); if (VC.rapidaptor(it.a, n) && !RAP_SKIP.has(it.a)) v.feat.push('Патрон Rapidaptor');   // owner 22.10.2026: by the name, the datasheet or the WERA composition (cat/vyd_comp.js)
   if (/\bESD\b/.test(n)) v.feat.push('ESD'); if (/Stubby|коротк/i.test(n)) v.feat.push('Коротка (Stubby)'); if (/нержав/i.test(n)) v.feat.push('Нержавіюча сталь');
   if (/Imperial|дюймов/i.test(n)) v.feat.push('Дюймовий (Imperial)'); if (/гнучк/i.test(n)) v.feat.push('Гнучкий стрижень'); if (/магніт/i.test(n)) v.feat.push('З магнітом'); if (/кульков/i.test(n)) v.feat.push('Кулькова головка');
   out.push(v); }

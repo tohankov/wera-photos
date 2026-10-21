@@ -57,6 +57,8 @@ const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').so
 const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.includes(k))])];
 function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n && !G.order.includes(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: 0, use: false, why: `чужа характеристика, лише у ${n} з ${ps.length}` }; const vals = new Set(ps.flatMap(p => v(p, k))); if (!n) return { n, d: 0, use: false, why: 'немає значень' };
   // any filter but a feature («Особливості…», partial by nature) and «… у складі» needs at least half of the section (21.10.2026: «Привід» on 1 of 28 VDE sets)
+  // owner 22.10.2026: a length («Довжина …») stays wherever some products carry it (ESD sets: 3 screwdriver sets of 7 have blade lengths, handle + bits sets have none)
+  if (/^dovzhyna/.test(k) && n >= 2) return { n, d: vals.size, use: true };
   if (!/^osoblyvosti/.test(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів` };
   if (vals.size === 1 && n === ps.length && !/^dovzhyna/.test(k)) return { n, d: 1, use: false, why: `у всіх одне значення «${[...vals][0]}»` }; return { n, d: vals.size, use: true }; }
 const secRows = [], missing = [], single = []; const plans = {};

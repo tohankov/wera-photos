@@ -101,6 +101,19 @@ function kind(a, t, now) { const cmp = comp(a); const fst = first(a);
   return R(merged, merged.join() !== now.join() ? '«Приладдя для викруток» → «Приладдя»' : 'як є'); }
 // «З індикатором напруги» (Особливості викрутки): a voltage tester is in the WERA composition of the set (owner 22.10.2026)
 const withTester = a => comp(a).some(g => ctype(g.head) === 'tester');
+// «Патрон Rapidaptor» (Особливості викрутки) — owner 22.10.2026 (docs/report_1022f.md): the product has a Rapidaptor chuck by its name, its WERA datasheet, or — for a set —
+// a composition row / a component's datasheet (one nested set deep). A compatibility sentence («подходит к ручке … Rapidaptor», «можно использовать с … Rapidaptor») is not a chuck.
+// -> { how, q } | null
+const RAP = /Rapidaptor/i, RAP_COMPAT = /подходит|подходящ|можно использовать|использовать, например|совместим/i;
+// the clause before each «Rapidaptor» (from the previous sentence end, at most 150 characters) must not be a compatibility one; datasheet lines are wrapped, so the text is joined first
+const rapSentence = t => { const x = t.replace(/\s+/g, ' '); for (let i = x.search(RAP); i >= 0; i = x.indexOf('Rapidaptor', i + 1)) { const st = Math.max(x.lastIndexOf('. ', i) + 2, i - 150, 0);
+    if (RAP_COMPAT.test(x.slice(st, i + 10))) continue; const e = x.indexOf('. ', i); return x.slice(st, e < 0 || e > i + 90 ? i + 90 : e).trim(); } return null; };
+function rapidaptor(a, title = '') { if (RAP.test(title)) return { how: 'назва', q: title };
+  for (const g of comp(a)) { if (RAP.test(g.head)) return { how: 'склад', q: g.head };
+    for (const i of g.items) if (i.art && i.art !== a) { const s = rapSentence(text(i.art)); if (s) return { how: 'паспорт компонента ' + i.art, q: s };
+      for (const g2 of comp(i.art)) { if (RAP.test(g2.head)) return { how: 'вкладений набір ' + i.art, q: g2.head };
+        for (const i2 of g2.items) if (i2.art && i2.art !== i.art) { const s2 = rapSentence(text(i2.art)); if (s2) return { how: 'вкладений набір ' + i.art + ' → ' + i2.art, q: s2 }; } } } }
+  const s = rapSentence(text(a)); return s ? { how: 'паспорт', q: s } : null; }
 // generators (owner 22.10.2026): the written kind of every product of the three groups is cat/vyd_final.json (built by cat/vyd_1022.js from the site);
 // a product not in it (new) gets kind() of the generator's own value. compute=false (cat/import_group.js, every group): only vyd_final.json.
 // A «Викрутка з набором біт» carries no «Довжина стрижня»; a set with a voltage tester in the composition gets «З індикатором напруги».
@@ -110,4 +123,4 @@ function finishKinds(items, compute = true) { for (const it of items) { const no
   if (!compute) continue;
   if (to.includes('Викрутка з набором біт') && 'dovzhyna_stryzhnia' in it.vals) it.vals.dovzhyna_stryzhnia = [];
   if ('osoblyvosti_vykrutky' in it.vals && to.some(x => /^Набір|з набором/.test(x)) && withTester(it.a)) it.vals.osoblyvosti_vykrutky = [...new Set([...(it.vals.osoblyvosti_vykrutky || []), 'З індикатором напруги'])]; } return items; }
-module.exports = { COMP, has, NEED, ACC, isSet, compText, supports, text, first, parts, ctype, kind, withTester, KIND_OWNER, finishKinds };
+module.exports = { COMP, has, NEED, ACC, isSet, compText, supports, text, first, parts, ctype, kind, withTester, KIND_OWNER, finishKinds, rapidaptor };
