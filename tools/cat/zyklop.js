@@ -10,7 +10,7 @@ const DRIVE = { 1278: '1/4', 1303: '3/8', 1291: '1/2', 1276: '1/2', 1277: '1/2' 
 const t = require('../sections/tree_now.json'); const parentOf = Object.fromEntries(t.map(p => [p.id, p.parent]));
 const driveOfSec = s => { let x = s; while (x && !DRIVE[x]) x = parentOf[x]; return DRIVE[x] || null; };
 const PROF = { TX: 'TX (TORX®)', HEX: 'HEX (шестигранник)', PH: 'PH (Phillips)', PZ: 'PZ (Pozidriv)', SL: 'SL (шліц)', SOCK: 'Торцева головка (зовнішній шестигранник)' };
-const VYD_RU = { 'Торцева головка': 'Торцевая головка', 'Торцева головка подовжена': 'Торцевая головка удлинённая', 'Торцева головка з фіксуючою функцією': 'Торцевая головка с фиксирующей функцией', 'Торцева головка ударна Impaktor': 'Торцевая головка ударная Impaktor', 'Торцева головка ударна Impaktor подовжена': 'Торцевая головка ударная Impaktor удлинённая', 'Викруткова головка': 'Отвёрточная головка', 'Тріскачка': 'Трещотка', 'Набір з тріскачкою': 'Набор с трещоткой', 'Набір головок': 'Набор головок', 'Приладдя': 'Принадлежности' };
+const VYD_RU = { 'Торцева головка': 'Торцевая головка', 'Торцева головка подовжена': 'Торцевая головка удлинённая', 'Торцева головка з фіксуючою функцією': 'Торцевая головка с фиксирующей функцией', 'Торцева головка ударна Impaktor': 'Торцевая головка ударная Impaktor', 'Торцева головка ударна Impaktor подовжена': 'Торцевая головка ударная Impaktor удлинённая', 'Викруткова головка': 'Отвёрточная головка', 'Тріскачка': 'Трещотка', 'Набір з тріскачкою': 'Набор с трещоткой', 'Набір головок': 'Набор головок', 'Перехідник': 'Переходник', 'Приладдя': 'Принадлежности' };
 const DRV = { '1/4': 'квадрат 1/4″', '3/8': 'квадрат 3/8″', '1/2': 'квадрат 1/2″', hex: 'шестигранник 1/4″', mini2: 'Zyklop Mini 2 (пряме приєднання головок)' };
 const DRV_RU = { 'квадрат 1/4″': 'квадрат 1/4″', 'квадрат 3/8″': 'квадрат 3/8″', 'квадрат 1/2″': 'квадрат 1/2″', 'шестигранник 1/4″': 'шестигранник 1/4″', 'Zyklop Mini 2 (пряме приєднання головок)': 'Zyklop Mini 2 (прямое присоединение головок)' };
 const num = s => String(s).replace('.', ',').trim(); const mm = s => num(s).replace(/,0$/, '') + ' мм';
@@ -33,6 +33,7 @@ function length(it) { const r = it.row || {}; const L = r['Загальна до
   const f = path.join(__dirname, '../batch/ds', it.a + '.txt'); if (fs.existsSync(f)) { const h = fs.readFileSync(f, 'utf8').split('\n')[0]; const d = h.match(/ x (\d+(?:\.\d+)?) мм\s*$/); if (d) return [mm(d[1]), 'даташит']; }
   return [null, 'нет длины']; }
 const VC = require('./vyd_comp.js');
+const ADAPTER = /^\S+(?: \S+)?(?: \d\/\d")? (Переходник|Соединительная деталь)/i, ADAPTER_HOLD = new Set(['05003641001']);
 const out = [], disputed = [];
 for (const it of I) {
   // leaf section of this group the item is shown in (main if inside the group, else the first alt inside)
@@ -44,6 +45,9 @@ for (const it of I) {
   else if (['05049005001', '05049004001'].includes(it.a)) vyd = 'Приладдя';   // owner 21.10.2026: adapter 9549 / hinge 9550 Tool-Check Modular in «Набори Zyklop Mini»
   else if (RSETS.includes(sec) || (sec === 1271) || (/набір/i.test(n) && [1276, 1277].includes(sec))) vyd = 'Набір з тріскачкою';
   else if (HSETS.includes(sec)) vyd = /неукомплект|тримач[^,]*неукомплект/i.test(n) || /^Пояс/i.test(n) ? 'Приладдя' : 'Набір головок';
+  // owner 22.10.2026 (docs/fill_gaps.md item 6): the kind of a single product is the datasheet's, not the section's — the WERA datasheet names it «Переходник» /
+  // «Соединительная деталь» (784 C/1, 8784 A1, 8784 B1) -> «Перехідник» («Приладдя Zyklop» gave a second kind «Приладдя»). 8784 C2 05003641001 — waits for the owner (ADAPTER_HOLD)
+  else if ((ACC.includes(sec) || [1276, 1277].includes(sec)) && ADAPTER.test(VC.first(it.a)) && !ADAPTER_HOLD.has(it.a)) vyd = 'Перехідник';
   else if (ACC.includes(sec) || [1276, 1277].includes(sec)) vyd = 'Приладдя';
   // owner 21.10.2026: the section rule is checked against the WERA datasheet (cat/vyd_comp.js). «Набір з тріскачкою» without a ratchet in the composition
   // (Tool-Check Modular modules in «Набори Zyklop Mini»: 05049002001 handle + micro bits, 05049003001 L-keys) takes the kind its composition shows;

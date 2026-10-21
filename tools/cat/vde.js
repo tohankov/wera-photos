@@ -33,6 +33,8 @@ for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd,
   if (/індикатор напруги/i.test(n) && !/^Набір/i.test(n)) vyd = 'Індикатор напруги';
   else if (/Joker/i.test(n) && /ріжков/i.test(n)) vyd = /^Набір/i.test(n) ? 'Набір ключів' : 'Ріжковий ключ';
   else if (/^Набір|набір|\bSet\b|у наборі/i.test(n) || [1230, 1239, 1246, 1263].includes(s)) vyd = /^Пояс/i.test(n) ? 'Приладдя' : (ZYK.includes(s) ? 'Набір головок' : 'Набір викруток');
+  // owner 22.10.2026 (docs/fill_gaps.md item 6): a torque handle (7440 / 7441 / 7444 VDE, 7508 / 7516 VDE) is a «Динамометрична викрутка» only — the kind by the main function
+  else if (/динамометр/i.test(n)) vyd = 'Динамометрична викрутка';
   else if (/ручка-тримач|викрутка-тримач|ручка з тріскачкою|Т-подібна ізольована ручка/i.test(n) || s === 1231) vyd = 'Ручка-тримач';
   else if (/подовжувач|адаптер|перехідник|Пояс/i.test(n) || [1264, 1453].includes(s)) vyd = 'Приладдя';
   else if (/тріскачка/i.test(n) || [1266, 1456].includes(s)) vyd = 'Тріскачка';

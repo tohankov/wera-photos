@@ -36,6 +36,9 @@ for (const p of L) { const vy = v(p, 'vyd_instrumentu'); if (!vy.length) continu
       const other = vy.filter(x => x !== val);
       r.res = other.some(isSetVal) ? 'помилка' : 'спірне'; r.why = other.some(isSetVal) ? `набір: одиночний вид поруч із «${other.filter(isSetVal).join(', ')}»` : 'у даташиті склад із кількох позицій, а вид одиночний'; r.quote = compText.slice(0, 400); }
     rows.push(r); } }
+// owner 22.10.2026 (docs/fill_gaps.md item 6): one product — one kind (a single product by the datasheet and its main function, not by the section); two kinds or more is an error
+for (const p of L) { const vy = v(p, 'vyd_instrumentu'); if (vy.length < 2) continue;
+  rows.push({ a: p.article, title: p.title.ua, sec: name[p.parent.id], all: vy.join(' + '), val: vy.join(' + '), src: (SRC[p.article] || []).map(s => s.g + ': ' + s.v.join(' + ')).join('; '), res: 'два види', why: 'у товару два види і більше — вид один, за паспортом / складом WERA', quote: C.first(p.article) }); }
 fs.writeFileSync(path.join(__dirname, 'vyd_audit.json'), JSON.stringify({ checked: L.filter(p => v(p, 'vyd_instrumentu').length).length, values: L.reduce((n, p) => n + v(p, 'vyd_instrumentu').length, 0), rows }, null, 1));
 console.log('products with «Вид інструменту»', L.filter(p => v(p, 'vyd_instrumentu').length).length, '| flagged values', rows.length, JSON.stringify(rows.reduce((c, r) => (c[r.res] = (c[r.res] || 0) + 1, c), {})));
 for (const r of rows) console.log(r.res.padEnd(8), r.a, '|', r.all, '| −', r.val, '|', r.src, '|', r.why, '|', r.title.slice(0, 60), '\n          ', (r.quote || '').slice(0, 200));

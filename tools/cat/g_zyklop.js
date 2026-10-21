@@ -1,6 +1,6 @@
 // Group definition «Тріскачки та приладдя Zyklop» (1270) for cat/import_group.js.
 const { out, disputed, VYD_RU, DRV_RU } = require('./zyklop.js');
-const VYD_ORDER = ['Торцева головка', 'Торцева головка подовжена', 'Торцева головка з фіксуючою функцією', 'Торцева головка ударна Impaktor', 'Торцева головка ударна Impaktor подовжена', 'Викруткова головка', 'Тріскачка', 'Набір з тріскачкою', 'Набір головок', 'Приладдя'];
+const VYD_ORDER = ['Торцева головка', 'Торцева головка подовжена', 'Торцева головка з фіксуючою функцією', 'Торцева головка ударна Impaktor', 'Торцева головка ударна Impaktor подовжена', 'Викруткова головка', 'Тріскачка', 'Набір з тріскачкою', 'Набір головок', 'Перехідник', 'Приладдя'];
 const DRV_ORDER = ['квадрат 1/4″', 'квадрат 3/8″', 'квадрат 1/2″', 'шестигранник 1/4″', 'Zyklop Mini 2 (пряме приєднання головок)'];
 const items = out.map(v => ({ a: v.a, title: v.title, secs: v.secs, sec: v.sec, kind: v.kind, vals: {
   vyd_instrumentu: [].concat(v.vyd || []), pryvid: v.drv, profil: v.profile ? [v.profile] : [], rozmir_holovky: v.size[0] ? [v.size[0]] : [], dovzhyna_holovky: v.len[0] ? [v.len[0]] : [] } }));
