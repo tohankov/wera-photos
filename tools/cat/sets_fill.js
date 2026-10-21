@@ -20,7 +20,8 @@ function fromText(head, size) { const z = String(size).trim().replace(/(\d)\.(\d
   else return null;
   if (/Impaktor|\bIMP\b/i.test(head)) typ.push('Ударна (Impaktor)'); else if (/BiTorsion|TorsionBi|торсион/i.test(head)) typ.push('Торсійна'); if (/Diamond|алмаз/i.test(head)) typ.push('Алмазне покриття'); if (/Stainless|нержав/i.test(head)) typ.push('Нержавіюча сталь');
   const L = len + ' мм'; return { vals: { profil: [prof], rozmir: [sz], rozmir_nakonechnyka: [sz], rozmir_robochoho_kintsia: [sz], dovzhyna: [L], dovzhyna_robochoho_kintsia: [L], dovzhyna_stryzhnia: [L], typ_bity: typ } }; }
-const NONPRODUCT = /^(Ручка-тримач|Приладдя|Приладдя для викруток|Бітотримач|Підставка)/;
+// accessories give a set no values (owner 21.10.2026); a remover (Знімач 1429 / 1529 ESD) too — its 50 мм is not a blade length (22.10.2026)
+const NONPRODUCT = /^(Ручка-тримач|Приладдя|Приладдя для викруток|Бітотримач|Підставка|Знімач)/;
 function fill(name, items, chars) {
   if (process.env.SETS_FILL === 'off') return { items, disputed: [], report: null };
   const L = J('sets_list.json') || {}, C = J('sets_comp.json') || {}, M = J('member_vals.json') || {}, D = J('dicts_snapshot.json') || {};
@@ -28,6 +29,10 @@ function fill(name, items, chars) {
   const out = items.map(it => { if (!sets.has(it.a)) return it; rep.sets++; const comp = C[it.a];
     if (!comp || !comp.length) { rep.noComp++; disputed.push({ a: it.a, sec: (it.secs || [])[0], what: 'Состав набора', why: 'состав не найден в datasheet WERA — значения по составу не записаны', title: it.title }); return it; }
     const mem = comp.flatMap(g => g.items.map(x => (x.art && M[x.art]) ? (x.art === it.a ? null : M[x.art]) : fromText(g.head, x.size))).filter(m => m && !m.nonProduct);
+    // a component that is itself a set with a WERA composition (nested set: Tool-Check Modular 1 inside Modular Set 1) is opened down to its leaves
+    // (cat/comp_expand.js; 22.10.2026 — before, only the nested set's own values counted, and those are empty when member_vals.json is built)
+    const { expand } = require('./comp_expand.js');
+    for (const x of comp.flatMap(g => g.items)) if (x.art && x.art !== it.a && C[x.art] && C[x.art].length) mem.push(...expand(x.art, 1, new Set([it.a, x.art])).filter(r => r.known && !r.set && !r.nonProduct).map(r => ({ vals: r.vals })));
     const vals = { ...it.vals }; let added = 0;
     for (const c of chars.filter(c => c.key !== 'vyd_instrumentu')) { const dict = D[c.key] ? new Set(D[c.key].values) : null; const got = new Set(vals[c.key] || []);
       for (const m of mem) for (const k of [c.key, ...(ALT[c.key] || [])]) for (const v of (m.vals[k] || []).map(fixZero)) { if (got.has(v)) continue;

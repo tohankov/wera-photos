@@ -17,7 +17,8 @@ out.push('# Фильтры каталога — план для админки (
   '- «Характеристики для сторінки товару» — только на разделе группы. «… у складі» туда не ставить никогда (служебные фильтры наборов).',
   '- «Характеристики з посиланням на фільтр» — на разделе группы, как написано.',
   '- Фильтр без значений в разделе Хорошоп прячет сам. Свой список подраздел получает только там, где унаследованный фильтр был бы с одним значением на все товары или лишним (например, «Профіль» рядом с «Профіль і розмір», размеры в наборах).',
-  '- Разделы с 1–2 товарами наследуют — своего списка не надо.',
+  '- Правило (владелец 22.10.2026): фильтр, где у всех товаров раздела одно и то же значение, не ставится — кроме «Довжина…» в мм; «Довжина ключа» (Стандартний / Подовжений / Короткий) с одним значением — не ставится. Признак («Особливості…», «… у складі», «Тип біт у наборі») — только если он есть хотя бы у 2 товаров раздела. Фильтр не убирается из-за того, что у принадлежности / ручки нет значения. Подразделы «Біти» получают свой список, только где мёртвых фильтров 2 и больше («Довжина» не считается).',
+  '- Разделы с 1 товаром наследуют — своего списка не надо.',
   '- Дизайн фильтра (как в «Біти»): вертикальный, размер M, сворачивание включено, все группы развёрнуты, максимум 10 значений + «Показать еще».', '');
 let n = 0;
 const groupBlock = (g, lvl) => { const plan = P(g); const T = plan.titles; const nm = k => T[k] || k;
@@ -34,19 +35,37 @@ const groupBlock = (g, lvl) => { const plan = P(g); const T = plan.titles; const
   if (plan.link.length) b.push(`- З посиланням на фільтр: ${plan.link.map(nm).join(', ')}`);
   if (plan.own.length) { b.push('', `**Свой список «Фільтри» у подразделов (${plan.own.length}):**`); for (const o of plan.own) b.push(`- ${o.path.replace(rootPath + ' → ', '')}: ${[...head, ...o.list.map(nm)].join(' → ')}`); }
   else if (Object.keys(plan.plans).length > 1) b.push('', 'Подразделы наследуют — своих списков не надо.');
+  if (g === 'vykrutky') plan.empty = plan.empty.filter(x => !/TORQ-SET/.test(x));   // owner 20.10.2026: TORQ-SET — he deals with it himself
   if (plan.empty.length) b.push('', `**Пустые разделы (0 товаров) — скрыть (глаз в дереве):** ${plan.empty.map(x => '«' + x + '»').join('; ')}`);
   b.push(''); return b; };
-// «Викрутки» are set up by the owner: only what differs on the storefront now from the plan
-const vkBlock = lvl => { const plan = P('vykrutky'); const T = plan.titles; const nm = k => T[k] || k; const b = [`${lvl} Викрутки (уже настроено — только разница)`, ''];
-  const diffs = []; for (const [id, pl] of Object.entries(plan.plans)) { if (pl.tiny) continue; const want = (pl.inherits ? plan.rootList.filter(k => pl.present.includes(k)) : pl.list).map(nm);
-    const now = (SC[id] ? SC[id].ua.filters : []).map(f => f.title).filter(t => t !== '?' && t !== 'Бренд'); const add = want.filter(t => !now.includes(t)), rem = now.filter(t => !want.includes(t));
-    if (add.length || rem.length) diffs.push(`- ${pl.path.replace('Викрутки → ', '')}: ${rem.length ? 'убрать ' + rem.map(x => '«' + x + '»').join(', ') : ''}${rem.length && add.length ? '; ' : ''}${add.length ? 'добавить ' + add.map(x => '«' + x + '»').join(', ') : ''}`); }
-  b.push(diffs.length ? `Витрина сейчас отличается от плана в ${diffs.length} разделах (сравнение набора фильтров, без порядка). «Набори викруток з поперечною ручкою» и «Ручки-тримачі з електростатичним захистом ESD» — из твоего списка правок. Остальные — новые после 21.10: у всех товаров раздела теперь одно значение «Особливості викрутки» («ESD» или «Нержавіюча сталь»), а фильтр с одной галочкой ничего не выбирает:` : 'Витрина совпадает с планом по набору фильтров (порядок здесь не сравнивается — его проверяет `node cat/plan_vs_site.js`).', '', ...diffs, '');
-  plan.empty = plan.empty.filter(x => !/TORQ-SET/.test(x));   // owner 20.10.2026: TORQ-SET — he deals with it himself
-  if (plan.empty.length) b.push(`**Пустой раздел — скрыть:** ${plan.empty.map(x => '«' + x + '»').join('; ')}`, '');
-  return b; };
+// owner 22.10.2026: «Викрутки» and «Діелектричні» are already set up in the admin — at the top of the plan only WHAT TO CHANGE. What the admin holds now:
+// cat/night_plan_<group>_configured.json (the plan the owner set up — the rules before 22.10 (h); the storefront scan matched it) and the storefront scan
+// (the filter blocks in their order). Per listing section: own list needed now / no longer needed, or a different effective list. Full paths by names.
+const adminDiff = () => { const b = ['## Что поменять в админке — уже настроенные «Викрутки», «Діелектричні інструменти» и «Біти»', ''];
+  let cnt = 0; const parts = [];
+  for (const g of ['vykrutky', 'vde', 'biti']) { const plan = P(g); const nm = k => plan.titles[k] || k; const rows = []; const cf = path.join(__dirname, `night_plan_${g}_configured.json`);
+    const old = fs.existsSync(cf) ? JSON.parse(fs.readFileSync(cf, 'utf8')) : null; const rootPath = ((SC[plan.roots[0]] && SC[plan.roots[0]].path) || plan.name).replace(/ +$/, '');
+    const rootNew = [...head, ...plan.rootList.map(nm)].join(' → '), rootOld = old ? [...head, ...old.rootList.map(nm)].join(' → ') : null;
+    const rootLine = rootOld && rootOld !== rootNew ? `- **${rootPath}** (раздел группы) — поменять «Фільтри».
+  Сейчас: ${rootOld}
+  Надо: ${rootNew}` : null; if (rootLine) cnt++;
+    for (const [id, pl] of Object.entries(plan.plans)) { if (pl.tiny) continue; const keys = pl.inherits ? plan.rootList.filter(k => pl.present.includes(k)) : pl.list;
+      const want = keys.filter(k => has(id, k)).map(nm); const now = (SC[id] ? SC[id].ua.filters : []).map(f => f.title).filter(t => t && t !== '?' && t !== 'Бренд' && t !== 'Ціна');
+      const op = old && old.plans[id]; const oldOwn = op ? !op.inherits && !op.tiny : false, newOwn = !pl.inherits; const same = JSON.stringify(want) === JSON.stringify(now);
+      let act = null; if (same && !rootLine) continue;   // the storefront already shows the planned list and the group list stays — nothing to do
+      if (newOwn && !oldOwn) act = 'задать свой список' + (same ? ' (на витрине сейчас так и есть — через наследование; после правки раздела группы без своего списка изменится)' : '');
+      else if (newOwn && !same) act = 'заменить свой список';
+      else if (!newOwn && oldOwn && !same) act = 'очистить свой список — будет наследовать от «' + rootPath + '»';   // an own list that equals what inheritance gives — left as is
+      else if (!newOwn && !same) act = rootLine ? 'изменится сам после правки раздела группы' : 'проверить: наследует от «' + rootPath + '»';
+      if (!act) continue; const rem = now.filter(t => !want.includes(t)), add = want.filter(t => !now.includes(t));
+      const what = [rem.length ? 'убрать ' + rem.map(x => '«' + x + '»').join(', ') : '', add.length ? 'добавить ' + add.map(x => '«' + x + '»').join(', ') : '', !same && !rem.length && !add.length ? 'поменять порядок' : ''].filter(Boolean).join('; ');
+      rows.push(`- **${pl.path}** — ${act}${what ? '; на витрине: ' + what : ''}.
+  Сейчас на витрине: ${now.length ? now.join(' → ') : '—'}
+  Надо: ${[...head, ...want].join(' → ')}`); }
+    cnt += rows.length; parts.push(`**${plan.name}**`, '', ...(rootLine ? [rootLine] : [`- **${rootPath}** (раздел группы) — без изменений: ${rootNew}`]), ...rows, ''); }
+  b.push(`Сравнение: что настроено сейчас (прошлый план и витрина UA, порядок блоков) и новый план ниже. Только разделы, где надо что-то сделать — всего ${cnt}. «Хіти продажів» и «Ціна» не сравниваются (всегда первыми; Хорошоп прячет их сам, когда стикеров нет или цена одна). Полные пути — названиями разделов.`, '', ...parts); return b; };
+out.push(...adminDiff());
 for (const g of ORDER) { n++; if (Array.isArray(g)) { out.push(`## ${n}. ${g[0]}`, ''); for (const s of g[1]) out.push(...groupBlock(s, '###')); }
-  else if (g === 'vykrutky') out.push(...vkBlock(`## ${n}.`));
   else out.push(...groupBlock(g, `## ${n}.`)); }
 // owner 22.10.2026 (item 10 of docs/preview_vid.md): sections of «Викрутки», Kraftform Kompakt, «Діелектричні» with products of 2+ kinds after the kinds
 // by the WERA composition — the FULL «Фільтри» list (as an own list of the section), the count per kind

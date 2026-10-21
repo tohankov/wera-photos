@@ -22,6 +22,8 @@ const notGap = (p, k, kind) => { const vy = v(p, 'vyd_instrumentu');
   if (NO_DATA[p.article] && (SIZE.has(k) || /^dovzhyna/.test(k))) return NO_DATA[p.article];
   if (/^sklad_/.test(k) && !screwSet(p)) return 'набір без гвинтових профілів у складі (торцеві головки / торцеві викрутки / тріскачки)';
   if (TORQUE.has(k) && !vy.some(x => /динамометр/i.test(x))) return 'не динамометричний інструмент — моменту немає';
+  // owner 22.10.2026 (principle): a property the product does not have is not invented — a ratchet has no tip / bit size
+  if (SIZE.has(k) && !/^sklad_/.test(k) && vy.length && vy.every(x => x === 'Тріскачка')) return 'тріскачка — розміру наконечника немає';
   if (/^dovzhyna/.test(k) && kind === 'приладдя') return vy.includes('Ручка-тримач') ? 'ручка-тримач — жала немає' : 'приладдя / перехідник — довжина не пишеться';
   return null; };
 const out = [], skipped = [];

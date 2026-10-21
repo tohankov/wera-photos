@@ -12,8 +12,10 @@ function sizesOf(it) { const n = norm(it.title), r = it.row || {}; let m;
   if ((m = n.match(/(\d+)x(\d+) мм/))) return [mm(m[1]), mm(m[2])];
   if ((m = n.match(/(\d+\/\d+)″\s*$/)) || (m = n.match(/, (\d+\/\d+)″/))) return [inch(m[1])];
   if ((m = n.match(/(\d+(?:,\d+)?) мм\s*$/)) || (m = n.match(/, (\d+(?:,\d+)?) мм/))) return [mm(m[1])]; return []; }
+// accessories in the composition (Velcro strips, pouches) give no sizes; cat/1185_sets.json = the full WERA PDF (all pages) since 22.10.2026
+const ACC = /липучк|сумк|футляр|чехол/i;
 function setSizes(a) { const g = SETS[a]; if (!g) return []; const s = [];
-  for (const grp of g.filter(x => !/^9610/.test(x.code))) for (const it of grp.items) { const z = norm(it.size); let m;
+  for (const grp of g.filter(x => !/^9610/.test(x.code) && !ACC.test(x.head))) for (const it of grp.items) { const z = norm(it.size); let m;
     if ((m = z.match(/^(\d+);[\d; ]*?(\d+) мм x/))) { s.push(range(m[1], m[2])); const k = z.match(/ x (\d+);[\d; ]*?(\d+) мм x/); if (k) s.push(range(k[1], k[2])); continue; }
     if (/двусторон/i.test(grp.head) && (m = z.match(/^(\d+(?:,\d+)?) мм x (\d+(?:,\d+)?) мм/))) { s.push(mm(m[1]), mm(m[2])); continue; }
     if ((m = z.match(/^(\d+(?:,\d+)?) мм/))) s.push(mm(m[1])); else if ((m = z.match(/^(\d+\/\d+)″/))) s.push(inch(m[1])); }

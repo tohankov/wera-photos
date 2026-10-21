@@ -133,7 +133,9 @@ const skFmt = (prof, sz) => prof === TXBO ? `TX BO ${sz}` : fmt(prof, sz, 'ua', 
 const FIX_SIZES = { '05004186001': [['PH (Phillips)', '1'], [TX, '10'], [TX, '25'], ...['2,5', '3,0', '4,0', '5,0'].map(s => ['HEX (шестигранник)', s])],
   '05004182001': [...['2,5', '3,0', '4,0', '5,0', '6,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25']],
   // Bicycle Set 8: rows not in the catalog — 8767 B TX 25, TX 30 x 107 mm; 8740 B (hex) 4, 5, 6 x 107 mm, 8, 10 x 100 mm
-  '05004176001': [...['4,0', '5,0', '6,0', '8,0', '10,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25'], [TX, '30']] };
+  '05004176001': [...['4,0', '5,0', '6,0', '8,0', '10,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25'], [TX, '30']],
+  // owner 22.10.2026: Hex-Plus Christmas 2026 — ONE card of the counter display is sold; datasheet «4 Г-образных ключа (размеры 3,0; 4,0; 5,0; 6,0) и открывалка для бутылок»
+  '05135825001': ['3,0', '4,0', '5,0', '6,0'].map(s => ['HEX (шестигранник)', s]) };
 // owner 19.10.2026: sets whose datasheet has no sizes — the composition from the set's page on wera.de («Werkzeuge in diesem Set»), fetched 19.10.2026
 const HX = 'HEX (шестигранник)'; const hexMM = ['1,5', '2,0', '2,5', '3,0', '4,0', '5,0', '6,0', '8,0', '10,0'].map(s => [HX, s]); const txL = ['8', '9', '10', '15', '20', '25', '27', '30', '40'].map(s => [TX, s]);
 const WERA_DE = {
@@ -155,7 +157,7 @@ const NOSIZE = prof => `${{ [TX]: 'TX', [TXBO]: 'TX BO', 'PlusMinus (PH/PZ + ш�
 // owner 19.10.2026: 05133126001 — «Профіль і розмір» stays empty (no slot thickness anywhere)
 // owner 21.10.2026: accessories get no sizes — removers 1429 / 1529 ESD, handle 1014 (its bit values in «Мікробіти 4 мм Micro» stay)
 const EMPTY392 = ['05133126001', '05027456001', '05027450001', '05051278001'];
-Object.assign(module.exports, { WERA_DE, PROFIL_FIX, NOSIZE, NOSIZE_RU, EMPTY392 });
+Object.assign(module.exports, { WERA_DE, FIX_SIZES, PROFIL_FIX, NOSIZE, NOSIZE_RU, EMPTY392 });
 function buildSklad(L, ctx) { const { cp, v } = ctx; const items = require('./g_sklad.js').items; const byA = Object.fromEntries(L.map(p => [p.article, p])); const out = [];
   for (const it of items) { const p = byA[it.a]; if (!p) continue; const c = hasComp(it.a) ? cp(it.a) : { pairs: [], unk: [] }; const pairs = [...c.pairs, ...(FIX_SIZES[it.a] || []), ...((WERA_DE[it.a] || {}).pairs || [])];
     // no composition sizes: a one-profile set takes the sizes its group already wrote from WERA (L-key sets: «Розмір ключа»)

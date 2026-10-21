@@ -19,6 +19,9 @@ const TITLE = { vyd_instrumentu: 'Вид інструменту', profil: 'Пр�
 const SKLAD = ['sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus'];
 const SETSIZE = new Set(['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir']);   // replaced by «… у складі» in set sections
 const CORE = new Set(['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'diapazon_momentu']);   // a product without it disappears when it is filtered
+// owner's own lists (22.10.2026, docs/filters_rule_check.md п. 6, 7): Ручки-тримачі Kompakt VDE, Спеціальні вставки Kompakt VDE; «Спеціальні викрутки … Kraftform Micro» (+ ESD) — the list of 20.10
+const OWNER_LIST = { 1231: ['vyd_instrumentu', 'diapazon_momentu'], 1232: ['vyd_instrumentu', 'profil', 'dovzhyna_robochoho_kintsia'],
+  1130: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'], 1148: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'] };
 const VYD_KEEP = new Set([1129, 1130, 1148]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds); owner 20.10 / 22.10.2026: both «Спеціальні викрутки … Kraftform Micro» (1130) and «… Micro ESD» (1148) — with «Вид»
 const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'rozmir_nasadky'];
 const GROUPS = {
@@ -55,19 +58,26 @@ const prodIn = id => L.filter(p => vis(p) && secs(p).includes(id));
 const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').some(x => /^Набір|Набор|^Викрутка з набором біт$/.test(x));   // 22.10.2026: a handle + bits is a set
 // characteristics a section's products carry, in the group's order, then the others met there
 const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.includes(k))])];
+// a feature (признак): «Особливості …» (incl. «Особливості динамометра», owner 22.10.2026), «… у складі», «Тип біт у наборі», «Інструмент у ложементі» — partial by nature
+const ISFEAT = k => /^osoblyvosti/.test(k) || SKLAD.includes(k) || k === 'typ_bit_u_nabori' || k === 'instrument_u_lozhementi';
+// owner 22.10.2026 (docs/filters_rule_check.md п. 6): a filter where every product carrying it has the same single value is not set — except «Довжина …» in mm;
+// «Довжина ключа» (Стандартний / Подовжений / Короткий — a category, not mm) with one value is not set; a feature only when 2+ products carry it and not all the same.
+// A filter is NOT dropped because an accessory / handle has no value (a product without the property is not invented a value).
 function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n && !G.order.includes(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: 0, use: false, why: `чужа характеристика, лише у ${n} з ${ps.length}` }; const vals = new Set(ps.flatMap(p => v(p, k))); if (!n) return { n, d: 0, use: false, why: 'немає значень' };
   // any filter but a feature («Особливості…», partial by nature) and «… у складі» needs at least half of the section (21.10.2026: «Привід» on 1 of 28 VDE sets)
   // owner 22.10.2026: a length («Довжина …») stays wherever some products carry it (ESD sets: 3 screwdriver sets of 7 have blade lengths, handle + bits sets have none)
-  if (/^dovzhyna/.test(k) && n >= 2) return { n, d: vals.size, use: true };
-  if (!/^osoblyvosti/.test(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів` };
-  if (vals.size === 1 && n === ps.length && !/^dovzhyna/.test(k)) return { n, d: 1, use: false, why: `у всіх одне значення «${[...vals][0]}»` }; return { n, d: vals.size, use: true }; }
+  if (/^dovzhyna/.test(k) && n >= 2 && [...vals].every(x => / мм$/.test(x))) return { n, d: vals.size, use: true };
+  if (ISFEAT(k)) { if (n < 2) return { n, d: vals.size, use: false, why: `ознака лише в 1 товару` };
+    if (n === ps.length && new Set(ps.map(p => JSON.stringify(v(p, k).sort()))).size === 1) return { n, d: vals.size, use: false, why: `у всіх однакове значення «${v(ps[0], k).join(' + ')}»` }; return { n, d: vals.size, use: true }; }
+  if (n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів` };
+  if (vals.size === 1) return { n, d: 1, use: false, why: `у всіх одне значення «${[...vals][0]}»${n < ps.length ? ` (у ${n} з ${ps.length}, решта без значення)` : ''}` }; return { n, d: vals.size, use: true }; }
 const secRows = [], missing = [], single = []; const plans = {};
 for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodIn(id); const hid = L.filter(p => !vis(p) && secs(p).includes(id)).length;
   const row = { id, path: t.path, depth: t.depth, status: sc ? sc.ua.status : '-', shows: listing(id) ? 'товари' : (kids[id] || []).length ? 'плитки підрозділів' : 'порожньо', vis: ps.length, hid, filtersNow: sc ? sc.ua.filters.filter(f => f.title !== '?').map(f => `${f.title}(${f.vals.length})`).join(', ') : '' };
   secRows.push(row); if (!listing(id)) continue;
   const setSec = ps.filter(isSet).length * 2 >= ps.length; row.kind = setSec ? 'набори' : 'товари';
   const cand = setSec ? [...ALLK.filter(k => !SETSIZE.has(k)).slice(0, 1), ...SKLAD, ...ALLK.filter(k => !SETSIZE.has(k)).slice(1)] : ALLK;
-  const use = [], drop = []; if (ps.length <= 2) drop.push(`розділ з ${ps.length} товар(ами) — фільтри не потрібні`); else for (const k of cand) { const u = useful(ps, k); if (u.use) use.push(k); else if (u.n) { drop.push(`${TITLE[k]}: ${u.why}`); if (!SKLAD.includes(k)) single.push({ path: t.path, char: TITLE[k], why: u.why, n: ps.length }); } }
+  const use = [], drop = []; if (ps.length <= 1) drop.push(`розділ з ${ps.length} товаром — фільтри не потрібні`); else for (const k of cand) { const u = useful(ps, k); if (u.use) use.push(k); else if (u.n) { drop.push(`${TITLE[k]}: ${u.why}`); if (!SKLAD.includes(k)) single.push({ path: t.path, char: TITLE[k], why: u.why, n: ps.length }); } }
   // «Профіль» next to «Профіль і розмір» repeats it (the owner's «Викрутки» have no «Профіль»)
   { const i = use.indexOf('profil'); if (i >= 0 && use.includes('rozmir_nakonechnyka')) { use.splice(i, 1); drop.push('Профіль: є «Профіль і розмір»'); } }
   // «Вид інструменту»: only when the second kind is at least a fifth of the section (19 screwdrivers + 2 handles is not a choice),
@@ -79,7 +89,8 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   for (const k of ['rozmir_robochoho_kintsia', 'rozmir']) { const i = use.indexOf(k); if (i >= 0 && use.some(x => x !== k && SIZE.includes(x) && x !== 'rozmir_nasadky')) { use.splice(i, 1); drop.push(`${TITLE[k]}: дублює основний розмір розділу`); } }
   // set sections: a bare size / profile is not a filter there (sizes are in «… у складі»)
   if (setSec) for (const k of SETSIZE) { if (ps.some(p => v(p, k).length)) drop.push(`${TITLE[k]}: у наборах — «… у складі»`); }
-  plans[id] = { path: t.path, setSec, tiny: ps.length <= 2, use, drop, present: [...cand, ...SETSIZE].filter(k => ps.some(p => v(p, k).length)) };
+  if (OWNER_LIST[id]) { use.length = 0; use.push(...OWNER_LIST[id].filter(k => ps.some(p => v(p, k).length))); drop.push('список власника'); }
+  plans[id] = { path: t.path, setSec, tiny: ps.length <= 1, owner: !!OWNER_LIST[id], use, drop, present: [...cand, ...SETSIZE].filter(k => ps.some(p => v(p, k).length)) };
   row.planned = use.map(k => TITLE[k]).join(', '); row.notUsed = drop.join('; ');
   for (const p of ps) for (const k of use.filter(k => CORE.has(k) && G.order.includes(k) && (k === 'vyd_instrumentu' || !isSet(p)))) if (!v(p, k).length) missing.push({ path: t.path, a: p.article, title: p.title.ua, char: TITLE[k], vyd: v(p, 'vyd_instrumentu').join(', ') }); }
 // the group list: per characteristic, in the group's order — taken when more listing sections use it than have it but do not use it
@@ -90,13 +101,20 @@ const orderKey = k => { const i = [...G.order, ...SKLAD].indexOf(k); return i < 
 const nSet = ids.filter(id => plans[id].setSec).length;
 for (const k of keysAll.sort((a, b) => orderKey(a) - orderKey(b))) { const u = ids.filter(id => plans[id].use.includes(k)).length, bad = ids.filter(id => !plans[id].use.includes(k) && plans[id].present.includes(k) && !(plans[id].setSec && SETSIZE.has(k))).length;
   if (SKLAD.includes(k) ? nSet * 2 < ids.length : !G.order.includes(k)) continue; if (u >= 2 && u > bad) rootList.push(k); }
+// a group the owner has already set up (cat/night_plan_<group>_configured.json, 22.10.2026): its group list stays as configured while every key of it is still
+// used by 2+ listing sections — fewer changes in the admin; the subsections' own lists are computed against it
+{ const cf = path.join(__dirname, `night_plan_${GK}_configured.json`); if (fs.existsSync(cf)) { const cr = JSON.parse(fs.readFileSync(cf, 'utf8')).rootList;
+    if (cr.every(k => ids.filter(id => plans[id].use.includes(k)).length >= 2) && JSON.stringify(cr) !== JSON.stringify(rootList)) { console.log('group list kept as configured:', cr.join(', '), '(rules gave', rootList.join(', ') + ')'); rootList.length = 0; rootList.push(...cr); } } }
 // a group of one listing section (the group section itself lists the products): its list is that section's list
 if (ids.length === 1) { rootList.length = 0; const P1 = plans[ids[0]]; rootList.push(...(P1.setSec ? [...P1.use.filter(k => k === 'vyd_instrumentu'), ...P1.use.filter(k => SKLAD.includes(k)), ...P1.use.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : P1.use)); }
 // set keys go after «Вид інструменту»: in the group list only when most listing sections are set sections
 const own = []; for (const id of ids) { const P0 = plans[id]; const inh = rootList.filter(k => P0.present.includes(k)); const want = [...P0.use].sort((a, b) => (P0.setSec && SKLAD.includes(a) !== SKLAD.includes(b) ? 0 : 0) || orderKey(a) - orderKey(b));
   // set sections: «Вид інструменту», then «… у складі», then the rest
   const ordered = P0.setSec ? [...want.filter(k => k === 'vyd_instrumentu'), ...want.filter(k => SKLAD.includes(k)), ...want.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : want;
-  P0.list = ordered; P0.inherits = P0.tiny || JSON.stringify([...inh].sort()) === JSON.stringify([...want].sort()); if (!P0.inherits) own.push(id); }
+  P0.list = P0.owner ? want.slice().sort((a, b) => OWNER_LIST[id].indexOf(a) - OWNER_LIST[id].indexOf(b)) : ordered; P0.inherits = P0.tiny || JSON.stringify([...inh].sort()) === JSON.stringify([...want].sort()) && !P0.owner;
+  // «Біти» (owner 22.10.2026): a subsection gets its own list only where 2+ inherited filters are dead (one value), «Довжина» not counted; only «Профіль» dead — as is
+  if (GK === 'biti' && !P0.inherits && want.every(k => inh.includes(k)) && inh.filter(k => !want.includes(k) && !/^dovzhyna/.test(k)).length < 2) P0.inherits = true;
+  if (!P0.inherits) own.push(id); }
 // product page: what the group's products carry (main section in the group), «… у складі» never
 const mains = L.filter(p => vis(p) && inG.has(+p.parent.id)); const card = G.card || ALLK.filter(k => mains.filter(p => v(p, k).length).length >= Math.max(1, mains.length * 0.02)).sort((a, b) => orderKey(a) - orderKey(b));
 const link = G.link.filter(k => rootList.includes(k));

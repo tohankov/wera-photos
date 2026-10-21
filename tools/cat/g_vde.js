@@ -35,7 +35,8 @@ const sizeOf = x => num(x.replace(/^(PH\/S|PZ\/S|PH|PZ|TX|IP|IPR|HEX|Квадр�
 { const P = require('./pr_size.js'); for (const it of module.exports.items) { if (!(it.vals.vyd_instrumentu || []).some(x => x === 'Викрутка' || x === 'Змінна вставка' || x === 'Викруткова головка')) { it.vals.rozmir_nakonechnyka = [];
       const uni = new Set(SKK.flatMap(k => (P.SNAP && P.SNAP.values[k] && P.SNAP.values[k][it.a]) || []).filter(x => !/не вказано/.test(x)).map(x => x.replace(/^TX BO /, 'TX ')));
       if (uni.size && [...uni].every(x => D392.includes(x))) { it.vals.rozmir_nakonechnyka = D392.filter(x => uni.has(x)); const cov = new Set(it.vals.rozmir_nakonechnyka.map(sizeOf));
-        if ((it.vals.rozmir_robochoho_kintsia || []).every(x => cov.has(num(x)))) it.vals.rozmir_robochoho_kintsia = []; }
+        // owner 22.10.2026 (п. 8): a bare size covered by «Профіль і розмір» is dropped; socket / cabinet sizes «… мм» stay
+        it.vals.rozmir_robochoho_kintsia = (it.vals.rozmir_robochoho_kintsia || []).filter(x => / мм$|″$|^M\d/.test(x.trim()) || !cov.has(num(x))); }
       continue; }
     const r = P.tipValues(it.a, it.vals.profil || [], it.vals.rozmir_robochoho_kintsia || []); if (r.length) { it.vals.rozmir_nakonechnyka = r; it.vals.rozmir_robochoho_kintsia = []; it.tip = true; } } }
 // owner 22.10.2026: kinds by the WERA composition («Викрутка з набором біт», «Набір з тріскачкою» …, cat/vyd_final.json), «З індикатором напруги» on sets with a tester

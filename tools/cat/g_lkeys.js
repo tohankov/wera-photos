@@ -20,3 +20,7 @@ module.exports = {
 };
 // sets get all values of their composition (cat/sets_fill.js)
 { const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
+// owner 22.10.2026 (docs/filters_rule_check.md п. 1): a set without sizes in its datasheet composition takes «Розмір ключа» from the WERA composition on wera.de
+// («Werkzeuge in diesem Set», cat/pr_size.js WERA_DE) or the datasheet prose (FIX_SIZES: Hex-Plus Christmas — one card, 3,0; 4,0; 5,0; 6,0) — the same source as its «… у складі»
+{ const P = require('./pr_size.js'); for (const it of module.exports.items) { if (it.kind || (it.vals.rozmir_kliucha || []).length) continue;
+    const pairs = [...(P.FIX_SIZES[it.a] || []), ...((P.WERA_DE[it.a] || {}).pairs || [])]; if (pairs.length) it.vals.rozmir_kliucha = [...new Set(pairs.map(q => q[1]))]; } }

@@ -36,6 +36,8 @@ for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd,
   // owner 22.10.2026 (docs/fill_gaps.md item 6): a torque handle (7440 / 7441 / 7444 VDE, 7508 / 7516 VDE) is a «Динамометрична викрутка» only — the kind by the main function
   else if (/динамометр/i.test(n)) vyd = 'Динамометрична викрутка';
   else if (/ручка-тримач|викрутка-тримач|ручка з тріскачкою|Т-подібна ізольована ручка/i.test(n) || s === 1231) vyd = 'Ручка-тримач';
+  // owner 22.10.2026 (docs/filters_rule_check.md п. 7): 712 i VDE — WERA «Насадка-переходник» -> «Перехідник» (one product, one kind by the datasheet)
+  else if (/\b712 i\b/.test(n)) vyd = 'Перехідник';
   else if (/подовжувач|адаптер|перехідник|Пояс/i.test(n) || [1264, 1453].includes(s)) vyd = 'Приладдя';
   else if (/тріскачка/i.test(n) || [1266, 1456].includes(s)) vyd = 'Тріскачка';
   else if (/торцева/i.test(n) && ZYK.includes(s)) { vyd = 'Торцева головка'; kind = 'head'; }
@@ -46,6 +48,8 @@ for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd,
   if (kind) { const p = profileOf(nn, s); if (p) { v.profile = [PROF[p]]; const z = size(it, p); if (z) v.size = [z]; else disputed.push({ a: it.a, sec: s, what: 'Розмір робочого кінця', why: 'нет в таблице и названии', title: n }); }
     else disputed.push({ a: it.a, sec: s, what: 'Профіль', why: 'не определён', title: n });
     if (kind === 'blade') { const L = length(it); if (L) v.len = [L]; else disputed.push({ a: it.a, sec: s, what: 'Довжина робочого кінця', why: 'нет в таблице и названии', title: n }); } }
+  // owner 22.10.2026 (п. 7): 712 i VDE gets «Довжина робочого кінця» from its WERA datasheet «1/4" x 154 мм» (the value really exists — the product is found by the filter)
+  if (vyd === 'Перехідник') { const f = path.join(__dirname, '../batch/ds', it.a + '.txt'); const m = fs.existsSync(f) && fs.readFileSync(f, 'utf8').split('\n').slice(0, 3).map(x => x.replace(/^p\d+ /, '')).join(' ').match(/1\/4" x (\d+) мм/); if (m) v.len = [m[1] + ' мм']; }
   if (vyd === 'Ріжковий ключ') { const m = nn.match(/(\d+)-(\d+) мм/); if (m) v.size = [`${m[1]}–${m[2]} мм`]; }
   if (ZYK.includes(s) || /410 i VDE/.test(n)) v.drv = drive(n);
   // owner 22.10.2026 (docs/fill_gaps.md): handles for Kraftform Kompakt VDE blades («Исключительно для сменных отверток VDE») — the drive like the torque handles

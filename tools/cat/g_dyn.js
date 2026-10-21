@@ -1,5 +1,5 @@
 // Group definition «Динамометричний інструмент» (1195) for cat/import_group.js.
-const { out, disputed, BUCKETS } = require('./dyn.js');
+const { out, disputed } = require('./dyn.js');
 const VYD_NEW = ['Динамометричний ключ', 'Динамометрична викрутка', 'Індикатор крутного моменту', 'Набір з динамометричним інструментом', 'Змінна насадка', 'Ручка-вороток', 'Ремкомплект / запчастина'];
 const VYD_RU = { 'Динамометричний ключ': 'Динамометрический ключ', 'Динамометрична викрутка': 'Динамометрическая отвёртка', 'Індикатор крутного моменту': 'Индикатор крутящего момента', 'Набір з динамометричним інструментом': 'Набор с динамометрическим инструментом', 'Змінна насадка': 'Сменная насадка', 'Ручка-вороток': 'Рукоятка-вороток', 'Ремкомплект / запчастина': 'Ремкомплект / запчасть' };
 const DRV_NEW = ['квадрат 3/4″', '9×12 мм (змінні насадки)', '14×18 мм (змінні насадки)', 'Halfmoon / HIOS 4 мм', 'Kraftform Kompakt VDE (вставки)'];
@@ -9,14 +9,14 @@ const NAS = ['Ріжковий ключ', 'Ріжковий ключ Joker (са
 const NAS_RU = { 'Ріжковий ключ': 'Рожковый ключ', 'Ріжковий ключ Joker (самоналаштування)': 'Рожковый ключ Joker (самонастройка)', 'Накидний ключ': 'Накидной ключ', 'Накидний ключ з прорізом': 'Накидной ключ с прорезью', 'З квадратом': 'С квадратом', 'Тріскачка з квадратом': 'Трещотка с квадратом', 'Для зварювання': 'Для сварки' };
 const FEAT = ['ESD', 'VDE (ізольований)', 'Тріскачка з реверсом', 'Для правої та лівої різьби', 'Функція Torque Lock', 'Шкала в дюйм-фунтах (in·lb)', 'Пістолетна ручка', 'Т-подібна ручка'];
 const FEAT_RU = { 'VDE (ізольований)': 'VDE (изолированный)', 'Тріскачка з реверсом': 'Трещотка с реверсом', 'Для правої та лівої різьби': 'Для правой и левой резьбы', 'Функція Torque Lock': 'Функция Torque Lock', 'Пістолетна ручка': 'Пистолетная рукоятка', 'Т-подібна ручка': 'Т-образная рукоятка' };
-const TQ = BUCKETS.map(b => b[0]), TQ_RU = { 'понад 400 Н·м': 'свыше 400 Н·м' };
+// «Діапазон моменту»: exact WERA ranges in ascending order, in·lb last (owner 22.10.2026; the 6 bins «до 1 Н·м» … «понад 400 Н·м» were removed)
+const TQ = require('./torque_exact.json').order, TQ_RU = {};
 // insert sizes: mm, then ranges, then TORX — by number
 const nk = v => { const m = v.match(/^(\d+)(?:–(\d+))? мм$/); if (m) return (m[2] ? 1000 : 0) + +m[1]; const t = v.match(/^TX (\d+)$/); return t ? 2000 + +t[1] : 9999; };
 const NSIZE = [...new Set(out.flatMap(v => v.nsize))].sort((a, b) => nk(a) - nk(b));
 const items = out.map(v => ({ a: v.a, title: v.title, secs: v.secs, kind: v.kind, sec: v.sec, vals: { vyd_instrumentu: v.vyd, diapazon_momentu: v.torque, nalashtuvannia_momentu: v.set, pryvid: v.drv, typ_nasadky: v.nas, rozmir_nasadky: v.nsize, profil: v.profile, rozmir_nakonechnyka: v.tip, osoblyvosti_dynamometra: v.feat } }));
-// non-products inside a product section get all values of that section (CLAUDE.md filters rule)
-for (const it of items.filter(i => !i.kind && i.vals.vyd_instrumentu[0] === 'Приладдя')) { const peers = items.filter(p => p.kind && p.secs[0] === it.secs[0]);
-  for (const k of ['diapazon_momentu', 'nalashtuvannia_momentu', 'pryvid']) it.vals[k] = [...new Set(peers.flatMap(p => p.vals[k]))]; }
+// owner 22.10.2026: a product gets only values it really has — an accessory in a torque section (the recalibration set 05137003001: no torque in its WERA
+// datasheet) no longer takes the torque / setting / drive of its section peers (that rule gave it «до 1 / 1–5 / 5–25 Н·м» + «Встановлений»)
 module.exports = {
   name: 'dyn', root: 1195, seed: '05027935001', testArticle: '05006605001',
   chars: [

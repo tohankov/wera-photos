@@ -7,9 +7,15 @@ const dsText = it => { const f = path.join(__dirname, '../batch/ds', it.a + '.tx
 const norm = s => s.replace(/​/g, '').replace(/(\d)\.(\d)/g, '$1,$2').replace(/(\d) ?["”″]/g, '$1″').replace(/(\d|″)\s*[хХ×]\s*(?=\d)/g, '$1x');
 const f = s => +String(s).replace(',', '.');
 const INLB = 0.113; // 1 in·lb = 0,113 N·m
-const BUCKETS = [['до 1 Н·м', 0, 1], ['1–5 Н·м', 1, 5], ['5–25 Н·м', 5, 25], ['25–100 Н·м', 25, 100], ['100–400 Н·м', 100, 400], ['понад 400 Н·м', 400, 1e9]];
-const buckets = (lo, hi) => BUCKETS.filter(([, a, b]) => lo === hi ? lo >= a && lo < b : lo < b && hi > a).map(b => b[0]);
 const NUM = '(\\d+(?:,\\d+)?)';
+const TQX = require('./torque_exact.json').products;
+const fmt = x => String(Math.round(x * 1000) / 1000).replace('.', ',');
+// a range computed by torque() (N·m; in·lb converted) back to the WERA unit: «0,3–1,2 Н·м», «25–55 in·lb», an indicator «3 Н·м»
+const exact = ([lo, hi], n) => { const inlb = /дюйм фунт|in·lb/i.test(n); const k = inlb ? INLB : 1, u = inlb ? 'in·lb' : 'Н·м'; return lo === hi ? `${fmt(lo / k)} ${u}` : `${fmt(lo / k)}–${fmt(hi / k)} ${u}`; };
+// «Особливості динамометра» from the WERA datasheet (owner 22.10.2026): «для правой и левой затяжки / резьбы» -> «Для правої та лівої різьби»,
+// «ручка пистолетной формы» -> «Пістолетна ручка». Torque Lock of Safe-Torque (unlimited torque position) is NOT «Функція Torque Lock» (Click-Torque Lock: locked setting)
+const RL = /правой и левой (затяжк|резьб)/i, PG = /ручка пистолетной формы/i;
+const dsFlat = it => dsText(it).replace(/^p\d+ /gm, '').replace(/ \| /g, ' ').replace(/\s+/g, ' ');
 function torque(it, n) { const r = it.row || {}; const inlb = /дюйм фунт|in·lb/i.test(n) || Object.keys(r).some(k => /in·lb/.test(k)); const k = inlb ? INLB : 1;
   const sc = Object.entries(r).find(([h]) => /Основна шкала/.test(h)); if (sc && /-/.test(sc[1])) { const [a, b] = String(sc[1]).split('-'); return [f(a) * k, f(b) * k]; }
   let m = n.match(new RegExp(NUM + ' ?[–-] ?' + NUM + ' ?(?:Нм|Nm|Н·м|дюйм)')); if (m) return [f(m[1]) * k, f(m[2]) * k];
@@ -39,8 +45,10 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title), t = norm(dsTitle
   else if (DRV.includes(s)) { vyd = 'Динамометрична викрутка'; kind = 'drv'; }
   else vyd = 'Приладдя';
   const v = { a: it.a, title: it.title, secs: it.secs, sec: s, kind, vyd: [vyd], torque: [], set: [], drv: [], nas: [], nsize: [], profile: [], tip: [], feat: [] };
-  if (kind === 'ind' || kind === 'key' || kind === 'drv' || vyd.startsWith('Набір')) { const q = torque(it, n); if (q) v.torque = buckets(q[0], q[1]); else if (kind) disputed.push({ a: it.a, sec: s, what: 'Діапазон моменту', why: 'нет в таблице, названии и datasheet', title: it.title }); }
-  if (kind === 'ind' || [1204, 1205, 1206].includes(s) || (s === 1464)) v.set = ['Встановлений (фіксований)']; else if (kind === 'key' || kind === 'drv') v.set = ['Регульований'];
+  // «Діапазон моменту» = the exact WERA range (owner 22.10.2026, вариант (а)): cat/torque_exact.json; a new product — its range from the table / name / datasheet
+  if (kind === 'ind' || kind === 'key' || kind === 'drv' || vyd.startsWith('Набір')) { const q = TQX[it.a] ? null : torque(it, n);
+    if (TQX[it.a]) v.torque = TQX[it.a].vals; else if (q) v.torque = [exact(q, n)]; else if (kind) disputed.push({ a: it.a, sec: s, what: 'Діапазон моменту', why: 'нет в таблице, названии и datasheet', title: it.title }); }
+  if (kind && (kind === 'ind' || [1204, 1205, 1206].includes(s) || s === 1464)) v.set = ['Встановлений (фіксований)']; else if (kind === 'key' || kind === 'drv') v.set = ['Регульований'];
   if (kind === 'key' || s === 1458) v.drv = drives(n, t);
   if (kind === 'drv') v.drv = [1199, 1205].includes(s) ? ['Halfmoon / HIOS 4 мм'] : (s === 1202 || /VDE/.test(n)) ? ['Kraftform Kompakt VDE (вставки)'] : ['шестигранник 1/4″'];
   if (kind === 'nas') { v.nas = [NAS[s]]; if (s === 1219 && /тріскачк|тремтіння|реверс/i.test(n)) v.nas = ['Тріскачка з квадратом'];
@@ -59,10 +67,11 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title), t = norm(dsTitle
   if (/\bESD\b/.test(n)) v.feat.push('ESD'); if (/VDE/.test(n)) v.feat.push('VDE (ізольований)');
   if (s === 1223 || (kind === 'key' && /реверс/i.test(n))) v.feat.push('Тріскачка з реверсом'); if (/R\/L|правого та лівого/i.test(n)) v.feat.push('Для правої та лівої різьби');
   if (kind === 'key' && /\bLock\b/.test(n)) v.feat.push('Функція Torque Lock'); if (s === 1206) v.feat.push('Шкала в дюйм-фунтах (in·lb)');
-  if (/пістолетн|ручкою-пістолетом/i.test(n)) v.feat.push('Пістолетна ручка'); if (/т-подібн/i.test(n)) v.feat.push('Т-подібна ручка');
+  if (/пістолетн|ручкою-пістолетом/i.test(n) || PG.test(dsFlat(it))) v.feat.push('Пістолетна ручка');
+  if (RL.test(dsFlat(it)) && !v.feat.includes('Для правої та лівої різьби')) v.feat.push('Для правої та лівої різьби'); if (/т-подібн/i.test(n)) v.feat.push('Т-подібна ручка');
   if (s === 1465) v.feat = []; // spare parts: the features describe the wrench they fit, not the part
   out.push(v); }
-module.exports = { out, disputed, BUCKETS };
+module.exports = { out, disputed };
 if (require.main === module) { const c = k => { const m = {}; for (const v of out) for (const x of v[k]) m[x] = (m[x] || 0) + 1; return m; };
   console.log('items', out.length, 'disputed', disputed.length); for (const k of ['vyd', 'torque', 'set', 'drv', 'nas', 'nsize', 'profile', 'tip', 'feat']) console.log(k, JSON.stringify(c(k)));
   console.log(disputed.map(d => `${d.a} ${d.sec} ${d.what}: ${d.why} | ${d.title.slice(0, 90)}`).join('\n'));
