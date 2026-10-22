@@ -36,8 +36,9 @@ for (const it of I) { const s = it.secs[0], n = it.title, nn = norm(n); let vyd,
   // owner 22.10.2026 (docs/fill_gaps.md item 6): a torque handle (7440 / 7441 / 7444 VDE, 7508 / 7516 VDE) is a «Динамометрична викрутка» only — the kind by the main function
   else if (/динамометр/i.test(n)) vyd = 'Динамометрична викрутка';
   else if (/ручка-тримач|викрутка-тримач|ручка з тріскачкою|Т-подібна ізольована ручка/i.test(n) || s === 1231) vyd = 'Ручка-тримач';
-  // owner 22.10.2026 (docs/filters_rule_check.md п. 7): 712 i VDE — WERA «Насадка-переходник» -> «Перехідник» (one product, one kind by the datasheet)
-  else if (/\b712 i\b/.test(n)) vyd = 'Перехідник';
+  // owner 22.10.2026 (docs/filters_rule_check.md п. 7): 712 i VDE — WERA «Насадка-переходник» -> «Перехідник» (one product, one kind by the datasheet);
+  // 22.10 (i): 781 A/B VDE / 781 B/A VDE — datasheet «781 A/B VDE переходник, изолированный» -> «Перехідник» too
+  else if (/\b712 i\b|\b781 [AB]\/[AB] VDE\b/.test(n)) vyd = 'Перехідник';
   else if (/подовжувач|адаптер|перехідник|Пояс/i.test(n) || [1264, 1453].includes(s)) vyd = 'Приладдя';
   else if (/тріскачка/i.test(n) || [1266, 1456].includes(s)) vyd = 'Тріскачка';
   else if (/торцева/i.test(n) && ZYK.includes(s)) { vyd = 'Торцева головка'; kind = 'head'; }

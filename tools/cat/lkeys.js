@@ -17,6 +17,10 @@ for (const it of I) { const n = norm(it.title); const isSet = /^Набір/i.tes
   const ps = profiles(n); const v = { a: it.a, title: it.title, secs: it.secs, kind: !isSet, vyd: [isSet ? 'Набір Г-подібних ключів' : 'Г-подібний ключ'], profile: ps.map(p => PROF[p]), size: [], len: [lengthOf(n)], coat: coat(n), feat: feat(n) };
   // 950 SPKL 05022514001 (title without the series words): WERA datasheet «BlackLaser», «с шестигранным шариковым наконечником» (night 20.10 / owner 21.10.2026)
   if (it.a === '05022514001') { v.coat = ['BlackLaser']; v.feat = [...new Set([...v.feat, 'Кулькова головка'])]; }
+  // owner 22.10.2026 (report_1022h «Ждёт тебя» 8, 9): 967/9 TX XL HF 1 05024450001 — wera.de «BlackLaser» + «Zinkphosphatiert», both; 967/9 TX XL 1 05024460001 —
+  // datasheet «цинковое фосфатирование» (title) + «BlackLaser» (text), wera.de «BlackLaser»; Hex-Plus Christmas 05135825001 — wera.de «Kugelkopf», datasheet «Шестигранная шариковая»
+  if (it.a === '05024450001' || it.a === '05024460001') v.coat = ['BlackLaser', 'Цинкове фосфатування'];
+  if (it.a === '05135825001') v.feat = [...new Set([...v.feat, 'Кулькова головка'])];
   if (!isSet) { if (ps.length !== 1) disputed.push({ a: it.a, sec: it.secs[0], what: 'Профіль', why: 'не определён однозначно (' + ps.join('/') + ')', title: it.title });
     else { const s = size(it, ps[0]); if (s) v.size = [s]; else disputed.push({ a: it.a, sec: it.secs[0], what: 'Розмір ключа', why: 'нет в таблице и названии', title: it.title }); } }
   else if (!ps.length) disputed.push({ a: it.a, sec: it.secs[0], what: 'Профіль', why: 'набор: профиль не указан в названии', title: it.title });

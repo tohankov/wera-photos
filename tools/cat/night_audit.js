@@ -59,6 +59,7 @@ const isSet = p => SKLAD.some(k => v(p, k).length) || v(p, 'vyd_instrumentu').so
 // characteristics a section's products carry, in the group's order, then the others met there
 const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.includes(k))])];
 // a feature (признак): «Особливості …» (incl. «Особливості динамометра», owner 22.10.2026), «… у складі», «Тип біт у наборі», «Інструмент у ложементі» — partial by nature
+const isAcc = p => { const vy = v(p, 'vyd_instrumentu').join(', '); return /Приладдя|Ручка-тримач|Футляр|Підставка|Тримач|Сумка|Знімач|Бітотримач/i.test(vy) && !/Набір/.test(vy); };
 const ISFEAT = k => /^osoblyvosti/.test(k) || SKLAD.includes(k) || k === 'typ_bit_u_nabori' || k === 'instrument_u_lozhementi';
 // owner 22.10.2026 (docs/filters_rule_check.md п. 6): a filter where every product carrying it has the same single value is not set — except «Довжина …» in mm;
 // «Довжина ключа» (Стандартний / Подовжений / Короткий — a category, not mm) with one value is not set; a feature only when 2+ products carry it and not all the same.
@@ -69,7 +70,11 @@ function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n 
   if (/^dovzhyna/.test(k) && n >= 2 && [...vals].every(x => / мм$/.test(x))) return { n, d: vals.size, use: true };
   if (ISFEAT(k)) { if (n < 2) return { n, d: vals.size, use: false, why: `ознака лише в 1 товару` };
     if (n === ps.length && new Set(ps.map(p => JSON.stringify(v(p, k).sort()))).size === 1) return { n, d: vals.size, use: false, why: `у всіх однакове значення «${v(ps[0], k).join(' + ')}»` }; return { n, d: vals.size, use: true }; }
-  if (n * 2 < ps.length) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів` };
+  // 22.10 (i): accessories (holders, belts, bags, handles …) do not vote in «half of the section» — a filter is not dropped because an accessory has no value
+  // («Набори головок Zyklop ¼»: «Розмір головки» on 6 of 14, of 11 without the 3 «Приладдя»); only where accessories are a minority — in a section of
+  // accessories / handles they are the main products and vote
+  const acn = ps.filter(isAcc).length, base = acn * 2 < ps.length ? ps.length - acn : ps.length;
+  if (n * 2 < base) return { n, d: vals.size, use: false, why: `лише у ${n} з ${ps.length} товарів${base < ps.length ? ` (без приладдя — з ${base})` : ''}` };
   if (vals.size === 1) return { n, d: 1, use: false, why: `у всіх одне значення «${[...vals][0]}»${n < ps.length ? ` (у ${n} з ${ps.length}, решта без значення)` : ''}` }; return { n, d: vals.size, use: true }; }
 const secRows = [], missing = [], single = []; const plans = {};
 for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodIn(id); const hid = L.filter(p => !vis(p) && secs(p).includes(id)).length;
