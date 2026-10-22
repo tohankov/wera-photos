@@ -19,8 +19,8 @@ const TITLE = { vyd_instrumentu: 'Вид інструменту', profil: 'Пр�
 const SKLAD = ['sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus'];
 const SETSIZE = new Set(['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir']);   // replaced by «… у складі» in set sections
 const CORE = new Set(['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'diapazon_momentu']);   // a product without it disappears when it is filtered
-// owner's own lists (22.10.2026, docs/filters_rule_check.md п. 6, 7): Ручки-тримачі Kompakt VDE, Спеціальні вставки Kompakt VDE; «Спеціальні викрутки … Kraftform Micro» (+ ESD) — the list of 20.10
-const OWNER_LIST = { 1231: ['vyd_instrumentu', 'diapazon_momentu'], 1232: ['vyd_instrumentu', 'profil', 'dovzhyna_robochoho_kintsia'],
+// owner's own lists (22.10.2026, docs/filters_rule_check.md п. 6, 7; 1231 + «Особливості викрутки» — as the owner set it in the admin, 22.10 (i)): Ручки-тримачі Kompakt VDE, Спеціальні вставки Kompakt VDE; «Спеціальні викрутки … Kraftform Micro» (+ ESD) — the list of 20.10
+const OWNER_LIST = { 1231: ['vyd_instrumentu', 'diapazon_momentu', 'osoblyvosti_vykrutky'], 1232: ['vyd_instrumentu', 'profil', 'dovzhyna_robochoho_kintsia'],
   1130: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'], 1148: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'] };
 const VYD_KEEP = new Set([1129, 1130, 1148]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds); owner 20.10 / 22.10.2026: both «Спеціальні викрутки … Kraftform Micro» (1130) and «… Micro ESD» (1148) — with «Вид»
 const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'rozmir_nasadky'];
@@ -62,14 +62,14 @@ const ALLK = [...new Set([...G.order, ...Object.keys(TITLE).filter(k => !SKLAD.i
 const isAcc = p => { const vy = v(p, 'vyd_instrumentu').join(', '); return /Приладдя|Ручка-тримач|Футляр|Підставка|Тримач|Сумка|Знімач|Бітотримач/i.test(vy) && !/Набір/.test(vy); };
 const ISFEAT = k => /^osoblyvosti/.test(k) || SKLAD.includes(k) || k === 'typ_bit_u_nabori' || k === 'instrument_u_lozhementi';
 // owner 22.10.2026 (docs/filters_rule_check.md п. 6): a filter where every product carrying it has the same single value is not set — except «Довжина …» in mm;
-// «Довжина ключа» (Стандартний / Подовжений / Короткий — a category, not mm) with one value is not set; a feature only when 2+ products carry it and not all the same.
+// «Довжина ключа» (Стандартний / Подовжений / Короткий — a category, not mm) with one value is not set; a feature stays even on 1 product (owner 22.10 (i); before — 2+), not when all are the same.
 // A filter is NOT dropped because an accessory / handle has no value (a product without the property is not invented a value).
 function useful(ps, k) { const n = ps.filter(p => v(p, k).length).length; if (n && !G.order.includes(k) && !SKLAD.includes(k) && n * 2 < ps.length) return { n, d: 0, use: false, why: `чужа характеристика, лише у ${n} з ${ps.length}` }; const vals = new Set(ps.flatMap(p => v(p, k))); if (!n) return { n, d: 0, use: false, why: 'немає значень' };
   // any filter but a feature («Особливості…», partial by nature) and «… у складі» needs at least half of the section (21.10.2026: «Привід» on 1 of 28 VDE sets)
   // owner 22.10.2026: a length («Довжина …») stays wherever some products carry it (ESD sets: 3 screwdriver sets of 7 have blade lengths, handle + bits sets have none)
-  if (/^dovzhyna/.test(k) && n >= 2 && [...vals].every(x => / мм$/.test(x))) return { n, d: vals.size, use: true };
-  if (ISFEAT(k)) { if (n < 2) return { n, d: vals.size, use: false, why: `ознака лише в 1 товару` };
-    if (n === ps.length && new Set(ps.map(p => JSON.stringify(v(p, k).sort()))).size === 1) return { n, d: vals.size, use: false, why: `у всіх однакове значення «${v(ps[0], k).join(' + ')}»` }; return { n, d: vals.size, use: true }; }
+  // owner 22.10 (i): a feature or a length on 1 product is NOT dropped (it starts working by itself with new products) — only a filter where ALL products have the same value
+  if (/^dovzhyna/.test(k) && [...vals].every(x => / мм$/.test(x))) return { n, d: vals.size, use: true };
+  if (ISFEAT(k)) { if (n === ps.length && new Set(ps.map(p => JSON.stringify(v(p, k).sort()))).size === 1) return { n, d: vals.size, use: false, why: `у всіх однакове значення «${v(ps[0], k).join(' + ')}»` }; return { n, d: vals.size, use: true }; }
   // 22.10 (i): accessories (holders, belts, bags, handles …) do not vote in «half of the section» — a filter is not dropped because an accessory has no value
   // («Набори головок Zyklop ¼»: «Розмір головки» on 6 of 14, of 11 without the 3 «Приладдя»); only where accessories are a minority — in a section of
   // accessories / handles they are the main products and vote

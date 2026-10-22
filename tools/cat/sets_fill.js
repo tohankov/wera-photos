@@ -15,11 +15,14 @@ function fromText(head, size) { const z = String(size).trim().replace(/(\d)\.(\d
   else if ((m = z.match(/^# ?(\d) x (\d+(?:,\d+)?) мм$/)) && /\b(PZ|PH)\/S\b/.test(head)) { prof = 'PlusMinus (PH/PZ + шліц)'; sz = m[1]; len = m[2]; }   // «65 iS PZ/S # 1» is PlusMinus (19.10.2026)
   else if ((m = z.match(/^# ?(\d) x (\d+(?:,\d+)?) мм$/))) { prof = 'Квадрат (Robertson)'; sz = m[1]; len = m[2]; }
   else if (!/футляр|сумк|чехол|витрин|подколен|тестер|индикатор/i.test(head) && (m = z.match(/^(\d+(?:,\d+)?) мм x (\d+(?:,\d+)?) мм x (\d+(?:,\d+)?) мм$/)) && +m[1].replace(',', '.') <= 2.5 && +m[2].replace(',', '.') <= 20) { prof = 'SL (шліц)'; sz = dec1(m[2]); len = m[3]; }   // thickness x width x length — only slotted blades
-  else if (/^840\b|^3840\b|шестигран/i.test(head) && (m = z.match(/^(\d+(?:,\d+)?) mm x (\d+(?:,\d+)?) мм$/))) { prof = 'HEX (шестигранник)'; sz = dec1(m[1]); len = m[2]; }
-  else if (/^840\b|^3840\b|шестигран/i.test(head) && (m = z.match(/^(\d+\/\d+)" x (\d+(?:,\d+)?) мм$/))) { prof = 'HEX (шестигранник)'; sz = m[1] + '″'; len = m[2]; }
+  else if (/^840\b|^3840\b|^8740\b|шестигран/i.test(head) && (m = z.match(/^(\d+(?:,\d+)?) mm x (\d+(?:,\d+)?) мм$/))) { prof = 'HEX (шестигранник)'; sz = dec1(m[1]); len = m[2]; }   // 8740 Zyklop hex screwdriver heads (22.10 (i))
+  else if (/^840\b|^3840\b|^8740\b|шестигран/i.test(head) && (m = z.match(/^(\d+\/\d+)" x (\d+(?:,\d+)?) мм$/))) { prof = 'HEX (шестигранник)'; sz = m[1] + '″'; len = m[2]; }
   else return null;
   if (/Impaktor|\bIMP\b/i.test(head)) typ.push('Ударна (Impaktor)'); else if (/BiTorsion|TorsionBi|торсион/i.test(head)) typ.push('Торсійна'); if (/Diamond|алмаз/i.test(head)) typ.push('Алмазне покриття'); if (/Stainless|нержав/i.test(head)) typ.push('Нержавіюча сталь');
-  const L = len + ' мм'; return { vals: { profil: [prof], rozmir: [sz], rozmir_nakonechnyka: [sz], rozmir_robochoho_kintsia: [sz], dovzhyna: [L], dovzhyna_robochoho_kintsia: [L], dovzhyna_stryzhnia: [L], typ_bity: typ } }; }
+  const L = len + ' мм'; const vals = { profil: [prof], rozmir: [sz], rozmir_nakonechnyka: [sz], rozmir_robochoho_kintsia: [sz], dovzhyna: [L], dovzhyna_robochoho_kintsia: [L], dovzhyna_stryzhnia: [L], typ_bity: typ };
+  // a Zyklop screwdriver head's length is «Довжина головки» (Bicycle Set 8: «8767 B TORX® Zyklop отвёрточная головка … TX 25 x 107 мм», «8740 B … 8 mm x 100 мм»; 22.10 (i))
+  if (/Zyklop/i.test(head) && /головк/i.test(head)) vals.dovzhyna_holovky = [L];
+  return { vals }; }
 // accessories give a set no values (owner 21.10.2026); a remover (Знімач 1429 / 1529 ESD) too — its 50 мм is not a blade length (22.10.2026)
 const NONPRODUCT = /^(Ручка-тримач|Приладдя|Приладдя для викруток|Бітотримач|Підставка|Знімач)/;
 function fill(name, items, chars) {
