@@ -134,6 +134,9 @@ const FIX_SIZES = { '05004186001': [['PH (Phillips)', '1'], [TX, '10'], [TX, '25
   '05004182001': [...['2,5', '3,0', '4,0', '5,0', '6,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25']],
   // Bicycle Set 8: rows not in the catalog — 8767 B TX 25, TX 30 x 107 mm; 8740 B (hex) 4, 5, 6 x 107 mm, 8, 10 x 100 mm
   '05004176001': [...['4,0', '5,0', '6,0', '8,0', '10,0'].map(s => ['HEX (шестигранник)', s]), [TX, '25'], [TX, '30']],
+  // Bicycle Set 7 (owner 23.10.2026, datasheet p. 4): «8740 B Zyklop отвёрточная головка 3/8", с вытянутой рабочей частью» — «05003054001 | 1x | 8 mm x 100 мм»,
+  // «05003056001 | 1x | 10 mm x 100 мм» (not in the catalog); the rest of the set comes from the composition
+  '05004175001': ['8,0', '10,0'].map(s => ['HEX (шестигранник)', s]),
   // owner 22.10.2026: Hex-Plus Christmas 2026 — ONE card of the counter display is sold; datasheet «4 Г-образных ключа (размеры 3,0; 4,0; 5,0; 6,0) и открывалка для бутылок»
   '05135825001': ['3,0', '4,0', '5,0', '6,0'].map(s => ['HEX (шестигранник)', s]) };
 // owner 19.10.2026: sets whose datasheet has no sizes — the composition from the set's page on wera.de («Werkzeuge in diesem Set»), fetched 19.10.2026

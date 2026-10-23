@@ -5,6 +5,7 @@ const fs = require('fs'), path = require('path'); const [, , LIVE, SCAN] = proce
 const ORDER = ['novynky', 'vykrutky', 'vde', 'zyklop', 'joker', 'lkeys', 'kk', 'bags', ['Біти та бітотримачі', ['biti', 'holders', 'bitsets', 'adapters', 'drills', 'stands']], 'dyn', 'trolley', 'bike', 'impact', 'hammers'];
 const P = g => JSON.parse(fs.readFileSync(path.join(__dirname, `night_plan_${g}.json`), 'utf8'));
 const secs = p => [p.parent && p.parent.id, ...(p.alt_parent || []).map(x => x.id)].map(Number); const vis = p => +p.display_in_showcase === 1;
+const SKL = k => /^sklad_/.test(k);   // owner 23.10.2026: a set section lists ALL «… у складі», an empty one is hidden by Horoshop — not checked for values
 const has = (id, k) => L.some(p => vis(p) && secs(p).includes(+id) && ((p.characteristics || {})[k] || []).length);
 const head = ['Хіти продажів', 'Ціна'];
 let checks = 0; const stop = m => { console.log('STOP', m); process.exit(2); };
@@ -17,16 +18,17 @@ out.push('# Фильтры каталога — план для админки (
   '- «Характеристики для сторінки товару» — только на разделе группы. «… у складі» туда не ставить никогда (служебные фильтры наборов).',
   '- «Характеристики з посиланням на фільтр» — на разделе группы, как написано.',
   '- Фильтр без значений в разделе Хорошоп прячет сам. Свой список подраздел получает только там, где унаследованный фильтр был бы с одним значением на все товары или лишним (например, «Профіль» рядом с «Профіль і розмір», размеры в наборах).',
-  '- Правило (владелец 22.10.2026): фильтр, где у всех товаров раздела одно и то же значение, не ставится — кроме «Довжина…» в мм; «Довжина ключа» (Стандартний / Подовжений / Короткий) с одним значением — не ставится. Признак («Особливості…», «… у складі», «Тип біт у наборі») — только если он есть хотя бы у 2 товаров раздела. Фильтр не убирается из-за того, что у принадлежности / ручки нет значения. Подразделы «Біти» получают свой список, только где мёртвых фильтров 2 и больше («Довжина» не считается).',
-  '- Разделы с 1 товаром наследуют — своего списка не надо.',
+  '- Правило (владелец 22–23.10.2026): фильтр, где у всех товаров раздела одно и то же значение или один и тот же НАБОР значений (Zyklop Pocket: «Привід» квадрат 3/8″ + шестигранник 1/4″ у всех), не ставится — кроме «Довжина…» в мм; «Довжина ключа» (Стандартний / Подовжений / Короткий) с одним значением — не ставится. Признак («Особливості…», «Тип біт у наборі») ставится и у 1 товара раздела; убирается, только если у ВСЕХ товаров одно и то же. Фильтр не убирается из-за того, что у принадлежности / ручки нет значения. Подразделы «Біти» получают свой список, только где мёртвых фильтров 2 и больше («Довжина» не считается).',
+  '- В разделах НАБОРОВ — ВСЕ «… у складі» (PH, PZ, TX, SL, HEX, Квадрат, TX BO, PlusMinus), даже без значений: пустой Хорошоп прячет сам, с новыми наборами заработает (владелец 23.10.2026). В списках ниже они перечислены все; на витрине видны только те, у которых есть значения.',
+  '- Разделы с 1 товаром наследуют — своего списка не надо. Разделы с 2 товарами — свой список «Хіти продажів → Ціна» (владелец 23.10.2026).',
   '- Дизайн фильтра (как в «Біти»): вертикальный, размер M, сворачивание включено, все группы развёрнуты, максимум 10 значений + «Показать еще».', '');
 let n = 0;
 const groupBlock = (g, lvl) => { const plan = P(g); const T = plan.titles; const nm = k => T[k] || k;
   const rootId = plan.roots[0]; const rootPath = ((SC[rootId] && SC[rootId].path) || plan.name).replace(/ +$/, '');
   // checks: every characteristic in a list is filled on products of that section / group
   const groupIds = Object.keys(plan.plans);
-  for (const k of plan.rootList) { checks++; if (!groupIds.some(id => has(id, k))) stop(`${plan.name}: ${k} not filled anywhere`); }
-  for (const o of plan.own) for (const k of o.list) { checks++; if (!has(o.id, k)) stop(`${o.path}: ${k} not filled`); }
+  for (const k of plan.rootList.filter(k => !SKL(k))) { checks++; if (!groupIds.some(id => has(id, k))) stop(`${plan.name}: ${k} not filled anywhere`); }
+  for (const o of plan.own) for (const k of o.list.filter(k => !SKL(k))) { checks++; if (!has(o.id, k)) stop(`${o.path}: ${k} not filled`); }
   for (const k of plan.card) { checks++; if (!L.some(p => vis(p) && ((p.characteristics || {})[k] || []).length && groupIds.some(id => secs(p).includes(+id)))) stop(`${plan.name} card: ${k}`); }
   const b = []; b.push(`${lvl} ${plan.name}`, '');
   b.push(`**Раздел «${rootPath}»:**`);
@@ -41,16 +43,16 @@ const groupBlock = (g, lvl) => { const plan = P(g); const T = plan.titles; const
 // owner 22.10.2026: «Викрутки» and «Діелектричні» are already set up in the admin — at the top of the plan only WHAT TO CHANGE. What the admin holds now:
 // cat/night_plan_<group>_configured.json (the plan the owner set up — the rules before 22.10 (h); the storefront scan matched it) and the storefront scan
 // (the filter blocks in their order). Per listing section: own list needed now / no longer needed, or a different effective list. Full paths by names.
-const adminDiff = () => { const b = ['## Что поменять в админке — уже настроенные «Викрутки», «Діелектричні інструменти» и «Біти»', ''];
+const adminDiff = () => { const b = ['## Что поменять в админке — уже настроенные «Викрутки», «Діелектричні інструменти», «Тріскачки та приладдя Zyklop» и «Біти»', ''];
   let cnt = 0; const parts = [];
-  for (const g of ['vykrutky', 'vde', 'biti']) { const plan = P(g); const nm = k => plan.titles[k] || k; const rows = []; const cf = path.join(__dirname, `night_plan_${g}_configured.json`);
+  for (const g of ['vykrutky', 'vde', 'zyklop', 'biti']) { const plan = P(g); const nm = k => plan.titles[k] || k; const rows = []; const cf = path.join(__dirname, `night_plan_${g}_configured.json`);
     const old = fs.existsSync(cf) ? JSON.parse(fs.readFileSync(cf, 'utf8')) : null; const rootPath = ((SC[plan.roots[0]] && SC[plan.roots[0]].path) || plan.name).replace(/ +$/, '');
     const rootNew = [...head, ...plan.rootList.map(nm)].join(' → '), rootOld = old ? [...head, ...old.rootList.map(nm)].join(' → ') : null;
     const rootLine = rootOld && rootOld !== rootNew ? `- **${rootPath}** (раздел группы) — поменять «Фільтри».
   Сейчас: ${rootOld}
   Надо: ${rootNew}` : null; if (rootLine) cnt++;
     for (const [id, pl] of Object.entries(plan.plans)) { if (pl.tiny) continue; const keys = pl.inherits ? plan.rootList.filter(k => pl.present.includes(k)) : pl.list;
-      const want = keys.filter(k => has(id, k)).map(nm); const now = (SC[id] ? SC[id].ua.filters : []).map(f => f.title).filter(t => t && t !== '?' && t !== 'Бренд' && t !== 'Ціна');
+      const want = keys.filter(k => has(id, k)).map(nm); const now = (SC[id] ? SC[id].ua.filters : []).map(f => f.title).filter(t => t && t !== '?' && t !== 'Бренд' && t !== 'Ціна' && !(/ у складі$/.test(t) && !want.includes(t)));   // an extra «… у складі» is the owner's rule (23.10.2026), not a change
       const op = old && old.plans[id]; const oldOwn = op ? !op.inherits && !op.tiny : false, newOwn = !pl.inherits; const same = JSON.stringify(want) === JSON.stringify(now);
       let act = null; if (same && !rootLine) continue;   // the storefront already shows the planned list and the group list stays — nothing to do
       if (newOwn && !oldOwn) act = 'задать свой список' + (same ? ' (на витрине сейчас так и есть — через наследование; после правки раздела группы без своего списка изменится)' : '');
@@ -73,9 +75,9 @@ for (const g of ORDER) { n++; if (Array.isArray(g)) { out.push(`## ${n}. ${g[0]}
   for (const g of ['vykrutky', 'kk', 'vde']) { const plan = P(g); const nm = k => plan.titles[k] || k;
     for (const [id, pl] of Object.entries(plan.plans)) { const ps = L.filter(p => vis(p) && secs(p).includes(+id)); const c = {}; for (const p of ps) for (const x of v(p, 'vyd_instrumentu')) c[x] = (c[x] || 0) + 1;
       if (Object.keys(c).length < 2) continue; const list = pl.tiny ? null : (pl.inherits ? plan.rootList.filter(k => pl.present.includes(k)) : pl.list);
-      for (const k of list || []) { checks++; if (!has(id, k)) stop(`${pl.path}: ${k} not filled`); }
+      for (const k of (list || []).filter(k => !SKL(k))) { checks++; if (!has(id, k)) stop(`${pl.path}: ${k} not filled`); }
       const why = list && !list.includes('vyd_instrumentu') ? ` «Вид інструменту» не ставится: другого вида ${ps.length - Math.max(...Object.values(c))} из ${ps.length}.` : '';
-      rows.push(`- **${pl.path}** — товаров: ${ps.length}; ${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => `${x[0]} ${x[1]}`).join(', ')}.` + (list ? `\n  Фільтри: ${[...head, ...list.map(nm)].join(' → ')}${pl.inherits ? ' (совпадает с разделом группы — можно оставить пустым)' : ''}.${why}` : '\n  1–2 товара — своего списка не надо.')); } }
+      rows.push(`- **${pl.path}** — товаров: ${ps.length}; ${Object.entries(c).sort((a, b) => b[1] - a[1]).map(x => `${x[0]} ${x[1]}`).join(', ')}.` + (list ? `\n  Фільтри: ${[...head, ...list.map(nm)].join(' → ')}${pl.inherits ? ' (совпадает с разделом группы — можно оставить пустым)' : ''}.${why}` : '\n  1 товар — своего списка не надо.')); } }
   out.push('## Смешанные разделы «Викрутки», Kraftform Kompakt, «Діелектричні» (22.10.2026)', '',
     'Разделы, где после записи видов по составу WERA (22.10) лежат товары разных видов. Список «Фільтри» — полный, его можно ставить как свой список подраздела. «Вид інструменту» — если второй вид или все товары не основного вида ≥ 20 % раздела (и не меньше 2 товаров); «Особливості викрутки» — где у товаров есть особенности (в т. ч. новое «З індикатором напруги»). Количество по видам — после записи; товар с двумя видами считается в обоих.', '', ...rows, ''); }
 out.push('---', '', `Проверка плана: каждая характеристика каждого списка заполнена у товаров своего раздела (${checks} проверок, 0 ошибок).`, '');
