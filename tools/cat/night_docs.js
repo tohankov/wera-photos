@@ -20,7 +20,7 @@ out.push('# Фильтры каталога — план для админки (
   '- Фильтр без значений в разделе Хорошоп прячет сам. Свой список подраздел получает только там, где унаследованный фильтр был бы с одним значением на все товары или лишним (например, «Профіль» рядом с «Профіль і розмір», размеры в наборах).',
   '- Правило (владелец 22–23.10.2026): фильтр, где у всех товаров раздела одно и то же значение или один и тот же НАБОР значений (Zyklop Pocket: «Привід» квадрат 3/8″ + шестигранник 1/4″ у всех), не ставится — кроме «Довжина…» в мм; «Довжина ключа» (Стандартний / Подовжений / Короткий) с одним значением — не ставится. Признак («Особливості…», «Тип біт у наборі») ставится и у 1 товара раздела; убирается, только если у ВСЕХ товаров одно и то же. Фильтр не убирается из-за того, что у принадлежности / ручки нет значения. Подразделы «Біти» получают свой список, только где мёртвых фильтров 2 и больше («Довжина» не считается).',
   '- В разделах НАБОРОВ — ВСЕ «… у складі» (PH, PZ, TX, SL, HEX, Квадрат, TX BO, PlusMinus), даже без значений: пустой Хорошоп прячет сам, с новыми наборами заработает (владелец 23.10.2026). В списках ниже они перечислены все; на витрине видны только те, у которых есть значения.',
-  '- Разделы с 1 товаром наследуют — своего списка не надо. Разделы с 2 товарами — свой список «Хіти продажів → Ціна» (владелец 23.10.2026).',
+  '- Разделы с 1 товаром наследуют — своего списка не надо. Разделы с 2 товарами — по общим правилам; исключения владельца — «Поперечна ручка-тримач із патроном Rapidaptor» и «Тріскачки та набори Zyklop VDE ¼» (Хіти продажів → Ціна), Zyklop Pocket (без «Привід», «PH у складі» после «TX у складі»).',
   '- Дизайн фильтра (как в «Біти»): вертикальный, размер M, сворачивание включено, все группы развёрнуты, максимум 10 значений + «Показать еще».', '');
 let n = 0;
 const groupBlock = (g, lvl) => { const plan = P(g); const T = plan.titles; const nm = k => T[k] || k;
@@ -43,9 +43,11 @@ const groupBlock = (g, lvl) => { const plan = P(g); const T = plan.titles; const
 // owner 22.10.2026: «Викрутки» and «Діелектричні» are already set up in the admin — at the top of the plan only WHAT TO CHANGE. What the admin holds now:
 // cat/night_plan_<group>_configured.json (the plan the owner set up — the rules before 22.10 (h); the storefront scan matched it) and the storefront scan
 // (the filter blocks in their order). Per listing section: own list needed now / no longer needed, or a different effective list. Full paths by names.
-const adminDiff = () => { const b = ['## Что поменять в админке — уже настроенные «Викрутки», «Діелектричні інструменти», «Тріскачки та приладдя Zyklop» и «Біти»', ''];
+// 23.10.2026: the owner has set up the whole catalog — every group is compared
+const DIFF = ORDER.flatMap(g => Array.isArray(g) ? g[1] : [g]);
+const adminDiff = () => { const b = ['## Что поменять в админке — весь каталог настроен (23.10.2026)', ''];
   let cnt = 0; const parts = [];
-  for (const g of ['vykrutky', 'vde', 'zyklop', 'biti']) { const plan = P(g); const nm = k => plan.titles[k] || k; const rows = []; const cf = path.join(__dirname, `night_plan_${g}_configured.json`);
+  for (const g of DIFF) { const plan = P(g); const nm = k => plan.titles[k] || k; const rows = []; const cf = path.join(__dirname, `night_plan_${g}_configured.json`);
     const old = fs.existsSync(cf) ? JSON.parse(fs.readFileSync(cf, 'utf8')) : null; const rootPath = ((SC[plan.roots[0]] && SC[plan.roots[0]].path) || plan.name).replace(/ +$/, '');
     const rootNew = [...head, ...plan.rootList.map(nm)].join(' → '), rootOld = old ? [...head, ...old.rootList.map(nm)].join(' → ') : null;
     const rootLine = rootOld && rootOld !== rootNew ? `- **${rootPath}** (раздел группы) — поменять «Фільтри».

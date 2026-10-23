@@ -4,7 +4,7 @@
 // catalog in menu order; menu_tree.json: [{id, depth, path}] in the admin menu order.
 // Plan rules (owner, night task): «Хіти продажів» and «Ціна» first; a filter is useful in a section when its products carry it and NOT all of them carry the
 // same value set («Довжина…» in mm stays); set sections (most products carry «… у складі») get ALL «… у складі» (23.10.2026) instead of «Профіль» and of the
-// tip/bit size characteristics; «… у складі» never on the product page; a section of 2 products — «Хіти продажів → Ціна» only. The group section gets the list most of its listing sections can inherit;
+// tip/bit size characteristics; «… у складі» never on the product page. The group section gets the list most of its listing sections can inherit;
 // a section whose useful list differs gets its own full list. Filters without values in a section are hidden by Horoshop, so they do not force an own list.
 const fs = require('fs'), path = require('path'), X = require('xlsx');
 const [, , GK, LIVE, SCAN, TREE] = process.argv; const L = JSON.parse(fs.readFileSync(LIVE, 'utf8')), SC = JSON.parse(fs.readFileSync(SCAN, 'utf8')), MT = JSON.parse(fs.readFileSync(TREE, 'utf8'));
@@ -21,7 +21,10 @@ const SETSIZE = new Set(['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kint
 const CORE = new Set(['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'diapazon_momentu']);   // a product without it disappears when it is filtered
 // owner's own lists (22.10.2026, docs/filters_rule_check.md п. 6, 7; 1231 + «Особливості викрутки» — as the owner set it in the admin, 22.10 (i)): Ручки-тримачі Kompakt VDE, Спеціальні вставки Kompakt VDE; «Спеціальні викрутки … Kraftform Micro» (+ ESD) — the list of 20.10
 const OWNER_LIST = { 1231: ['vyd_instrumentu', 'diapazon_momentu', 'osoblyvosti_vykrutky'], 1232: ['vyd_instrumentu', 'profil', 'dovzhyna_robochoho_kintsia'],
-  1130: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'], 1148: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'] };
+  1130: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'], 1148: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'],
+  // owner 23.10.2026: «Поперечна ручка-тримач Rapidaptor» (серія 400) and «Тріскачки та набори Zyklop VDE ¼» — «Хіти продажів → Ціна»; Zyklop Pocket — as he set it:
+  // no «Привід», «PH у складі» after «TX у складі»
+  1138: [], 1456: [], 1271: ['sklad_pz', 'sklad_tx', 'sklad_ph', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus', 'rozmir_holovky', 'dovzhyna_holovky'] };
 const VYD_KEEP = new Set([1129, 1130, 1148]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds); owner 20.10 / 22.10.2026: both «Спеціальні викрутки … Kraftform Micro» (1130) and «… Micro ESD» (1148) — with «Вид»
 const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'rozmir_nasadky'];
 const GROUPS = {
@@ -86,10 +89,10 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   secRows.push(row); if (!listing(id)) continue;
   const setSec = ps.filter(isSet).length * 2 >= ps.length; row.kind = setSec ? 'набори' : 'товари';
   const cand = setSec ? [...ALLK.filter(k => !SETSIZE.has(k)).slice(0, 1), ...SKLAD, ...ALLK.filter(k => !SETSIZE.has(k)).slice(1)] : ALLK;
-  // owner 23.10.2026: a section of 1 product — no own list (inherits); of 2 products — its own list «Хіти продажів → Ціна» (Rapidaptor 400, Zyklop VDE ¼);
-  // a set section gets ALL «… у складі» (PH … PlusMinus), with or without values: Horoshop hides an empty one, it starts working with new sets
-  const use = [], drop = []; const pair = ps.length === 2;
-  if (ps.length <= 1) drop.push(`розділ з ${ps.length} товаром — фільтри не потрібні`); else if (pair) drop.push('розділ з 2 товарів — свій список «Хіти продажів → Ціна» (власник 23.10.2026)');
+  // owner 23.10.2026: a section of 1 product — no own list (inherits); 2 products — by the general rules (the «2 → Хіти → Ціна» rule of 23.10 (k) is cancelled,
+  // owner's exceptions in OWNER_LIST: 1138, 1456); a set section gets ALL «… у складі» (PH … PlusMinus), with or without values: Horoshop hides an empty one
+  const use = [], drop = [];
+  if (ps.length <= 1) drop.push(`розділ з ${ps.length} товаром — фільтри не потрібні`);
   else for (const k of cand) { if (setSec && SKLAD.includes(k)) { use.push(k); continue; } const u = useful(ps, k); if (u.use) use.push(k); else if (u.n) { drop.push(`${TITLE[k]}: ${u.why}`); if (!SKLAD.includes(k)) single.push({ path: t.path, char: TITLE[k], why: u.why, n: ps.length }); } }
   // «Профіль» next to «Профіль і розмір» repeats it (the owner's «Викрутки» have no «Профіль»)
   { const i = use.indexOf('profil'); if (i >= 0 && use.includes('rozmir_nakonechnyka')) { use.splice(i, 1); drop.push('Профіль: є «Профіль і розмір»'); } }
@@ -102,8 +105,8 @@ for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodI
   for (const k of ['rozmir_robochoho_kintsia', 'rozmir']) { const i = use.indexOf(k); if (i >= 0 && use.some(x => x !== k && SIZE.includes(x) && x !== 'rozmir_nasadky')) { use.splice(i, 1); drop.push(`${TITLE[k]}: дублює основний розмір розділу`); } }
   // set sections: a bare size / profile is not a filter there (sizes are in «… у складі»)
   if (setSec) for (const k of SETSIZE) { if (ps.some(p => v(p, k).length)) drop.push(`${TITLE[k]}: у наборах — «… у складі»`); }
-  if (OWNER_LIST[id]) { use.length = 0; use.push(...OWNER_LIST[id].filter(k => ps.some(p => v(p, k).length))); drop.push('список власника'); }
-  plans[id] = { path: t.path, setSec, tiny: ps.length <= 1, pair, owner: !!OWNER_LIST[id], use, drop, present: [...cand, ...SETSIZE].filter(k => ps.some(p => v(p, k).length)) };
+  if (OWNER_LIST[id]) { use.length = 0; use.push(...OWNER_LIST[id].filter(k => (setSec && SKLAD.includes(k)) || ps.some(p => v(p, k).length))); drop.push('список власника'); }
+  plans[id] = { path: t.path, setSec, tiny: ps.length <= 1, owner: !!OWNER_LIST[id], use, drop, present: [...cand, ...SETSIZE].filter(k => ps.some(p => v(p, k).length)) };
   row.planned = use.map(k => TITLE[k]).join(', '); row.notUsed = drop.join('; ');
   for (const p of ps) for (const k of use.filter(k => CORE.has(k) && G.order.includes(k) && (k === 'vyd_instrumentu' || !isSet(p)))) if (!v(p, k).length) missing.push({ path: t.path, a: p.article, title: p.title.ua, char: TITLE[k], vyd: v(p, 'vyd_instrumentu').join(', ') }); }
 // the group list: per characteristic, in the group's order — taken when more listing sections use it than have it but do not use it
@@ -127,7 +130,7 @@ const own = []; for (const id of ids) { const P0 = plans[id]; const inh = rootLi
   const ordered = P0.setSec ? [...want.filter(k => k === 'vyd_instrumentu'), ...want.filter(k => SKLAD.includes(k)), ...want.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : want;
   // inherit or not — by what the storefront would show: an empty «… у складі» of the own list is hidden anyway
   const wantP = want.filter(k => P0.present.includes(k));
-  P0.list = P0.owner ? want.slice().sort((a, b) => OWNER_LIST[id].indexOf(a) - OWNER_LIST[id].indexOf(b)) : ordered; P0.inherits = P0.tiny || !P0.pair && JSON.stringify([...inh].sort()) === JSON.stringify([...wantP].sort()) && !P0.owner;   // 2 products: always own «Хіти → Ціна» (owner 23.10.2026)
+  P0.list = P0.owner ? want.slice().sort((a, b) => OWNER_LIST[id].indexOf(a) - OWNER_LIST[id].indexOf(b)) : ordered; P0.inherits = P0.tiny || JSON.stringify([...inh].sort()) === JSON.stringify([...wantP].sort()) && !P0.owner;
   // «Біти» (owner 22.10.2026): a subsection gets its own list only where 2+ inherited filters are dead (one value), «Довжина» not counted; only «Профіль» dead — as is
   if (GK === 'biti' && !P0.inherits && wantP.every(k => inh.includes(k)) && inh.filter(k => !wantP.includes(k) && !/^dovzhyna/.test(k)).length < 2) P0.inherits = true;
   if (!P0.inherits) own.push(id); }
