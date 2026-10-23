@@ -17,7 +17,9 @@ for (const [id, h] of Object.entries(H)) { const s = S[id]; const vis = L.filter
   else if (JSON.stringify(want) !== JSON.stringify(now)) { const miss = want.filter(x => !now.includes(x)), extra = now.filter(x => !want.includes(x));
     if (miss.length) notes.push('нет: ' + miss.join(', ')); if (extra.length) notes.push('лишний: ' + extra.join(', ')); if (!miss.length && !extra.length) notes.push('порядок'); }
   const info = sk.length ? 'инфо: ещё ' + sk.map(x => '«' + x + '»').join(', ') + ' (правило владельца — все «… у складі»)' : '';
-  if (priceAt < 0) notes.push('нет «Ціни»'); else if (priceAt !== (hitAt >= 0 ? 1 : 0)) notes.push('«Ціна» не на месте');
+  // «Біти» (pilot 15–16.10.2026, CLAUDE.md): Хіти продажів → Профіль → Ціна → … — «Профіль» before the price is the configured order there
+  const pre = GK === 'biti' && h.ua.heads[(hitAt >= 0 ? 1 : 0)] === 'Профіль' ? 1 : 0;
+  if (priceAt < 0) notes.push('нет «Ціни»'); else if (priceAt !== (hitAt >= 0 ? 1 : 0) + pre) notes.push('«Ціна» не на месте');
   if (hitAt > 0) notes.push('«Хіти» не первым'); if (!ruOk) notes.push('ru ≠ ua по числу блоков');
   const prices = [...new Set(vis.map(p => p.price))];
   rows.push({ id, path: s.path, n: vis.length, own: pl ? (pl.tiny ? 'tiny' : pl.inherits ? 'наслед.' : 'свой') : '-', want: ['Ціна', ...(want || [])].join(' → '), now: h.ua.heads.join(' → '), ru: h.ru.heads.join(' → '), res: notes.join('; ') || 'OK', info }); }

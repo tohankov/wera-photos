@@ -56,10 +56,11 @@ const adminDiff = () => { const b = ['## Что поменять в админк
     for (const [id, pl] of Object.entries(plan.plans)) { if (pl.tiny) continue; const keys = pl.inherits ? plan.rootList.filter(k => pl.present.includes(k)) : pl.list;
       const want = keys.filter(k => has(id, k)).map(nm); const now = (SC[id] ? SC[id].ua.filters : []).map(f => f.title).filter(t => t && t !== '?' && t !== 'Бренд' && t !== 'Ціна' && !(/ у складі$/.test(t) && !want.includes(t)));   // an extra «… у складі» is the owner's rule (23.10.2026), not a change
       const op = old && old.plans[id]; const oldOwn = op ? !op.inherits && !op.tiny : false, newOwn = !pl.inherits; const same = JSON.stringify(want) === JSON.stringify(now);
-      let act = null; if (same && !rootLine) continue;   // the storefront already shows the planned list and the group list stays — nothing to do
+      let act = null; if (same && !rootLine) continue; if (rootLine && plan.roots.includes(+id)) continue;   // the group section itself — already in rootLine   // the storefront already shows the planned list and the group list stays — nothing to do
       if (newOwn && !oldOwn) act = 'задать свой список' + (same ? ' (на витрине сейчас так и есть — через наследование; после правки раздела группы без своего списка изменится)' : '');
       else if (newOwn && !same) act = 'заменить свой список';
       else if (!newOwn && oldOwn && !same) act = 'очистить свой список — будет наследовать от «' + rootPath + '»';   // an own list that equals what inheritance gives — left as is
+      else if (!newOwn && !same && plan.roots.includes(+id)) act = 'раздел группы — поменять «Фільтри»';
       else if (!newOwn && !same) act = rootLine ? 'изменится сам после правки раздела группы' : 'проверить: наследует от «' + rootPath + '»';
       if (!act) continue; const rem = now.filter(t => !want.includes(t)), add = want.filter(t => !now.includes(t));
       const what = [rem.length ? 'убрать ' + rem.map(x => '«' + x + '»').join(', ') : '', add.length ? 'добавить ' + add.map(x => '«' + x + '»').join(', ') : '', !same && !rem.length && !add.length ? 'поменять порядок' : ''].filter(Boolean).join('; ');

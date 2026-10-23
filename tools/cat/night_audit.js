@@ -24,7 +24,10 @@ const OWNER_LIST = { 1231: ['vyd_instrumentu', 'diapazon_momentu', 'osoblyvosti_
   1130: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'], 1148: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'],
   // owner 23.10.2026: «Поперечна ручка-тримач Rapidaptor» (серія 400) and «Тріскачки та набори Zyklop VDE ¼» — «Хіти продажів → Ціна»; Zyklop Pocket — as he set it:
   // no «Привід», «PH у складі» after «TX у складі»
+  // owner 23.10.2026: «Інструментальний візок та ложементи» is a set section — all 8 «… у складі» after «Комплектація» and «Інструмент у ложементі», as he set it
+  1055: ['komplektatsiia', 'instrument_u_lozhementi', 'sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus'],
   1138: [], 1456: [], 1271: ['sklad_pz', 'sklad_tx', 'sklad_ph', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus', 'rozmir_holovky', 'dovzhyna_holovky'] };
+const SET_SEC = new Set([1055]);   // owner 23.10.2026: set sections whose products are not «Набір…» by kind (trolleys / inlays)
 const VYD_KEEP = new Set([1129, 1130, 1148]);   // owner 21.10.2026: «Набори викруток для електронників, серія Kraftform Micro» keeps «Вид інструменту» (4 kinds); owner 20.10 / 22.10.2026: both «Спеціальні викрутки … Kraftform Micro» (1130) and «… Micro ESD» (1148) — with «Вид»
 const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'rozmir_nasadky'];
 const GROUPS = {
@@ -87,7 +90,7 @@ const secRows = [], missing = [], single = []; const plans = {};
 for (const id of SECS) { const t = byId[id]; const sc = SC[id]; const ps = prodIn(id); const hid = L.filter(p => !vis(p) && secs(p).includes(id)).length;
   const row = { id, path: t.path, depth: t.depth, status: sc ? sc.ua.status : '-', shows: listing(id) ? 'товари' : (kids[id] || []).length ? 'плитки підрозділів' : 'порожньо', vis: ps.length, hid, filtersNow: sc ? sc.ua.filters.filter(f => f.title !== '?').map(f => `${f.title}(${f.vals.length})`).join(', ') : '' };
   secRows.push(row); if (!listing(id)) continue;
-  const setSec = ps.filter(isSet).length * 2 >= ps.length; row.kind = setSec ? 'набори' : 'товари';
+  const setSec = SET_SEC.has(+id) || ps.filter(isSet).length * 2 >= ps.length; row.kind = setSec ? 'набори' : 'товари';
   const cand = setSec ? [...ALLK.filter(k => !SETSIZE.has(k)).slice(0, 1), ...SKLAD, ...ALLK.filter(k => !SETSIZE.has(k)).slice(1)] : ALLK;
   // owner 23.10.2026: a section of 1 product — no own list (inherits); 2 products — by the general rules (the «2 → Хіти → Ціна» rule of 23.10 (k) is cancelled,
   // owner's exceptions in OWNER_LIST: 1138, 1456); a set section gets ALL «… у складі» (PH … PlusMinus), with or without values: Horoshop hides an empty one
@@ -123,7 +126,7 @@ for (const k of keysAll.sort((a, b) => orderKey(a) - orderKey(b))) { const u = i
 { const cf = path.join(__dirname, `night_plan_${GK}_configured.json`); if (fs.existsSync(cf)) { const cr = JSON.parse(fs.readFileSync(cf, 'utf8')).rootList;
     if (cr.every(k => ids.filter(id => plans[id].use.includes(k)).length >= 2) && JSON.stringify(cr) !== JSON.stringify(rootList)) { console.log('group list kept as configured:', cr.join(', '), '(rules gave', rootList.join(', ') + ')'); rootList.length = 0; rootList.push(...cr); } } }
 // a group of one listing section (the group section itself lists the products): its list is that section's list
-if (ids.length === 1) { rootList.length = 0; const P1 = plans[ids[0]]; rootList.push(...(P1.setSec ? [...P1.use.filter(k => k === 'vyd_instrumentu'), ...P1.use.filter(k => SKLAD.includes(k)), ...P1.use.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : P1.use)); }
+if (ids.length === 1) { rootList.length = 0; const P1 = plans[ids[0]]; rootList.push(...(P1.setSec && !P1.owner ? [...P1.use.filter(k => k === 'vyd_instrumentu'), ...P1.use.filter(k => SKLAD.includes(k)), ...P1.use.filter(k => k !== 'vyd_instrumentu' && !SKLAD.includes(k))] : P1.use)); }
 // set keys go after «Вид інструменту»: in the group list only when most listing sections are set sections
 const own = []; for (const id of ids) { const P0 = plans[id]; const inh = rootList.filter(k => P0.present.includes(k)); const want = [...P0.use].sort((a, b) => (P0.setSec && SKLAD.includes(a) !== SKLAD.includes(b) ? 0 : 0) || orderKey(a) - orderKey(b));
   // set sections: «Вид інструменту», then «… у складі», then the rest
