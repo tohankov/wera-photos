@@ -6,7 +6,7 @@
 // from the background, so there is no white halo on the dark site.
 //   cut(inputFile) -> { png: Buffer (RGBA), stats }      node lib/cutout.js <in> <out.png>
 const sharp = require('sharp');
-const P = { noise: 10, hi: 48, grad: 7, neutral: 14, holePure: 0.92, holeMin: 0.004, band: 2, core: 3, speck: 0.0005, close: 2, bandLen: 40 };
+const P = { noise: 10, hi: 48, grad: 7, neutral: 14, holePure: 0.92, holeMin: 0.004, band: 2, core: 3, speck: 0.0005, close: 2, bandLen: 40, rim: 4, rimRatio: 0.75 };
 async function cut(file, opt = {}) { const o = { ...P, ...opt };
   const { data, info } = await sharp(file).flatten({ background: '#ffffff' }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const W = info.width, H = info.height, N = W * H, px = i => [data[i * 3], data[i * 3 + 1], data[i * 3 + 2]];
@@ -55,21 +55,27 @@ async function cut(file, opt = {}) { const o = { ...P, ...opt };
       for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) if (j >= 0 && !bg[j] && !lab[j] && d[j] <= o.noise) { lab[j] = -1; st.push(j); } }
     const pure = comp.filter(i => d[i] <= 3).length / comp.length;
     if (comp.length >= o.holeMin * N && pure >= o.holePure) { for (const i of comp) bg[i] = 2; holes++; } else kept++; }
-  // distance (in px, up to band+1) from the background, for the soft edge
+  // distance (in px, up to rim+2) from the background, for the soft edge
   const dist = new Uint8Array(N).fill(255); let fr = []; for (let i = 0; i < N; i++) if (bg[i]) { dist[i] = 0; fr.push(i); }
-  for (let k = 1; k <= o.band + 1; k++) { const nx = []; for (const i of fr) { const x = i % W, y = (i / W) | 0;
+  const RIM = Math.max(o.band, o.rim);
+  for (let k = 1; k <= RIM + 2; k++) { const nx = []; for (const i of fr) { const x = i % W, y = (i / W) | 0;
       for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) if (j >= 0 && dist[j] === 255) { dist[j] = k; nx.push(j); } } fr = nx; }
-  // inner reference: the object's own distance from the background a little further in (light chrome -> small reference -> stays opaque)
-  const out = Buffer.alloc(N * 4); let semi = 0;
+  // inner reference: the tool's own distance from the background just inside the edge zone — the MEDIAN of the pixels rim+1..rim+2 px in
+  // (light chrome -> small reference -> stays opaque; a dark logo further in does not count). Owner 24.10.2026: a light rim up to `rim` px in
+  // (top of the 8790 groove, top edge of a long Vario bit) is a blend with the white, not the tool's colour — it gets the same soft alpha
+  const refAt = (x, y) => { const v = []; const R = RIM + 3;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue; const j = yy * W + xx; if (dist[j] > RIM && dist[j] <= RIM + 2) v.push(d[j]); }
+    if (!v.length) return 0; v.sort((p, q) => p - q); return v[v.length >> 1]; };
+  const out = Buffer.alloc(N * 4); let semi = 0, rim = 0;
   for (let i = 0; i < N; i++) { const [r, g, b] = px(i); let a = 1;
     if (bg[i]) a = 0;
-    else if (dist[i] <= o.band) { const x = i % W, y = (i / W) | 0; let ref = 0;
-      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue; const j = yy * W + xx; if (dist[j] > o.band) ref = Math.max(ref, d[j]); }
-      a = ref > 0 ? Math.min(1, d[i] / Math.max(ref, 24)) : Math.min(1, d[i] / 48); if (a < 1) semi++; }
+    else if (dist[i] <= RIM) { const ref = refAt(i % W, (i / W) | 0);
+      if (dist[i] <= o.band) { a = ref > 0 ? Math.min(1, d[i] / Math.max(ref, 24)) : Math.min(1, d[i] / 48); if (a < 1) semi++; }
+      else if (ref >= 24 && d[i] < o.rimRatio * ref) { a = d[i] / ref; semi++; rim++; } }
     let cr = r, cg = g, cb = b; if (a > 0 && a < 1) { cr = (r - (1 - a) * BG[0]) / a; cg = (g - (1 - a) * BG[1]) / a; cb = (b - (1 - a) * BG[2]) / a; }
     out[i * 4] = Math.max(0, Math.min(255, Math.round(cr))); out[i * 4 + 1] = Math.max(0, Math.min(255, Math.round(cg))); out[i * 4 + 2] = Math.max(0, Math.min(255, Math.round(cb))); out[i * 4 + 3] = Math.round(a * 255); }
   const fg = N - [...bg].filter(Boolean).length;
   const png = await sharp(out, { raw: { width: W, height: H, channels: 4 } }).png().toBuffer();
-  return { png, stats: { W, H, bg: BG, fgShare: +(fg / N).toFixed(3), holes, keptLight: kept, edge: semi, rimBack: back, closed, specks } }; }
+  return { png, stats: { W, H, bg: BG, fgShare: +(fg / N).toFixed(3), holes, keptLight: kept, edge: semi, lightRim: rim, rimBack: back, closed, specks } }; }
 module.exports = { cut, P };
 if (require.main === module) cut(process.argv[2]).then(r => { require('fs').writeFileSync(process.argv[3], r.png); console.log(JSON.stringify(r.stats)); });
