@@ -36,6 +36,23 @@ const fileOf = (a, i) => path.join(ADD, `${a}@${(L[a].images || []).length + i +
   const F = ['article', 'parent_article', 'title', 'mod_title', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description', 'characteristics', 'icons', 'short_description', 'seo_title', 'seo_description', 'slug'];
   const exp = async a => { const r = await call('horoshop_catalog_export', { expr: { article: [a] }, includedParams: F, limit: 5, allowLarge: true }); const p = ((r.response || {}).products || [])[0]; if (!p) stop('export ' + a); return p; };
   const fname = u => u.split('/').pop(); const list = LISTF ? JSON.parse(fs.readFileSync(LISTF, 'utf8')) : Object.keys(plan);
+  // batches of 25 (the API allows few requests per hour: 4 requests per batch instead of 4 per product); a product cut off mid-batch keeps its
+  // add_before_<art>.json and is finished one by one below (resume)
+  const linksOf = a => plan[a].map((_, i) => 'https://raw.githubusercontent.com/tohankov/wera-photos/main/images/global_add/' + encodeURIComponent(path.basename(fileOf(a, i))));
+  const fresh = list.filter(a => !(st[a] && st[a].done) && !fs.existsSync(path.join(WORK, 'add_before_' + a + '.json')));
+  for (let i = 0; i < fresh.length; i += 25) { if (Date.now() - T0 > BUD - 120000) break; const arts = fresh.slice(i, i + 25);
+    const r0 = await call('horoshop_catalog_export', { expr: { article: arts }, includedParams: F, limit: 100, allowLarge: true }); const B0 = Object.fromEntries(((r0.response || {}).products || []).map(p => [p.article, p]));
+    if (Object.keys(B0).length !== arts.length) stop('batch export ' + Object.keys(B0).length + ' of ' + arts.length);
+    for (const a of arts) { if (B0[a].images.length !== (L[a].images || []).length) stop(`${a}: photos ${B0[a].images.length} now, ${(L[a].images || []).length} when planned`); fs.writeFileSync(path.join(WORK, 'add_before_' + a + '.json'), JSON.stringify(B0[a])); for (const u of linksOf(a)) { const h = await fetch(u); if (h.status !== 200) stop(`${a}: not on GitHub ${u}`); } }
+    const TMP = path.join(__dirname, `../fix/wera_add_batch.json`); fs.writeFileSync(TMP, JSON.stringify({ products: arts.map(a => ({ article: a, images: { override: false, links: linksOf(a) } })) }));
+    const dry = await call('horoshop_catalog_import', { productsFile: TMP, dryRun: true }); const w = dry.willChange || [];
+    if (w.length !== arts.length || w.some(x => !arts.includes(x.article) || x.isNew || Object.keys(x.changes || {}).some(k => !/^images/.test(k)))) stop(`batch dry ${JSON.stringify(dry).slice(0, 400)}`);
+    const r = await call('horoshop_catalog_import', { productsFile: TMP, dryRun: false }); if ((r.errors || []).length) stop(`batch import ${JSON.stringify(r.errors).slice(0, 300)}`); fs.unlinkSync(TMP);
+    await sleep(4000); const r1 = await call('horoshop_catalog_export', { expr: { article: arts }, includedParams: F, limit: 100, allowLarge: true }); const A1 = Object.fromEntries(((r1.response || {}).products || []).map(p => [p.article, p]));
+    for (const a of arts) { const before = B0[a], after = A1[a]; if (!after) stop(a + ' missing after'); const bi = before.images.map(fname), ai = after.images.map(fname); const n = plan[a].length;
+      const bad = F.filter(k => k !== 'images' && JSON.stringify(before[k]) !== JSON.stringify(after[k])); if (ai.slice(0, bi.length).join() !== bi.join()) bad.push('old photos changed or moved'); if (ai.length !== bi.length + n) bad.push(`photos ${bi.length} -> ${ai.length}, planned +${n}`);
+      if (bad.length) stop(`${a}: ${bad.join('; ')}`); st[a] = { done: true, added: n, files: plan[a].map(x => x.file), at: new Date().toISOString() }; }
+    save(); console.log(`batch ${arts[0]}…: ${arts.length} products, +${arts.reduce((s, a) => s + plan[a].length, 0)} photos, checked`); }
   for (const a of list) { if (st[a] && st[a].done) continue; if (Date.now() - T0 > BUD - 60000) break; const files = plan[a].map((_, i) => fileOf(a, i)); if (files.some(f => !fs.existsSync(f))) { console.log(a, 'files missing'); continue; }
     const BF = path.join(WORK, 'add_before_' + a + '.json'); const resumed = fs.existsSync(BF); const before = resumed ? JSON.parse(fs.readFileSync(BF, 'utf8')) : await exp(a); if (!resumed) fs.writeFileSync(BF, JSON.stringify(before));
     if (before.images.length !== (L[a].images || []).length) stop(`${a}: photos ${before.images.length} now, ${(L[a].images || []).length} when planned`);
