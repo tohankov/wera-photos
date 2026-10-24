@@ -17,7 +17,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)); const nz = s => String(
   const need = [...new Set([...L0.filter(p => secs(p).some(id => ids.includes(id))).map(p => p.article), ...arts])];
   const L = await exp(need); S.close(); const by = Object.fromEntries(L.map(p => [p.article, p]));
   const tree = ids.map(id => M.find(s => s.id === id) || { id, path: String(id) }); const TREE = OUT.replace(/\.json$/, '_tree.json');
-  fs.writeFileSync(TREE, JSON.stringify(tree)); if (fs.existsSync(OUT)) fs.unlinkSync(OUT);
+  // SCAN_KEEP=1: continue a scan that did not fit in one foreground run (vt/sec_scan.js resumes from the out file); only right after the write it belongs to
+  fs.writeFileSync(TREE, JSON.stringify(tree)); if (fs.existsSync(OUT) && !process.env.SCAN_KEEP) fs.unlinkSync(OUT);
   execFileSync('node', [path.join(__dirname, '../vt/sec_scan.js'), TREE, OUT], { stdio: ['ignore', 'ignore', 'inherit'], timeout: 1800000 });
   const SC = JSON.parse(fs.readFileSync(OUT, 'utf8')); const BY = {}; for (const p of L) BY[(p.link || '').replace(/^https?:\/\/[^/]+/, '')] = p.article; let bad = 0, blocks = 0;
   for (const id of ids) { const s = SC[id]; const name = (tree.find(t => t.id === id) || {}).path; if (!s) { bad++; console.log('NOT SCANNED', id, name); continue; }
