@@ -38,13 +38,45 @@ function block(items, lang, { count } = {}) {
     + `<span class="${CLS}-more">${LBL.more[lang](items.length - SHOW)}</span><span class="${CLS}-less">${LBL.less[lang]}</span></summary>${grid(items.slice(SHOW))}</details>`;
   return h + `<p style="margin-top:8px;font-size:12px;color:${C.muted}">${LBL.hint[lang]}</p></div>`;
 }
+// Grouped by profile (owner 24.10.2026, as in the old WERA catalog): a row of chips «icon PH · 4» (only when ≥ 2 groups), then the groups —
+// heading = icon 34 px + «Phillips PH» + grey «· N поз.», under it the same cards and grid. Profile groups in the order of their first position
+// in the datasheet, groups without a profile (text heading, vt/setgroup.js CAT) — at the end, also by first appearance. More than 10 positions:
+// the first 8 (with their group headings) visible, the rest under <details>, a group cut at 8 continues inside without a new heading.
+//   blockG(items, lang, { count, iconBase, iconSrc })  items: as block() + gkey (vt/setgroup.js group().key); iconSrc(name) overrides the icon URL (preview)
+const G = require('./setgroup.js');
+LBL.pos = { ua: 'поз.', ru: 'поз.' };
+function blockG(items, lang, { count, iconBase = '/content/uploads/images/icons/', iconSrc } = {}) {
+  const n = count || items.reduce((s, x) => s + (+x.qty || 1), 0); const src = f => iconSrc ? iconSrc(f) : iconBase + f + '.png';
+  const keys = []; for (const it of items) if (!keys.includes(it.gkey)) keys.push(it.gkey);
+  const order = [...keys.filter(k => !k.startsWith('c:')), ...keys.filter(k => k.startsWith('c:'))];
+  const flat = order.flatMap(k => items.filter(it => it.gkey === k)); const cnt = k => items.filter(it => it.gkey === k).length;
+  const title = k => { const d = G.def(k); return cnt(k) === 1 && d.one ? d.one[lang] : d[lang]; };
+  const style = `<style>.${CLS} details>summary{list-style:none}.${CLS} details>summary::-webkit-details-marker{display:none}`
+    + `.${CLS} details[open]>summary .${CLS}-more{display:none}.${CLS} details:not([open])>summary .${CLS}-less{display:none}</style>`;
+  const chip = k => { const d = G.def(k); return `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px ${d.icon ? '3px 4px' : '3px 10px'};border:1px solid ${C.line};border-radius:14px;font-size:13px;color:${C.text};white-space:nowrap">`
+    + (d.icon ? `<img src="${esc(src(d.icon))}" alt="" width="20" height="20" style="display:block">` : '') + `${esc(d.chip || title(k))} · ${cnt(k)}</span>`; };
+  const head = k => { const d = G.def(k); return `<div style="display:flex;align-items:center;gap:10px;margin:16px 0 8px">`
+    + (d.icon ? `<img src="${esc(src(d.icon))}" alt="" width="34" height="34" style="display:block;flex:0 0 34px">` : '')
+    + `<span style="font-size:15px;font-weight:600;color:${C.text}">${esc(title(k))}<span style="font-weight:400;color:${C.muted}"> · ${cnt(k)} ${LBL.pos[lang]}</span></span></div>`; };
+  // runs of one group inside a slice of flat: heading only where the group starts (not where it continues after the cut)
+  const part = (from, to) => { let h = '', cur = null, run = []; const flush = () => { if (run.length) h += `<div style="${GRID}">${run.map(it => card(it, lang)).join('')}</div>`; run = []; };
+    for (let i = from; i < to; i++) { const it = flat[i]; if (it.gkey !== cur) { flush(); cur = it.gkey; if (i === 0 || flat[i - 1].gkey !== cur) h += head(cur); } run.push(it); }
+    flush(); return h; };
+  let h = `<div class="${CLS}">${style}<h3>${LBL.title[lang]} · ${n} ${items_(n, lang)}</h3>`;
+  if (order.length >= 2) h += `<div style="display:flex;flex-wrap:wrap;gap:6px">${order.map(chip).join('')}</div>`;
+  if (flat.length <= ALL) h += part(0, flat.length);
+  else h += part(0, SHOW) + `<details style="margin-top:10px"><summary style="cursor:pointer;display:inline-block;padding:8px 0;color:${C.green};font-weight:600">`
+    + `<span class="${CLS}-more">${LBL.more[lang](flat.length - SHOW)}</span><span class="${CLS}-less">${LBL.less[lang]}</span></summary>${part(SHOW, flat.length)}</details>`;
+  return h + `<p style="margin-top:8px;font-size:12px;color:${C.muted}">${LBL.hint[lang]}</p></div>`;
+}
 // datasheet size -> our format: «1 мм x 5.5 мм x 100 мм» -> «SL 1,0×5,5×100 мм» (slotted by our name), «PH 2 x 100 мм» -> «PH 2×100 мм»,
 // «3 mm x 25 мм» -> «HEX 3,0×25 мм» (hex bit by our name), «1/4" x 152 мм» -> «1/4″×152 мм», a list «10; 11; 12; 13 мм x 7/16; 1/2"» stays a list
-function size(s, name = '') {
+// prof — the position's profile group (vt/setgroup.js key) when known: our data first, the name only as a fallback
+function size(s, name = '', prof = '') {
   const parts = String(s).trim().replace(/(\d)\.(\d)/g, '$1,$2').replace(/\bmm\b/g, 'мм').replace(/"/g, '″').split(/\s+x\s+/).map(p => p.trim()); const raw = parts.slice(); parts.forEach((p, i) => { parts[i] = p.replace(/\s*мм$/, ''); });
   const d1 = v => /^\d+$/.test(v) ? v + ',0' : v; const num = v => /^\d+(?:,\d+)?$/.test(v);
-  if (/\bSL\b|шліц|шлиц/i.test(name) && parts.length === 3 && parts.every(num)) return `SL ${d1(parts[0])}×${d1(parts[1])}×${parts[2]} мм`;
-  if (/\bHEX\b|шестигран/i.test(name) && parts.length === 2 && parts.every(num)) return `HEX ${d1(parts[0])}×${parts[1]} мм`;
+  if ((prof ? prof === 'SL' : /\bSL\b|шліц|шлиц/i.test(name)) && parts.length === 3 && parts.every(num)) return `SL ${d1(parts[0])}×${d1(parts[1])}×${parts[2]} мм`;
+  if ((prof ? prof === 'HEX' : /\bHEX\b|шестигран/i.test(name)) && parts.length === 2 && parts.every(num)) return `HEX ${d1(parts[0])}×${parts[1]} мм`;
   const list = parts.some(p => /;/.test(p)); const unit = /мм/.test(String(s).replace(/\bmm\b/g, 'мм')) ? ' мм' : '';
   return list ? raw.join(' × ') : parts.join('×') + unit;
 }
@@ -52,4 +84,4 @@ function size(s, name = '') {
 const baseName = (t, art) => t.replace(new RegExp('\\s+WERA\\s+' + art + '$'), '').replace(/\s+(?:(?:SL|PH|PZ|TX|HEX|IPR?)\s)?[\d,\/\-–]+(?:×[\d,]+)*\s?мм$/, '').replace(/[,\s]+$/, '').trim();
 // WERA model code in front of our name when our name does not have it («932 A» + «Шліцева ударна викрутка»)
 const withCode = (name, code) => { const m = (code || '').match(/^\d+(?:\/\d+)*(?:\s(?:[A-Z]{1,4}\d?|i|iS)(?=\s|$))*/); if (!m) return name; const k = m[0].trim(); return name.includes(k.split(' ')[0]) ? name : `${k} ${name}`; };
-module.exports = { block, size, baseName, withCode, LBL, items_ };
+module.exports = { block, blockG, size, baseName, withCode, LBL, items_ };
