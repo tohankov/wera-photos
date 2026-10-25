@@ -31,7 +31,8 @@ for (const p of L) { const a = p.article; const f = { art: a, name: p.mod_title.
   for (const l of ['ua', 'ru']) { const r = apply(p.mod_title[l], a); if (r.t !== p.mod_title[l]) add(1, `формат названия (${l})`, `«${p.mod_title[l]}» → «${r.t}» (${r.hit.map(h => LABEL[h] || h).join(', ')})`, 'names/rules.js'); }
   for (const l of ['ua', 'ru']) if (/\((?:SL|PH|PZ|TX|HEX|IP|квадрат)[^)]*,(?=\S)[^)]*\)/.test(p.mod_title[l])) add(1, `нет пробела после запятой в скобках (${l})`, p.mod_title[l], 'формат CLAUDE.md «(SL, PH, PZ)»');
   if (/[A-Za-z0-9]х\d|\dх[A-Za-z0-9]/.test(p.mod_title.ua + ' ' + p.mod_title.ru)) add(1, 'кириллическая «х» в размере', p.mod_title.ua, 'формат «×»');
-  const pr = ch(p, 'rozmir_nakonechnyka'), len = ch(p, 'dovzhyna_stryzhnia');
+  // the length: «Довжина стрижня» (Викрутки) or «Довжина робочого кінця» (Діелектричні, Kompakt — 25.10.2026)
+  const LK = ch(p, 'dovzhyna_stryzhnia').length ? 'dovzhyna_stryzhnia' : 'dovzhyna_robochoho_kintsia'; const pr = ch(p, 'rozmir_nakonechnyka'), len = ch(p, LK);
   if (!isSet && pr.length === 1 && D) { // the size in the name = «Профіль і розмір» × length, the numbers = the datasheet line
     const exp = pr[0] + (len.length === 1 ? '×' + len[0].replace(' мм', '') + ' мм' : '');
     // the size at the end of our name, right before «WERA <article>»: an optional profile word + «#2», «5 IP», «1,0×5,5×100 мм», «1/4″×125 мм», «m×40 мм»
@@ -50,7 +51,7 @@ for (const p of L) { const a = p.article; const f = { art: a, name: p.mod_title.
       if (val === 'Шестигранний стрижень' && ch(p, 'profil').some(v => /HEX|шестигран/i.test(v))) { if (!have.includes(val)) add(2, 'спорно: «Sechskantklinge» у шестигранної викрутки', 'у викрутки HEX шестигранний сам робочий кінець — не особливість', url); continue; }
       if (!have.includes(val)) add(2, 'особенность по wera.de', `«${val}» — wera.de «${wp.merkmale.find(m => re.test(m))}»${notes.length ? '; сноски: ' + notes.join('; ') : ''}`, url); }
     const kl = row['Klingenlänge mm']; if (kl && len.length === 1 && nz(kl) !== nz(len[0].replace(' мм', ''))) add(2, 'длина стрижня ≠ wera.de', `у нас ${len[0]}, wera.de Klingenlänge ${kl} мм`, url);
-    if (kl && !len.length) add(2, 'нет «Довжина стрижня»', `wera.de Klingenlänge ${kl} мм`, url); }
+    if (kl && !len.length) add(2, LK === 'dovzhyna_stryzhnia' ? 'нет «Довжина стрижня»' : 'нет «Довжина робочого кінця»', `wera.de Klingenlänge ${kl} мм`, url); }
   if (!url && /^\d{11}$/.test(a)) add(2, 'нет страницы wera.de', 'wera.de/de/' + a + ' — 404', 'wera.de');
   // ---- 3. sets
   if (isSet || (COMP[a] && COMP[a].flatMap(g => g.items).length > 1)) { const seen = new Set(); const items = [];
