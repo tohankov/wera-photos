@@ -5,7 +5,10 @@ const fs = require('fs'); const T = 'C:/Users/Techlight/Desktop/wera-photos/tool
 const SB = require(T + 'vt/setblock.js'); const G = require(T + 'vt/setgroup.js'); const W = require(T + 'vt/wset.js'); const C = require(T + 'cat/ds_comp_all.json');
 const [, , D, LIVE, ICONS, OUT, ...argSets] = process.argv; const SETS = argSets.length ? argSets : ['05150153001'];
 const E = Object.fromEntries(require(D + '/exp.json').map(p => [p.article, p])); const L = Object.fromEntries(require(LIVE).map(p => [p.article, p]));
-const NOART = { 'KNIPEX': { ua: 'Сантехнічні кліщі KNIPEX Cobra® 87 01 250', ru: 'Сантехнические клещи KNIPEX Cobra® 87 01 250', img: 'wera_knipex_cobra_hightech_wasserpumpenzange_87_01_250' } };
+// KNIPEX positions (owner 25.10.2026): our KNIPEX product on techlight-shop.com.ua — the name links there (RU — its /ru/ page), the picture is its main photo without
+// background (cut here, served from images/setblock/ in the repo), «Арт. <KNIPEX article>»; not on techlight-shop — the WERA picture without a link
+const KN = 'https://techlight-shop.com.ua/vysokotekhnolohichni-santekhnichni-klishchi-cobra-knipex-87-01-250/';
+const NOART = { 'KNIPEX': { art: '87 01 250', ua: 'Високотехнологічні сантехнічні кліщі Cobra® 250 мм KNIPEX', ru: 'Высокотехнологичные сантехнические клещи 250 мм KNIPEX Cobra®', href: { ua: KN, ru: KN.replace('techlight-shop.com.ua/', 'techlight-shop.com.ua/ru/') }, img: 'knipex_87_01_250', site: 'https://raw.githubusercontent.com/tohankov/wera-photos/main/images/setblock/knipex_87_01_250.png' } };
 const uri = f => 'data:image/webp;base64,' + fs.readFileSync(D + '/th/' + f + '.webp').toString('base64');
 const icon = f => 'data:image/png;base64,' + fs.readFileSync(ICONS + '/' + f + '.png').toString('base64');
 const out = {}; const notes = [], questions = [];
@@ -16,9 +19,9 @@ for (const s of SETS) { const seen = new Set(); const items = [];
       const nm = l => SB.withCode(SB.baseName(p.mod_title[l], x.art), g.code);
       items.push({ art: x.art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, p.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: vis ? { ua: p.link, ru: p.link.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/') } : null, img: uri(x.art) }); }
     else { const k = Object.keys(NOART).find(k => g.head.includes(k)); if (!k) { questions.push(`${s} no-article position without a name: ${g.head}`); continue; }
-      items.push({ art: null, qty: x.qty, gkey: gr.key, size: '', name: { ua: NOART[k].ua, ru: NOART[k].ru }, href: null, img: uri(NOART[k].img) }); } }
+      items.push({ art: NOART[k].art || null, qty: x.qty, gkey: gr.key, size: '', name: { ua: NOART[k].ua, ru: NOART[k].ru }, href: NOART[k].href || null, img: uri(NOART[k].img) }); } }
   const w = W.parse(fs.readFileSync(D + '/w_' + s + '.html', 'utf8')).items.filter(i => i.rows.length).flatMap(i => i.rows);
-  const da = items.filter(i => i.art).map(i => i.art + ':' + i.qty).sort().join(','), wa = w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',');
+  const da = items.filter(i => /^\d{11}$/.test(i.art || '')).map(i => i.art + ':' + i.qty).sort().join(','), wa = w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',');
   notes.push(`${s}: datasheet ${items.length} positions, wera.de ${w.length}; articles+qty ${da === wa ? 'EQUAL' : 'DIFFER'}`);
   const keys = [...new Set(items.map(i => i.gkey))]; notes.push('  groups: ' + [...keys.filter(k => !k.startsWith('c:')), ...keys.filter(k => k.startsWith('c:'))].map(k => `${k} ${items.filter(i => i.gkey === k).length}`).join(', '));
   const txt = fs.readFileSync(T + 'batch/ds/' + s + '.txt', 'utf8'); const count = +((txt.match(/(\d+) предмет/) || [])[1] || 0) || undefined;
@@ -38,7 +41,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Roboto,Arial,sa
 .lang-ru .ua,.lang-ua .ru{display:none}
 </style></head><body class="lang-ua">
 <div class="bar"><b>Мова</b><button data-l="ua" class="on">UA</button><button data-l="ru">RU</button><b style="margin-left:12px">Ширина</b><button data-w="590" class="on">Компʼютер · 590 px (опис на сайті)</button><button data-w="328">Телефон · 328 px (360 px екран)</button></div>
-${SETS.map(s => `<div class="set"><h2>${esc(out[s].title.ua)}</h2><p class="sub">${s} · позицій у складі: ${out[s].n} · ${out[s].n > 10 ? 'видно 8 (з заголовками груп), решта під «Показати весь склад»' : 'до 10 позицій — усе одразу'} · <a href="${out[s].link}" style="color:var(--green)">товар на сайті</a></p>
+${SETS.map(s => `<div class="set"><h2>${esc(out[s].title.ua)}</h2><p class="sub">${s} · позицій у складі: ${out[s].n} · ${out[s].n > 10 ? 'видно цілі групи до 10 позицій, решта під «Показати весь склад»' : 'до 10 позицій — усе одразу'} · <a href="${out[s].link}" style="color:var(--green)">товар на сайті</a></p>
 <div class="frame" style="width:590px"><div class="text ua">${out[s].html.ua}</div><div class="text ru">${out[s].html.ru}</div></div></div>`).join('\n')}
 <script>
 document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{document.body.className='lang-'+b.dataset.l;document.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b))});
@@ -50,7 +53,7 @@ fs.writeFileSync(OUT, page);
 const site = {}; for (const s of SETS) { const its = []; const seen = new Set();
   for (const g of C[s]) for (const x of g.items) { const key = x.art || g.head; if (seen.has(key)) continue; seen.add(key); const gr = G.group(x.art ? L[x.art] : null, g.head); if (gr.question) continue;
     if (x.art) { const p = E[x.art]; its.push({ art: x.art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, p.mod_title.ua, gr.key), name: { ua: SB.withCode(SB.baseName(p.mod_title.ua, x.art), g.code), ru: SB.withCode(SB.baseName(p.mod_title.ru, x.art), g.code) }, href: +p.display_in_showcase === 1 ? { ua: p.link, ru: p.link.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/') } : null, img: (p.images || [])[0] || null }); }
-    else { const k = Object.keys(NOART).find(k => g.head.includes(k)); if (k) its.push({ art: null, qty: x.qty, gkey: gr.key, size: '', name: { ua: NOART[k].ua, ru: NOART[k].ru }, href: null, img: `https://www.wera.de/prodimg/240x240/${NOART[k].img}.webp` }); } }
+    else { const k = Object.keys(NOART).find(k => g.head.includes(k)); if (k) its.push({ art: NOART[k].art || null, qty: x.qty, gkey: gr.key, size: '', name: { ua: NOART[k].ua, ru: NOART[k].ru }, href: NOART[k].href || null, img: NOART[k].site }); } }
   site[s] = { count: out[s].count, html: Object.fromEntries(['ua', 'ru'].map(l => [l, SB.blockG(its.map(i => ({ ...i, href: i.href && i.href[l] })), l, { count: out[s].count })])) }; }
 fs.writeFileSync(D + '/blocks_g.json', JSON.stringify(site, null, 1));
 console.log(notes.join('\n')); console.log('questions:', questions.length ? '\n  ' + questions.join('\n  ') : 0); console.log('size', (page.length / 1024 | 0) + ' KB');

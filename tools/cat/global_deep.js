@@ -26,7 +26,8 @@ function wera(size, name, hint) { const s = String(size).replace(/(\d)\.(\d)/g, 
   if ((m = s.match(/^(PH|PZ|TX|IP|IPR)\s?(\d+)(?:\s?(BO|IP|IPR))?\s*x\s*([\d,]+)\s*(?:mm|мм|x)/i))) { const p = m[1].toUpperCase(); return { p, n: [/^P[HZ]$/.test(p) ? m[2] : f(m[2])], len: f(m[4]), bo: /BO/i.test(m[3] || '') }; }
   if ((m = s.match(/^(\d+)\s?(IP|IPR)\s*x\s*([\d,]+)\s*(?:mm|мм)/i))) return { p: m[2].toUpperCase(), n: [f(m[1])], len: f(m[3]) };
   if ((m = s.match(/^(PH\/S|PZ\/S)\s?(\d+)\s*x\s*([\d,]+)/i))) return { p: m[1].toUpperCase(), n: [m[2]], len: f(m[3]) };
-  if ((m = s.match(/^#\s?(\d+)\s*x\s*([\d,]+)/))) return { p: 'Квадрат', n: [f(m[1])], len: f(m[2]) };
+  // «# 1» of 1550 PH S (WERA: Phillips for mobile phones) is PH, not a square (owner 25.10.2026)
+  if ((m = s.match(/^#\s?(\d+)\s*x\s*([\d,]+)/))) return /PH S\b/.test(nm) ? { p: 'PH', n: [String(+m[1])], len: f(m[2]) } : { p: 'Квадрат', n: [f(m[1])], len: f(m[2]) };
   if ((m = s.match(/^(?:PL|Pentalobe)\s?([\d,]+)\s*x\s*([\d,]+)/i))) return { p: 'Pentalobe', n: [f(m[1])], len: f(m[2]) };
   if ((m = s.match(/^([\d,]+)\s*(?:mm|мм)?\s*x\s*([\d,]+)\s*(?:mm|мм)?\s*x\s*([\d,]+)\s*(?:mm|мм)/i)) && (sk === 'SL' || !sk && /schlitz|шлиц|плоск|SL\b|Elektrikerklinge|Werkstattklinge/i.test(nm))) return { p: 'SL', n: [f(m[1]), f(m[2])], len: f(m[3]) };
   if ((m = s.match(/^([\d,]+|\d+\/\d+)\s*(?:mm|мм|")?\s*x\s*([\d,]+)\s*(?:mm|мм)/i)) && (sk === 'HEX' || !sk && /sechskant|hex|шестигран/i.test(nm))) return { p: 'HEX', n: [frac(m[1])], len: f(m[2]), inch: /\//.test(m[1]) };

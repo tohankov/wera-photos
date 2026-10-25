@@ -38,10 +38,12 @@ function block(items, lang, { count } = {}) {
     + `<span class="${CLS}-more">${LBL.more[lang](items.length - SHOW)}</span><span class="${CLS}-less">${LBL.less[lang]}</span></summary>${grid(items.slice(SHOW))}</details>`;
   return h + `<p style="margin-top:8px;font-size:12px;color:${C.muted}">${LBL.hint[lang]}</p></div>`;
 }
-// Grouped by profile (owner 24.10.2026, as in the old WERA catalog): a row of chips «icon PH · 4» (only when ≥ 2 groups), then the groups —
+// Grouped by profile (owner 24.10.2026, as in the old WERA catalog): a row of chips «icon PH · 4» — only the screwdriver PROFILE groups, only when ≥ 2 of them
+// (owner 25.10.2026; groups without a profile are in the list below only), then the groups —
 // heading = icon 34 px + «Phillips PH» + grey «· N поз.», under it the same cards and grid. Profile groups in the order of their first position
 // in the datasheet, groups without a profile (text heading, vt/setgroup.js CAT) — at the end, also by first appearance. More than 10 positions:
-// the first 8 (with their group headings) visible, the rest under <details>, a group cut at 8 continues inside without a new heading.
+// the cut is at a GROUP boundary (owner 25.10.2026): whole groups are visible while their sum is ≤ 10 positions, so «Згорнути ▴» never stands inside a group;
+// only a first group of more than 10 is cut at 8 (it continues under <details> without a new heading).
 //   blockG(items, lang, { count, iconBase, iconSrc })  items: as block() + gkey (vt/setgroup.js group().key); iconSrc(name) overrides the icon URL (preview)
 const G = require('./setgroup.js');
 LBL.pos = { ua: 'поз.', ru: 'поз.' };
@@ -63,10 +65,12 @@ function blockG(items, lang, { count, iconBase = '/content/uploads/images/icons/
     for (let i = from; i < to; i++) { const it = flat[i]; if (it.gkey !== cur) { flush(); cur = it.gkey; if (i === 0 || flat[i - 1].gkey !== cur) h += head(cur); } run.push(it); }
     flush(); return h; };
   let h = `<div class="${CLS}">${style}<h3>${LBL.title[lang]} · ${n} ${items_(n, lang)}</h3>`;
-  if (order.length >= 2) h += `<div style="display:flex;flex-wrap:wrap;gap:6px">${order.map(chip).join('')}</div>`;
-  if (flat.length <= ALL) h += part(0, flat.length);
-  else h += part(0, SHOW) + `<details style="margin-top:10px"><summary style="cursor:pointer;display:inline-block;padding:8px 0;color:${C.green};font-weight:600">`
-    + `<span class="${CLS}-more">${LBL.more[lang](flat.length - SHOW)}</span><span class="${CLS}-less">${LBL.less[lang]}</span></summary>${part(SHOW, flat.length)}</details>`;
+  const prof = order.filter(k => !k.startsWith('c:')); if (prof.length >= 2) h += `<div style="display:flex;flex-wrap:wrap;gap:6px">${prof.map(chip).join('')}</div>`;
+  // visible part: whole groups while ≤ ALL positions; a first group bigger than ALL — its first SHOW positions
+  let cutAt = 0; for (const k of order) { if (cutAt + cnt(k) > ALL) break; cutAt += cnt(k); } if (!cutAt) cutAt = SHOW;
+  if (flat.length <= ALL || cutAt >= flat.length) h += part(0, flat.length);
+  else h += part(0, cutAt) + `<details style="margin-top:10px"><summary style="cursor:pointer;display:inline-block;padding:8px 0;color:${C.green};font-weight:600">`
+    + `<span class="${CLS}-more">${LBL.more[lang](flat.length - cutAt)}</span><span class="${CLS}-less">${LBL.less[lang]}</span></summary>${part(cutAt, flat.length)}</details>`;
   return h + `<p style="margin-top:8px;font-size:12px;color:${C.muted}">${LBL.hint[lang]}</p></div>`;
 }
 // datasheet size -> our format: «1 мм x 5.5 мм x 100 мм» -> «SL 1,0×5,5×100 мм» (slotted by our name), «PH 2 x 100 мм» -> «PH 2×100 мм»,
