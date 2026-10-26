@@ -85,7 +85,7 @@ function size(s, name = '', prof = '') {
   return list ? raw.join(' × ') : parts.join('×') + unit;
 }
 // our product name without « WERA <article>» and without the size at the end (the size is its own line)
-const baseName = (t, art) => t.replace(new RegExp('\\s+WERA\\s+' + art + '$'), '').replace(/\s+(?:(?:SL|PH|PZ|TX|HEX|IPR?)\s)?[\d,\/\-–]+(?:×[\d,]+)*\s?мм$/, '').replace(/[,\s]+$/, '').trim();
+const baseName = (t, art) => t.replace(new RegExp('\\s+WERA\\s+' + art + '$'), '').replace(/\s+(?:(?:SL|PH|PZ|TX|HEX|IPR?)\s)?[\d,\/\-–]+″?(?:×[\d,]+)*\s?мм$/, '').replace(/[,\s]+$/, '').trim();
 // WERA model code in front of our name when our name does not have it («932 A» + «Шліцева ударна викрутка»)
 const withCode = (name, code) => { const m = (code || '').match(/^\d+(?:\/\d+)*(?:\s(?:[A-Z]{1,4}\d?|i|iS)(?=\s|$))*/); if (!m) return name; const k = m[0].trim(); return name.includes(k.split(' ')[0]) ? name : `${k} ${name}`; };
 module.exports = { block, blockG, size, baseName, withCode, LBL, items_ };

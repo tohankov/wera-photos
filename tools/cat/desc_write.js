@@ -13,6 +13,8 @@ const stop = m => { save(); console.log('STOP', m); S.close(); process.exit(2); 
 const fields = ['article', 'parent_article', 'title', 'mod_title', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description', 'characteristics'];
 const exp = async arts => { const r = await call('horoshop_catalog_export', { expr: { article: arts }, includedParams: fields, limit: 200, allowLarge: true }); if (!r.response) stop('export ' + JSON.stringify(r).slice(0, 200)); return r.response.products; };
 const ws = s => s.replace(/\s+/g, ' ').replace(/> </g, '><').trim();
+// the import may return the values of a multi-select characteristic in another order (26.10.2026: «PH 2, PH 1» -> «PH 1, PH 2») — the same values are the same
+const same = (f, v) => f !== 'characteristics' || !v ? JSON.stringify(v) : JSON.stringify(Object.keys(v).sort().map(k => [k, Array.isArray(v[k]) ? v[k].map(x => JSON.stringify(x)).sort() : v[k]]));
 (async () => {
   const todo = Object.keys(plan.products).filter(a => !st.done.includes(a) && !st.skipped[a]);
   while (todo.length && Date.now() - T0 < budget - 60000) { const k = st.chunks; const arts = todo.splice(0, size);
@@ -26,7 +28,7 @@ const ws = s => s.replace(/\s+/g, ' ').replace(/> </g, '><').trim();
     const r = await call('horoshop_catalog_import', { productsFile: TMP, dryRun: false }); if ((r.errors || []).length) stop('import errors ' + JSON.stringify(r.errors).slice(0, 300));
     const after = await exp(go); fs.writeFileSync(BK + `${plan.name}_c${k}_after.json`, JSON.stringify(after)); const bad = [];
     for (const a of go) { const b = before.find(x => x.article === a), y = after.find(x => x.article === a); if (!y) { bad.push(a + ' missing'); continue; }
-      for (const f of fields) if (f !== 'description' && JSON.stringify(b[f]) !== JSON.stringify(y[f])) bad.push(`${a} ${f}`);
+      for (const f of fields) if (f !== 'description' && same(f, b[f]) !== same(f, y[f])) bad.push(`${a} ${f}`);
       for (const l of ['ua', 'ru']) { const e = plan.products[a].new[l]; if (y.description[l] === e) continue; if (ws(y.description[l]) === ws(e)) console.log(`note: ${a} ${l}: only whitespace normalised`); else bad.push(`${a} description.${l} ≠ plan`); } }
     if (bad.length) stop('verify: ' + bad.slice(0, 10).join('; '));
     st.done.push(...go); st.chunks++; save(); fs.unlinkSync(TMP);
