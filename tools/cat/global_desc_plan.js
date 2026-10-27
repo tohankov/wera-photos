@@ -24,7 +24,14 @@ const COL = { 'Klingendicke|mm': { icon: 'icon-blade-thickness', w: 26, ua: 'Т�
   'Klingenlänge|mm': { icon: 'icon-length', w: 10, ua: 'Довжина робочого кінця', ru: 'Длина рабочего конца', unit: 'mm' }, 'Gesamtlänge Klinge|mm': { icon: null, ua: 'Загальна довжина стрижня', ru: 'Общая длина стержня', unit: 'mm' },
   'Gesamtlänge|mm': { icon: null, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' },
   'Außenmaß (d1)|mm': { icon: 'icon-socket-d1', w: 26, ua: 'Зовнішній розмір (d1)', ru: 'Наружный размер (d1)', unit: 'mm' }, 'Durchmesser hinten (d2)|mm': { icon: 'icon-socket-d2', w: 26, ua: 'Задній діаметр (d2)', ru: 'Задний диаметр (d2)', unit: 'mm' },
-  'Höhe Abtrieb|mm': { icon: 'icon-socket-depth', w: 26, ua: 'Довжина робочого кінця', ru: 'Длина рабочего конца', unit: 'mm' }, 'Grifflänge|mm': { icon: 'icon-handle', w: 13, ua: 'Довжина ручки', ru: 'Длина ручки', unit: 'mm' },
+  'Höhe Abtrieb|mm': { icon: 'icon-socket-depth', w: 26, ua: 'Довжина робочого кінця', ru: 'Длина рабочего конца', unit: 'mm' },
+  // Joker combination wrenches — as our tables of the series (05020198001)
+  'Schlüsselweite|mm': { icon: 'icon-wrench-size', w: 23, ua: 'Розмір ключа', ru: 'Размер ключа', unit: 'mm' }, 'Schlüsselweite|inch': { icon: 'icon-wrench-size', w: 23, ua: 'Розмір ключа', ru: 'Размер ключа', unit: 'inch' },
+  'Schlüsselweite inch|inch': { icon: 'icon-wrench-size', w: 23, ua: 'Розмір ключа', ru: 'Размер ключа', unit: 'inch' },
+  'Außenmaß (b) Maul|mm': { icon: 'icon-wrench-b', w: 20, ua: 'Зовнішній розмір ріжкової частини (b)', ru: 'Наружный размер рожковой части (b)', unit: 'mm' },
+  'Kopfdicke|mm': { icon: 'icon-wrench-thickness', w: 12, ua: 'Товщина головки', ru: 'Толщина головки', unit: 'mm' },
+  'Außenmaß (b1) - Ratschenringschlüssel|mm': { icon: 'icon-ring-b1', w: 19, ua: 'Зовнішній розмір накидної частини з тріскачкою (b1)', ru: 'Наружный размер накидной части с трещоткой (b1)', unit: 'mm' },
+  'Max. Kopfhöhe - Ratschenringschlüssel|mm': { icon: 'icon-ring-height', w: 12, ua: 'Макс. висота головки накидної частини з тріскачкою', ru: 'Макс. высота головки накидной части с трещоткой', unit: 'mm' }, 'Grifflänge|mm': { icon: 'icon-handle', w: 13, ua: 'Довжина ручки', ru: 'Длина ручки', unit: 'mm' },
   'Klingendurchmesser|mm': { icon: 'icon-diameter', w: 26, ua: 'Діаметр робочого кінця', ru: 'Диаметр рабочего конца', unit: 'mm' }, 'Klingenbreite (in Zoll)|inch': { icon: null, ua: 'Ширина робочого кінця', ru: 'Ширина рабочего конца', unit: 'inch' },
   'Klingenlänge (in Zoll)|inch': { icon: 'icon-length-inch', w: 10, ua: 'Довжина робочого кінця', ru: 'Длина рабочего конца', unit: 'inch' }, 'Gesamtlänge Klinge in Zoll|inch': { icon: null, ua: 'Загальна довжина стрижня', ru: 'Общая длина стержня', unit: 'inch' } };
 const UNIT = { mm: { ua: 'мм', ru: 'мм' }, inch: { ua: 'дюйми', ru: 'дюймы' } };
@@ -32,12 +39,15 @@ const PROF_ICON = v => /^PH/.test(v) ? 'icon-ph' : /^PZ/.test(v) ? 'icon-pz' : /
 const fmt = v => String(v).replace(/"$/, '″').replace(/^#\s?/, '#');
 // footnotes of the series table (wera.de «Hinweis»): UA / RU text by hand from the datasheet RU line, keyed by the German note text
 const NOTE = { 'Kraftform-Griff, 1-komponentig': { ua: 'Ручка Kraftform, однокомпонентна', ru: 'Рукоятка Kraftform, однокомпонентная' } };
+// icon widths as in our existing tables (height 26)
+const ICON_W = { 'icon-hex': 26, 'icon-hex-socket': 26, 'icon-socket-vde-length': 22, 'icon-socket-d1': 21, 'icon-socket-d2': 26, 'icon-socket-length': 26, 'icon-socket-depth': 19, 'icon-wrench-size': 23, 'icon-combi-length': 9, 'icon-wrench-b': 20, 'icon-wrench-thickness': 12, 'icon-ring-b1': 19, 'icon-ring-height': 12, 'icon-length': 10, 'icon-length-inch': 10, 'icon-handle': 13 };
 function newTable(a, l) { const wp = W.pages[W.art[a]]; const t = wp.table; const D = ds(a);
   const rows = t.rows.filter(r => r.label !== 'Grifffarbe' && !/^Hinweis/.test(r.label)); const cols = [], keys = [];
   // sockets and screwdriver heads (Zyklop, VDE) — the columns of our existing tables of the same series (05004950001 sockets, 05004900001 heads)
   // Zyklop (27.10.2026): «Farbe» is left out as the handle colour; a column without a value in any row («-» — the metric heads' inch size) too
-  const t0 = A[a].mod_title.ua; const kind = /викруткова головка/i.test(t0) ? 'head' : /торцев\S* (?:[^ ]+ ){0,3}?головк/i.test(t0) ? 'socket' : '';
+  const t0 = A[a].mod_title.ua; const kind = /викруткова головка/i.test(t0) ? 'head' : /торцев\S* (?:[^ ]+ ){0,3}?головк/i.test(t0) ? 'socket' : /Joker/.test(t0) && /ключ/i.test(t0) ? 'wrench' : '';
   const KCOL = { socket: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Abtriebsgröße (in Zoll)|inch': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'inch' }, 'Gesamtlänge|mm': { icon: 'icon-socket-vde-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } },
+    wrench: { 'Gesamtlänge|mm': { icon: 'icon-combi-length', w: 9, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } },
     head: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Abtriebsgröße (in Zoll)|inch': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'inch' }, 'Gesamtlänge|mm': { icon: 'icon-socket-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } } };
   for (const r of rows) { const k = r.label + '|' + r.unit; if (r.label === 'Farbe' || r.vals.every(v => !v || v === '-' || v === '–')) continue; const kc = (KCOL[kind] || {})[k]; if (kc) { cols.push({ ...kc, unit: UNIT[kc.unit] }); keys.push(r); continue; }
     if (k === 'Abtriebsgröße (metrisch)|mm') { cols.push({ icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: UNIT.mm }); keys.push(r); continue; }   // Kompakt VDE 64 i hex blades — as our [icon-hex] «Розмір мм»
@@ -47,7 +57,7 @@ function newTable(a, l) { const wp = W.pages[W.art[a]]; const t = wp.table; cons
   const trows = t.arts.map((x, i) => { const nn = hint ? (hint.vals[i].match(/\d+/g) || []) : []; nn.forEach(n => used.add(n)); return [x, ...keys.map(r => fmt(r.vals[i] || '–')), nn.join(',')]; });
   const notes = { ua: [], ru: [] }; for (const n of [...used].sort()) { const de = wp.notesText[n]; const tr = NOTE[de]; if (!tr) throw new Error(`${a}: footnote ${n} «${de}» has no UA/RU text`); notes.ua.push(`<sup>${n})</sup> ${tr.ua}`); notes.ru.push(`<sup>${n})</sup> ${tr.ru}`); }
   const links = Object.fromEntries(t.arts.map(x => [x, linkOf(x, l)]).filter(([, u]) => u));
-  return table({ name: 'WERA ' + (D.series || ''), cols: cols.map(c => ({ icon: c.icon, w: c.w, ua: c.ua, ru: c.ru, unit: c.unit })), rows: trows, notes }, l, a, links); }
+  return table({ name: 'WERA ' + (D.series || ''), cols: cols.map(c => ({ icon: c.icon, w: ICON_W[c.icon] || c.w, ua: c.ua, ru: c.ru, unit: c.unit })), rows: trows, notes }, l, a, links); }
 // ---- c) + d)
 const altEmpty = h => h.replace(/(<th[^>]*>\s*<img src="\/content\/uploads\/images\/icons\/[^"]+"[^>]*?)alt="[^"]*"/g, '$1alt=""');
 const proseX = h => h.split(/(<table[\s\S]*?<\/table>)/).map((part, i) => i % 2 ? part : part.replace(/>([^<]+)</g, (m, t) => '>' + t.replace(/(\d|\d″|\b[A-Z]{1,2} ?\d+)\s?x\s?(?=\d)/g, (x, a) => a + '×') + '<')).join('');
