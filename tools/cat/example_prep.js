@@ -8,6 +8,9 @@ const SB = require('../vt/setblock.js'); const G = require('../vt/setgroup.js');
 const [, , ALL, D, ...args] = process.argv; const A = Object.fromEntries(JSON.parse(fs.readFileSync(ALL, 'utf8')).map(p => [p.article, p]));
 // NAMES=<set.json> (names plan of the group): the block shows the names as they will be after the names step
 if (process.env.NAMES) for (const [a, v] of Object.entries(JSON.parse(fs.readFileSync(process.env.NAMES, 'utf8')))) if (A[a]) A[a] = { ...A[a], mod_title: { ua: v.ua, ru: v.ru } }; fs.mkdirSync(D, { recursive: true });
+// the datasheet has no composition table (950/9 Hex-Plus Multicolour 1 …): the composition of wera.de «Werkzeuge in diesem Set» — also WERA (27.10.2026)
+const compOf = s => { const c = (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
+  return wp.setItems.filter(i => i.rows.length).map(i => ({ head: i.name, code: (i.name.match(/^\d{3,4}(?:\/\d+)?(?:\s[A-Z]{1,5}(?=\s|$))*/) || [''])[0], items: i.rows.map(r => ({ art: r.art, qty: r.qty, size: r.size.replace(/(\d),(\d)/g, '$1.$2').replace(/ mm$/, ' мм') })) })); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function photo(a) { const cf = path.join(D, a + '_cut.png'); if (fs.existsSync(cf)) return cf; const u = A[a].images[0]; const f = path.join(D, a + '_orig.' + u.split('.').pop());
   if (!fs.existsSync(f)) { await sleep(300); const r = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0' } }); fs.writeFileSync(f, Buffer.from(await r.arrayBuffer())); }
@@ -19,7 +22,7 @@ const thumb = async f => 'data:image/png;base64,' + (await sharp(f).trim().resiz
   for (const x of args.filter(x => !x.startsWith('set:'))) { await photo(x); console.log('photo', x); }
   for (const s of args.filter(x => x.startsWith('set:')).map(x => x.slice(4))) { await photo(s); const items = [], extra = [], q = []; const seen = new Set();
     const wp = W.pages[W.art[s]]; const wItems = wp && wp.setItems || [];
-    for (const g of C[s]) for (const x of g.items) { const key = (x.art || g.head) + '|' + x.size; if (seen.has(key)) continue; seen.add(key);
+    for (const g of compOf(s)) for (const x of g.items) { const key = (x.art || g.head) + '|' + x.size; if (seen.has(key)) continue; seen.add(key);
       if (x.art && A[x.art]) { const c = A[x.art]; const gr = G.group(c, g.head); if (gr.question) { q.push(`${x.art}: ${gr.question}`); continue; }
         const nm = l => SB.withCode(SB.baseName(c.mod_title[l], x.art), g.code);
         items.push({ art: x.art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, c.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: +c.display_in_showcase === 1 ? { ua: c.link, ru: c.link.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/') } : null, img: await thumb(await photo(x.art)) }); }

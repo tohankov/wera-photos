@@ -14,6 +14,9 @@ const L = Object.fromEntries(JSON.parse(fs.readFileSync(ALL, 'utf8')).map(p => [
 const KN = 'https://techlight-shop.com.ua/vysokotekhnolohichni-santekhnichni-klishchi-cobra-knipex-87-01-250/';
 const NOART = { KNIPEX: { art: '87 01 250', ua: 'Високотехнологічні сантехнічні кліщі Cobra® 250 мм KNIPEX', ru: 'Высокотехнологичные сантехнические клещи 250 мм KNIPEX Cobra®',
   href: { ua: KN, ru: KN.replace('techlight-shop.com.ua/', 'techlight-shop.com.ua/ru/') }, img: 'https://tl-shop.com.ua/content/uploads/images/icons/knipex_87_01_250.png' } };
+// the datasheet has no composition table (950/9 Hex-Plus Multicolour 1 …): the composition of wera.de «Werkzeuge in diesem Set» — also WERA (27.10.2026)
+const compOf = s => { const c = (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
+  return wp.setItems.filter(i => i.rows.length).map(i => ({ head: i.name, code: (i.name.match(/^\d{3,4}(?:\/\d+)?(?:\s[A-Z]{1,5}(?=\s|$))*/) || [''])[0], items: i.rows.map(r => ({ art: r.art, qty: r.qty, size: r.size.replace(/(\d),(\d)/g, '$1.$2').replace(/ mm$/, ' мм') })) })); };
 const ru = u => u.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/');
 const ANCHOR = /<h3>(?:Інші варіанти|Другие варианты|Дізнайтеся більше|Узнайте больше)/;
 const OLDPIC = /<p>(?:\s*<img(?![^>]*\/icons\/)[^>]*>\s*)+<\/p>/g;
@@ -29,7 +32,7 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
   if (!v.ready) { wait.push({ art: s, name: v.name, why: v.comps.filter(c => !['cut', 'knipex'].includes(c.state)).map(c => (c.art || c.head.slice(0, 40)) + ': ' + c.state) }); continue; }
   if (/class="wsb"/.test(p.description.ua + p.description.ru)) notes.push(`${s}: блок уже есть — заменяется`);
   const items = []; const seen = new Set(); const q = [];
-  for (const g of C[s]) for (const x of g.items) { const key = x.art || g.head; if (seen.has(key)) continue; seen.add(key);
+  for (const g of compOf(s)) for (const x of g.items) { const key = x.art || g.head; if (seen.has(key)) continue; seen.add(key);
     const c = x.art ? L[x.art] : null; const gr = G.group(c, g.head); if (gr.question) { q.push(`${x.art || '—'} ${g.head}: ${gr.question}`); continue; }
     if (x.art) { const nm = l => SB.withCode(SB.baseName(c.mod_title[l], x.art), g.code);
       items.push({ art: x.art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, c.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: +c.display_in_showcase === 1 ? { ua: c.link, ru: ru(c.link) } : null, img: c.images[0] }); }

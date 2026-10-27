@@ -48,7 +48,7 @@ const res = { size: [], len: [], feat: [], vyd: [], sets: [] };
 const row = (a, wp) => { const r = {}; if (wp && wp.table && wp.table.arts.includes(a)) { const k = wp.table.arts.indexOf(a); for (const x of wp.table.rows) r[x.label] = x.vals[k]; } return r; };
 // «Produktmerkmale» -> our «Особливості викрутки»; neg — the article's footnote that removes it
 const MERK = [[/Sechskantschlüsselhilfe/, 'Допоміжний шестигранник', /Keine Sechskant-Schlüsselhilfe/], [/Sechskantklinge/, 'Шестигранний стрижень', /Keine (?:durchgehende )?Sechskantklinge/],
-  [/Haltefunktion/, 'З фіксуючою функцією (HF)', /ohne Haltefunktion/i], [/^ESD/, 'ESD', null], [/^Rostfrei/, 'Нержавіюча сталь', null], [/^Kugelkopf/, 'Кулькова головка', /ohne Kugelkopf/i],
+  [/Haltefunktion/, 'З фіксуючою функцією (HF)', /ohne Haltefunktion/i], [/^ESD/, 'ESD', null], [/^Rostfrei/, 'Нержавіюча сталь', null], [/^Kugelkopf/, 'Кулькова головка', /ohne (?:Bohrung und )?Kugelkopf/i],
   [/Rapidaptor/, 'Патрон Rapidaptor', null], [/Hohlschaft/, 'Порожнистий стрижень', null], [/Reduzierte[rn]? Klingendurchmesser/, 'Звужений робочий кінець', null]];
 // datasheet page 1 (RU) -> the same values; magnet / ring only as the tool's own (CLAUDE.md «Особливості викрутки»)
 const DSF = [[/фиксирующ/i, 'З фіксуючою функцією (HF)'], [/\bESD\b|электростатическ/i, 'ESD'], [/нержаве/i, 'Нержавіюча сталь'], [/шаров\S* головк|шарообразн/i, 'Кулькова головка'],
