@@ -35,6 +35,7 @@ for (const p of L) { const a = p.article; if (st[a]) continue; if (Date.now() - 
   try { const so = of && await sig(of); if (so && df) { const sd = await sig(df); r.dDs = dist(so, sd); r.ratio = +(so.ratio / sd.ratio).toFixed(2); }
     if (so && wf) { const sw = await sig(wf); r.dWera = dist(so, sw); } } catch (e) { r.err = e.message.slice(0, 80); }
   st[a] = r; save(); }
+if (process.env.NOSHEETS) { console.log('compared', L.filter(p => st[p.article]).length, 'of', L.length); process.exit(0); }
 const done = L.filter(p => st[p.article]).length; console.log('compared', done, 'of', L.length);
 if (done < L.length) process.exit(0);
 // sheets: the most different first (largest distance to the datasheet picture / wera.de), 8 products per sheet
