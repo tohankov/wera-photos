@@ -35,10 +35,11 @@ const NOTE = { 'Kraftform-Griff, 1-komponentig': { ua: 'Ручка Kraftform, о
 function newTable(a, l) { const wp = W.pages[W.art[a]]; const t = wp.table; const D = ds(a);
   const rows = t.rows.filter(r => r.label !== 'Grifffarbe' && !/^Hinweis/.test(r.label)); const cols = [], keys = [];
   // sockets and screwdriver heads (Zyklop, VDE) — the columns of our existing tables of the same series (05004950001 sockets, 05004900001 heads)
-  const kind = /^Торцев\S* (?:ізольован\S* )?головк/.test(A[a].mod_title.ua) ? 'socket' : /^Викруткова головка/.test(A[a].mod_title.ua) ? 'head' : '';
-  const KCOL = { socket: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Gesamtlänge|mm': { icon: 'icon-socket-vde-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } },
-    head: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Gesamtlänge|mm': { icon: 'icon-socket-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } } };
-  for (const r of rows) { const k = r.label + '|' + r.unit; const kc = (KCOL[kind] || {})[k]; if (kc) { cols.push({ ...kc, unit: UNIT[kc.unit] }); keys.push(r); continue; }
+  // Zyklop (27.10.2026): «Farbe» is left out as the handle colour; a column without a value in any row («-» — the metric heads' inch size) too
+  const t0 = A[a].mod_title.ua; const kind = /викруткова головка/i.test(t0) ? 'head' : /торцев\S* (?:[^ ]+ ){0,3}?головк/i.test(t0) ? 'socket' : '';
+  const KCOL = { socket: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Abtriebsgröße (in Zoll)|inch': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'inch' }, 'Gesamtlänge|mm': { icon: 'icon-socket-vde-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } },
+    head: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Abtriebsgröße (in Zoll)|inch': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'inch' }, 'Gesamtlänge|mm': { icon: 'icon-socket-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } } };
+  for (const r of rows) { const k = r.label + '|' + r.unit; if (r.label === 'Farbe' || r.vals.every(v => !v || v === '-' || v === '–')) continue; const kc = (KCOL[kind] || {})[k]; if (kc) { cols.push({ ...kc, unit: UNIT[kc.unit] }); keys.push(r); continue; }
     if (k === 'Abtriebsgröße (metrisch)|mm') { cols.push({ icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: UNIT.mm }); keys.push(r); continue; }   // Kompakt VDE 64 i hex blades — as our [icon-hex] «Розмір мм»
     if (/^Abtriebsgröße/.test(r.label)) { const ic = PROF_ICON(r.vals[0]); cols.push({ icon: ic, w: 26, ua: 'Профіль', ru: 'Профиль' }); keys.push(r); continue; }
     const c = COL[k]; if (!c) throw new Error(`${a}: no column for «${k}»`); cols.push({ ...c, unit: UNIT[c.unit] }); keys.push(r); }

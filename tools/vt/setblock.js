@@ -47,10 +47,11 @@ function block(items, lang, { count } = {}) {
 //   blockG(items, lang, { count, iconBase, iconSrc })  items: as block() + gkey (vt/setgroup.js group().key); iconSrc(name) overrides the icon URL (preview)
 const G = require('./setgroup.js');
 LBL.pos = { ua: 'поз.', ru: 'поз.' };
-function blockG(items, lang, { count, iconBase = '/content/uploads/images/icons/', iconSrc } = {}) {
+function blockG(items, lang, { count, iconBase = '/content/uploads/images/icons/', iconSrc, keepOrder } = {}) {
   const n = count || items.reduce((s, x) => s + (+x.qty || 1), 0); const src = f => iconSrc ? iconSrc(f) : iconBase + f + '.png';
   const keys = []; for (const it of items) if (!keys.includes(it.gkey)) keys.push(it.gkey);
-  const order = [...keys.filter(k => !k.startsWith('c:')), ...keys.filter(k => k.startsWith('c:'))];
+  // keepOrder (variant for the owner, 27.10.2026): the groups in the datasheet order — a ratchet set shows its ratchet and sockets first
+  const order = keepOrder ? keys.slice() : [...keys.filter(k => !k.startsWith('c:')), ...keys.filter(k => k.startsWith('c:'))];
   const flat = order.flatMap(k => items.filter(it => it.gkey === k)); const cnt = k => items.filter(it => it.gkey === k).length;
   const title = k => { const d = G.def(k); return cnt(k) === 1 && d.one ? d.one[lang] : d[lang]; };
   const style = `<style>.${CLS} details>summary{list-style:none}.${CLS} details>summary::-webkit-details-marker{display:none}`
@@ -67,7 +68,7 @@ function blockG(items, lang, { count, iconBase = '/content/uploads/images/icons/
   let h = `<div class="${CLS}">${style}<h3>${LBL.title[lang]} · ${n} ${items_(n, lang)}</h3>`;
   const prof = order.filter(k => !k.startsWith('c:')); if (prof.length >= 2) h += `<div style="display:flex;flex-wrap:wrap;gap:6px">${prof.map(chip).join('')}</div>`;
   // visible part: whole groups while ≤ ALL positions; a first group bigger than ALL — its first SHOW positions
-  let cutAt = 0; for (const k of order) { if (cutAt + cnt(k) > ALL) break; cutAt += cnt(k); } if (!cutAt) cutAt = SHOW;
+  let cutAt = 0; for (const k of order) { if (cutAt + cnt(k) > ALL) break; cutAt += cnt(k); } if (!cutAt || (keepOrder && cutAt < SHOW)) cutAt = SHOW;   // keepOrder: a small first group (1 ratchet) — fill up to SHOW
   if (flat.length <= ALL || cutAt >= flat.length) h += part(0, flat.length);
   else h += part(0, cutAt) + `<details style="margin-top:10px"><summary style="cursor:pointer;display:inline-block;padding:8px 0;color:${C.green};font-weight:600">`
     + `<span class="${CLS}-more">${LBL.more[lang](flat.length - cutAt)}</span><span class="${CLS}-less">${LBL.less[lang]}</span></summary>${part(cutAt, flat.length)}</details>`;
