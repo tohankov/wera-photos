@@ -5,6 +5,8 @@
 // slot = the first file field of the form -> upload -> export after: images[0] is a NEW file, images[1..] identical, every other field identical,
 // else STOP (a wrong slot is put back from the backup bytes) -> the new main photo is fetched from the storefront: PNG with transparent corners.
 const fs = require('fs'), path = require('path'); const sharp = require('sharp'); const S = require('../lib/session.js').open();
+// TAG (env): a second replacement round of the same products keeps its own backups (28.10.2026, rule А after the 24.10 cut-outs)
+const TAG = process.env.TAG ? process.env.TAG + '_' : '';
 const [, , WORK, LIST, B] = process.argv; const T0 = Date.now(), BUD = (+B || 520) * 1000; const sleep = ms => new Promise(r => setTimeout(r, ms));
 const BK = 'C:/Users/Techlight/Desktop/wera-photos/backup/', ORIG = BK + 'global_photo_orig/'; const SF = path.join(WORK, 'replace_state.json');
 const st = fs.existsSync(SF) ? JSON.parse(fs.readFileSync(SF, 'utf8')) : {}; const save = () => fs.writeFileSync(SF, JSON.stringify(st, null, 1));
@@ -28,14 +30,14 @@ const fname = u => u.split('/').pop();
   for (const a of list) { if (st[a] && st[a].done) continue; if (Date.now() - T0 > BUD - 60000) break;
     const png = path.join(WORK, 'cut', a + '.png'); if (!fs.existsSync(png)) { st[a] = { skip: 'нет вырезки' }; save(); continue; }
     // resume: a run cut off (429 wait > process timeout) after the backup — the backup stays «before»; if the main photo is already new, no second upload
-    const BF = BK + `global_photo_${a}_before.json`; const resumed = fs.existsSync(BF);
+    const BF = BK + `global_photo_${TAG}${a}_before.json`; const resumed = fs.existsSync(BF);
     const before = resumed ? JSON.parse(fs.readFileSync(BF, 'utf8')) : await exp(a); if (!resumed) fs.writeFileSync(BF, JSON.stringify(before));
     if (resumed) { const now = await exp(a); if (fname(now.images[0]) !== fname(before.images[0])) { let after = now, restored = null;
         if (['characteristics', 'alt_parent'].some(k => JSON.stringify(before[k]) !== JSON.stringify(after[k]))) { restored = await restore(a, before, after); await sleep(2000); after = await exp(a); }
-        fs.writeFileSync(BK + `global_photo_${a}_after.json`, JSON.stringify(after)); const bad = F.filter(k => k !== 'images' && JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+        fs.writeFileSync(BK + `global_photo_${TAG}${a}_after.json`, JSON.stringify(after)); const bad = F.filter(k => k !== 'images' && JSON.stringify(before[k]) !== JSON.stringify(after[k]));
         const bi = before.images.map(fname), ai = after.images.map(fname); if (ai.length !== bi.length || ai.slice(1).join() !== bi.slice(1).join()) bad.push('gallery');
         if (bad.length) stop(`${a} (resumed): ${bad.join('; ')}`); st[a] = { done: true, resumed: true, old: bi[0], new: ai[0], restored, at: new Date().toISOString() }; save(); console.log(a, 'resumed: photo already replaced, checked', restored ? 'restored ' + JSON.stringify(restored) : ''); continue; } }
-    const dir = ORIG + a + '/'; fs.mkdirSync(dir, { recursive: true });
+    const dir = ORIG + TAG + a + '/'; fs.mkdirSync(dir, { recursive: true });
     for (const [i, u] of before.images.entries()) { const f = dir + String(i).padStart(2, '0') + path.extname(fname(u)); if (fs.existsSync(f)) continue; await sleep(500);
       const r = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0' } }); if (!r.ok) stop(`backup photo ${a} ${i}: HTTP ${r.status}`); fs.writeFileSync(f, Buffer.from(await r.arrayBuffer())); }
     const l = await call('horoshop_admin_list', { entity: 'products', search: a }); const rec = (l.records || []).filter(x => x.code === a || (x.cells || [])[0] === a); if (rec.length !== 1) stop('admin id ' + a + ': ' + rec.length);
@@ -45,7 +47,7 @@ const fname = u => u.split('/').pop();
     if (up.error || up.isError || up.ok === false) stop('upload ' + a + ' ' + JSON.stringify(up).slice(0, 300));
     await sleep(3000); let after = await exp(a); let restored = null;
     if (['characteristics', 'alt_parent'].some(k => JSON.stringify(before[k]) !== JSON.stringify(after[k]))) { restored = await restore(a, before, after); await sleep(2000); after = await exp(a); }
-    fs.writeFileSync(BK + `global_photo_${a}_after.json`, JSON.stringify(after));
+    fs.writeFileSync(BK + `global_photo_${TAG}${a}_after.json`, JSON.stringify(after));
     const bad = F.filter(k => k !== 'images' && JSON.stringify(before[k]) !== JSON.stringify(after[k]));
     const bi = before.images.map(fname), ai = after.images.map(fname); const changed = ai.map((x, i) => x !== bi[i] ? i : -1).filter(i => i >= 0);
     if (ai.length !== bi.length) bad.push(`images ${bi.length} -> ${ai.length}`); if (changed.join() !== '0') bad.push('changed photo slots: ' + (changed.join(',') || 'none'));
