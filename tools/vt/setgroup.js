@@ -25,7 +25,8 @@ const PROF = {
 const BY_PROFIL = { 'PH (Phillips)': 'PH', 'PZ (Pozidriv)': 'PZ', 'PlusMinus (PH/PZ + шліц)': 'PM', 'TX (TORX®)': 'TX', 'TX BO (TORX® з отвором)': 'TXBO',
   'IP (TORX PLUS®)': 'IP', 'IPR (TORX PLUS® IPR)': 'IPR', 'SL (шліц)': 'SL', 'HEX (шестигранник)': 'HEX', 'HEX BO (шестигранник з отвором)': 'HEXBO',
   'Квадрат (Robertson)': 'SQ', 'TRI-WING®': 'TRI', 'TORQ-SET® Mplus': 'TORQ', 'Spanner (натяжні гвинти)': 'SPAN', 'Microstix®': 'MSX', 'Pentalobe': 'PENTA',
-  'Торцева головка (зовнішній шестигранник)': 'c:SOCKET', 'XZN (багатозубцевий)': 'c:SOCKET' };
+  'Торцева головка (зовнішній шестигранник)': 'c:SOCKET', 'XZN (багатозубцевий)': 'c:SOCKET',
+  'Внутрішній квадрат (шафовий)': 'c:CABINET', 'Тригранник (шафовий)': 'c:CABINET', 'Подвійна борідка (шафова)': 'c:CABINET' };
 // groups without a profile: the heading names what is in the group (one position — singular)
 const CAT = {
   HANDLE: { ua: 'Ручки-тримачі', ru: 'Ручки-держатели', one: { ua: 'Ручка-тримач', ru: 'Ручка-держатель' } },
@@ -36,6 +37,7 @@ const CAT = {
   PLIERS: { ua: 'Кліщі', ru: 'Клещи', one: { ua: 'Кліщі', ru: 'Клещи' } },
   TORQUE: { ua: 'Динамометричний інструмент', ru: 'Динамометрический инструмент' },
   TESTER: { ua: 'Індикатор напруги', ru: 'Индикатор напряжения' },
+  CABINET: { ua: 'Вставки для розподільчих шаф', ru: 'Вставки для распределительных шкафов', one: { ua: 'Вставка для розподільчих шаф', ru: 'Вставка для распределительных шкафов' } },
   ACC: { ua: 'Приладдя', ru: 'Принадлежности' },
 };
 const BY_VYD = { 'Ручка-тримач': 'HANDLE', 'Ручка-вороток': 'HANDLE', 'Викрутка': 'SCREWDRIVER', 'Тріскачка': 'RATCHET',
