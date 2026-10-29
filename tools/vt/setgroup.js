@@ -20,6 +20,7 @@ const PROF = {
   SPAN: { icon: 'icon-spanner', ua: 'Spanner', ru: 'Spanner', chip: 'Spanner' },
   MSX: { icon: null, ua: 'Microstix®', ru: 'Microstix®', chip: 'Microstix®' },
   PENTA: { icon: 'icon-pentalobe', ua: 'Pentalobe', ru: 'Pentalobe', chip: 'Pentalobe' },
+  FIVE: { icon: null, ua: 'Five Lobe', ru: 'Five Lobe', chip: 'Five Lobe' },   // owner 29.10.2026: a group without an icon
 };
 // «Профіль» value (UA) -> key; Торцева головка / XZN / шафові — no screw profile, a text group
 const BY_PROFIL = { 'PH (Phillips)': 'PH', 'PZ (Pozidriv)': 'PZ', 'PlusMinus (PH/PZ + шліц)': 'PM', 'TX (TORX®)': 'TX', 'TX BO (TORX® з отвором)': 'TXBO',
@@ -38,6 +39,7 @@ const CAT = {
   TORQUE: { ua: 'Динамометричний інструмент', ru: 'Динамометрический инструмент' },
   TESTER: { ua: 'Індикатор напруги', ru: 'Индикатор напряжения' },
   CABINET: { ua: 'Вставки для розподільчих шаф', ru: 'Вставки для распределительных шкафов', one: { ua: 'Вставка для розподільчих шаф', ru: 'Вставка для распределительных шкафов' } },
+  SET: { ua: 'Набори', ru: 'Наборы', one: { ua: 'Набір', ru: 'Набор' } },
   ACC: { ua: 'Приладдя', ru: 'Принадлежности' },
 };
 const BY_VYD = { 'Ручка-тримач': 'HANDLE', 'Ручка-вороток': 'HANDLE', 'Викрутка': 'SCREWDRIVER', 'Тріскачка': 'RATCHET',
@@ -50,6 +52,8 @@ const BY_HEAD = [[/клещи|кліщі|zange/i, 'PLIERS'], [/трещотк|т
 function group(p, head = '') {
   if (!p) { const m = BY_HEAD.find(([re]) => re.test(head)); return m ? { key: 'c:' + m[1] } : { question: 'не на сайті, вид за паспортом не визначено: ' + head }; }
   const ch = p.characteristics || {}; const pr = [...new Set((ch.profil || []).map(x => BY_PROFIL[x.value.ua] || '?' + x.value.ua))];
+  const vy = (ch.vyd_instrumentu || []).map(x => x.value.ua).join(' ');
+  if (pr.length > 1 && /^Набір|Ложемент|Інструментальний візок/.test(vy)) return { key: 'c:SET' };
   if (pr.length > 1) return { question: 'два профілі: ' + (ch.profil || []).map(x => x.value.ua).join(' + ') };
   if (pr.length === 1) return pr[0].startsWith('?') ? { question: 'профіль без групи: ' + pr[0].slice(1) } : { key: pr[0] };
   const v = [...new Set((ch.vyd_instrumentu || []).map(x => BY_VYD[x.value.ua] || '?' + x.value.ua))];

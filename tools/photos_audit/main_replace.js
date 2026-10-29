@@ -42,7 +42,9 @@ const fname = u => u.split('/').pop();
       const r = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0' } }); if (!r.ok) stop(`backup photo ${a} ${i}: HTTP ${r.status}`); fs.writeFileSync(f, Buffer.from(await r.arrayBuffer())); }
     const l = await call('horoshop_admin_list', { entity: 'products', search: a }); const rec = (l.records || []).filter(x => x.code === a || (x.cells || [])[0] === a); if (rec.length !== 1) stop('admin id ' + a + ': ' + rec.length);
     const id = rec[0].id; const g = await call('horoshop_admin_record_get', { entity: 'products', id, fields: ['images'] }); const slot = (g.fileFields || [])[0];
-    if (!slot || g.fileFields.length !== before.images.length) stop(`${a}: slots ${(g.fileFields || []).length} ≠ photos ${before.images.length}`);
+    // a photo in the shared gallery (parent_common[gallery_common], 30.10.2026 05049065001) is not in the export and not a slot of this product
+    const own = (g.fileFields || []).filter(f => !/gallery_common/.test(f));
+    if (!slot || /gallery_common/.test(slot) || own.length !== before.images.length) stop(`${a}: slots ${(g.fileFields || []).length} ≠ photos ${before.images.length}`);
     const up = await call('horoshop_admin_upload_image', { entity: 'products', id, field: slot, base64: fs.readFileSync(png).toString('base64'), filename: a + '.png', dryRun: false });
     if (up.error || up.isError || up.ok === false) stop('upload ' + a + ' ' + JSON.stringify(up).slice(0, 300));
     await sleep(3000); let after = await exp(a); let restored = null;

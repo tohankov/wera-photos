@@ -115,18 +115,21 @@
 - **П. 2 — «не біти» в разделах бит:** пример TL64 — в отчёте ШАГА 0.
 
 
-## ГДЕ ОСТАНОВИЛСЯ (29.10.2026, лимит)
+## ГДЕ ОСТАНОВИЛСЯ (30.10.2026)
 
-Сделано (отчёты docs/report_global_<группа>.md):
-- «Викрутки» — всё, кроме текстов (правило Б ждёт «ок») и 16 блоков (ждут фото бит / файлы) — docs/global_vykrutky_blocks_wait.md.
-- «Діелектричні» + «Новинки» — названия, характеристики, фото (главные, фон, галереи, 331 недостающее), 15 блоков, строки старого артикула, 211 описаний. Ждут: 64 блока, тексты Б.
-- Zyklop — 282 названия, 526 главных (правило А + фон), 648 недостающих фото, 20 блоков, 394 описания. Ждут: 107 блоков (фото бит / файлы), вопросы в отчёте.
-- Joker — 129 названий, 135 главных фото (правило А + фон). НЕ сделано: недостающие фото WERA (series_cmp → decisions → wera_add), описания (cat/global_desc_plan.js … ../inventory/global_1185.json), блоки (35), items CSV, отчёт дополнить.
+**Готово** (отчёты docs/report_global_<группа>.md, docs/report_1030.md):
+- «Викрутки», «Діелектричні» + «Новинки», Zyklop, **Joker** — названия, характеристики, фото (правило А, фон, недостающие WERA, неактуальные убраны), описания, тексты по правилу Б, блоки состава где все позиции без фона.
 
-Дальше по порядку (только одобренное): Joker (остаток) → Г-подібні ключі (names/global_lk_plan.js, правило А — 15 старых, docs/global_lkeys_photos.csv, 3 вопроса) → Kraftform Kompakt (names/global_kk_plan.js, правило А — 32, календарь 05136607001) → для каждой: фон с главных (global_cut CUTOPT/PAD, листы big_sheets, крупно), недостающие фото, описания, блоки, строки, items CSV, «Что поменять в админке», отчёт.
-Новые группы (Сумки 2go, Біти …) — НЕ начинать без владельца.
+**Дальше по порядку:**
+1. **Г-подібні ключі** (группа 1152): names/global_lk_plan.js → характеристики (docs/global_lkeys.md, вопросы 3) → правило А (docs/global_lkeys_photos.csv: 15 старых, 3 вопроса; rulea_prep → большие листы → main_replace) → фон с остальных главных (global_cut CUTOPT/PAD, листы big_sheets — смотреть крупно) → недостающие фото (series_cmp → decisions.json → wera_add) → описания (global_desc_plan … ../inventory/global_1152.json) → фразы WERA лёгко (global_phrase_plan + замены) → блоки (comp_state → setblock_plan) → items CSV, «Что поменять в админке» (night_audit + plan_diff), отчёт.
+2. **Kraftform Kompakt** (1057) — так же (docs/global_kk_photos.csv: 32 старых + календарь 05136607001).
+3. Потом — анализ новых групп (Сумки 2go, Біти та бітотримачі 1104, динамометрия, візок, велосипеди, ударні, молотки) — только после команды владельца.
 
-Ждут владельца:
-- загрузка 31 файла в /content/uploads/images/icons/ — docs/global_noart_upload.md (после — node vt/noart_files.js check и переписать блоки ждущих наборов);
-- «ок» по правилу Б (docs/pilot/texts_light.html; VDE — cat/gvde_phrase_light.js);
-- вопросы: docs/report_global_vde.md, docs/report_global_zyklop.md (запятые в названиях головок, «Особливості головки», липучки = наши смужки?, 05049065001 галерея, 05005506001).
+**Ждут владельца:**
+- загрузка 31 файла (docs/global_noart_upload.md, файлы images/setblock_wera/) → потом node vt/noart_files.js check, node vt/comp_state.js <all.json> <tree.json> <cs.json>, setblock_plan, desc_write — блоки 40 наборов;
+- фото позиций без строки wera.de (docs/report_1030.md);
+- удалить дубль фото в общей галерее 05049065001;
+- Joker: новое значение «З фіксуючою функцією» в «Особливості гайкового ключа» (65 ключей)?
+- вопросы в docs/report_global_vde.md / docs/report_global_zyklop.md, которые не закрыты решениями 29.10.
+
+**Блоки ждут** — docs/global_<группа>_blocks_wait.md: «Викрутки» 12, VDE 36, Zyklop 90 (фото бит), Joker 1 (Black Edition).

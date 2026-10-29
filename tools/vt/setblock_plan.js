@@ -12,10 +12,13 @@ const SB = require('./setblock.js'); const G = require('./setgroup.js'); const C
 const [, , ALL, STF, OUT, NAME, ...only] = process.argv;
 const L = Object.fromEntries(JSON.parse(fs.readFileSync(ALL, 'utf8')).map(p => [p.article, p])); const ST = JSON.parse(fs.readFileSync(STF, 'utf8'));
 // the datasheet has no composition table (950/9 Hex-Plus Multicolour 1 …): the composition of wera.de «Werkzeuge in diesem Set» — also WERA (27.10.2026)
-const compOf = s => { const c = (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
+// owner 29.10.2026: these sets take the composition of wera.de «Werkzeuge in diesem Set» (the datasheet table misses positions: 827 T i, 05071076001, 05003526001 / 527)
+const WERA_COMP = new Set(['05006640001', '05004177001', '05004016001']);
+const compOf = s => { const c = WERA_COMP.has(s) ? [] : (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
   return wp.setItems.filter(i => i.rows.length).map(i => ({ head: i.name, code: (i.name.match(/^\d{3,4}(?:\/\d+)?(?:\s[A-Z]{1,5}(?=\s|$))*/) || [''])[0], items: i.rows.map(r => ({ art: r.art, qty: r.qty, size: r.size.replace(/(\d),(\d)/g, '$1.$2').replace(/ mm$/, ' мм') })) })); };
 const NR = require('./noart_resolve.js'); const NA = fs.existsSync(path.join(__dirname, 'noart.json')) ? require('./noart.json') : { names: {}, arts: {} };
 const OKST = ['cut', 'knipex', 'no article', 'not ours'];
+const VELCRO = { 70: '05670446001', 120: '05670447001', 240: '05670448001' };
 const ru = u => u.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/');
 const ANCHOR = /<h3>(?:Інші варіанти|Другие варианты|Дізнайтеся більше|Узнайте больше)/;
 const OLDPIC = /<p>(?:\s*<img(?![^>]*\/icons\/)[^>]*>\s*)+<\/p>/g;
@@ -36,9 +39,12 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
   const items = []; const seen = new Set(); const q = [], pend = [];
   for (const g of compOf(s)) for (const x of g.items) { const key = x.art || g.head + '|' + x.size; if (seen.has(key)) continue; seen.add(key);
     let art = x.art, c = x.art ? L[x.art] : null;
+    // owner 29.10.2026: «Klettstreifen 70 / 120 / 240» of WERA sets = our «Смужка на липучці № 1 / 2 / 3» (link + our photo); Klettstreifen 30 — WERA file
+    const vk = !c && (g.head.match(/(?:липучках\s+(?:№\s*)?|^Klettstreifen\s+)(70|120|240)\b/) || [])[1]; if (vk) { art = VELCRO[vk]; c = L[art]; }
     if (!c) { const { w } = NR.wmatch(s, g, x); if (w && w.art && L[w.art]) { art = w.art; c = L[w.art]; } // the wera.de row names our product (CLAUDE.md)
       else { // KNIPEX — matched by its article in the head (28.10.2026: before, any KNIPEX head took the 87 01 250 card); else the WERA picture
-        const kk = /KNIPEX/i.test(g.head) && Object.keys(NA.knipex || {}).find(k => g.head.includes(k));
+        const head = s === '05150153001' ? g.head.replace('87 01 125', '87 01 250') : g.head;
+        const kk = /KNIPEX/i.test(head) && Object.keys(NA.knipex || {}).find(k => head.includes(k));
         const e = kk ? NA.knipex[kk] : (w && !w.art && NA.names[w.name]) || NA.arts[x.art || (w && w.art)];
         if (!e || !e.group) { q.push(`${x.art || '—'} ${g.head}: немає нашого товару${/KNIPEX/i.test(g.head) ? ' (KNIPEX — немає в списку KNX, vt/noart_files.js)' : w ? ', назва / група не задані (vt/noart_files.js)' : ' і рядка wera.de'}`); continue; }
         if (!e.uploaded) { pend.push(`${x.art || (w && w.art) || kk || '—'} ${g.head.slice(0, 50)}: файл ${e.file} не завантажено`); continue; }
@@ -49,7 +55,7 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
     items.push({ art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, c.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: +c.display_in_showcase === 1 ? { ua: c.link, ru: ru(c.link) } : null, img: c.images[0] }); }
   if (pend.length && !q.length) { wait.push({ art: s, name: v.name, why: pend }); continue; }
   const wu = W.art[s]; const wp = wu && W.pages[wu]; const w = wp && wp.setItems && wp.setItems.length ? wp.setItems.flatMap(i => i.rows) : null;
-  const da = items.filter(i => /^\d{11}$/.test(i.art)).map(i => i.art + ':' + i.qty).sort().join(','), wa = w ? w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',') : null;
+  const da = items.filter(i => /^\d{11}$/.test(i.art) && !Object.values(VELCRO).includes(i.art)).map(i => i.art + ':' + i.qty).sort().join(','), wa = w ? w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',') : null;
   if (w && da !== wa) q.push(`паспорт ≠ wera.de: только паспорт ${da.split(',').filter(x => !wa.split(',').includes(x)).join(' ') || '—'}; только wera.de ${wa.split(',').filter(x => !da.split(',').includes(x)).join(' ') || '—'}`);
   if (!w) notes.push(`${s}: на wera.de нет «Werkzeuge in diesem Set» — состав по паспорту`);
   if (q.length) { questions.push({ art: s, name: v.name, q }); continue; }

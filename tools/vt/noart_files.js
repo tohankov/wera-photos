@@ -24,7 +24,7 @@ const N = {
   'Belt B VDE (Textilgurt), 10-teilig, unbestückt': { group: 'c:ACC', ua: 'Пояс Belt B VDE (текстильний) на 10 інструментів, без інструментів', ru: 'Belt B VDE (матерчатый), на 10 инструментов, неукомплектованный' },
   '9522 Gürteltasche, leer': { group: 'c:ACC', ua: '9522 Поясна сумка, без інструментів', ru: '9522 Поясная сумка, неукомплектованная' },
   '3247 Einpoliger Phasenprüfer, Edelstahl': { group: 'c:TESTER', ua: '3247 Однополюсний індикатор напруги, нержавіюча сталь', ru: '3247 Однополюсный тестер фазного напряжения, нержавеющая сталь' },
-  '9108 Montagewerkzeug für Solar-Steckverbinder MC4': { ua: '9108 Інструмент для монтажу конекторів MC4', ru: '9108 Инструмент для монтажа коннекторов MC4' },
+  '9108 Montagewerkzeug für Solar-Steckverbinder MC4': { group: 'c:KEY', ua: '9108 Інструмент для монтажу конекторів MC4', ru: '9108 Инструмент для монтажа коннекторов MC4' },
   '1440 Schraubkralle für Schraubendreherklingen, lange Bits und Winkel': { ua: '1440 Фіксатор гвинтів', ru: '1440 Фиксатор винтов' },
   '1442 Schraubkralle für Schraubendreherklingen, lange Bits und Winkel': { ua: '1442 Фіксатор гвинтів', ru: '1442 Фиксатор винтов' },
   // Zyklop sets (29.10.2026); belts — without the count (wera.de and the datasheet differ: Belt C Impaktor «9-teilig» / «на 6 инструментов»)
@@ -45,6 +45,8 @@ const N = {
   '9503 Reifenheber mit Ventilausdreher': { group: 'c:ACC', ua: '9503 Лопатка-монтажка з вузлом для викручування ніпеля', ru: '9503 Лопатка-монтировка с узлом для вывинчивания ниппеля' },
   '9481 Werkzeugtasche': { group: 'c:ACC', ua: '9481 Сумка для інструментів', ru: '9481 Сумка для инструментов' },
   '9480 Reißverschluss-Etui': { group: 'c:ACC', ua: '9480 Футляр на блискавці', ru: '9480 Футляр на молнии' },
+  '9603 Nuss-Magnetleiste Impaktor, 3/8", unbestückt': { group: 'c:ACC', ua: '9603 Магнітний тримач для головок Impaktor 1/2″, без головок', ru: '9603 Магнитный держатель для головок Impaktor, 1/2″, неукомплектованный' },   // owner 29.10.2026: by the datasheet (1/2″)
+  '873/1 Five Lobe Bits mit Bohrung': { group: 'FIVE', ua: 'Біти Five Lobe 873/1 з отвором', ru: 'Насадки Five Lobe 873/1 с отверстием' },
   '840/2 Z Bits': { group: 'HEX', ua: 'Біти 840/2 Z', ru: 'Насадки 840/2 Z' },
   '867/4 BTZ TORX® Bits': { group: 'TX', ua: 'Біти TORX® 867/4 BTZ', ru: 'Насадки TORX® 867/4 BTZ' },
   '800/4 BTZ Bits': { group: 'SL', ua: 'Біти 800/4 BTZ', ru: 'Насадки 800/4 BTZ' },
@@ -60,7 +62,7 @@ const NA = {
 };
 // KNIPEX in a set (owner 25.10.2026): our KNIPEX product on techlight-shop.com.ua — name = its h1 (UA / /ru/), link there, picture = its main photo without
 // background; key = the KNIPEX article as the WERA datasheet writes it (matched in the head of the position)
-const KNX = { '13 96 200': 'https://techlight-shop.com.ua/elektromontazhni-klishchi-knipex-13-96-200/',
+const KNX = { '87 01 250': 'https://techlight-shop.com.ua/vysokotekhnolohichni-santekhnichni-klishchi-cobra-knipex-87-01-250/', '13 96 200': 'https://techlight-shop.com.ua/elektromontazhni-klishchi-knipex-13-96-200/',
   '08 26 185': 'https://techlight-shop.com.ua/pasatyzhi-podovzheni-185-mm-knipex-08-26-185/' };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // node vt/noart_files.js check — which files the owner has uploaded (HTTP 200 image from our domain) -> «uploaded» in vt/noart.json
