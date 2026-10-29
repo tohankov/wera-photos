@@ -44,7 +44,8 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
         if (!e.uploaded) { pend.push(`${x.art || (w && w.art) || kk || '—'} ${g.head.slice(0, 50)}: файл ${e.file} не завантажено`); continue; }
         items.push({ art: kk || x.art || (w && w.art) || null, qty: x.qty, gkey: e.group, size: kk ? '' : SB.size(x.size, e.ua, e.group), name: { ua: e.ua, ru: e.ru }, href: e.href || null, img: 'https://tl-shop.com.ua/content/uploads/images/icons/' + e.file }); continue; } }
     const gr = G.group(c, g.head); if (gr.question) { q.push(`${x.art || '—'} ${g.head}: ${gr.question}`); continue; }
-    const nm = l => SB.withCode(SB.baseName(c.mod_title[l], art), g.code);
+    // a straight quote in a name (1" ) is written as ″: Horoshop turns &quot; inside alt="" back into " and the attribute breaks (29.10.2026, 05005581001)
+    const nm = l => SB.withCode(SB.baseName(c.mod_title[l], art), g.code).replace(/(\d)\s?"/g, '$1″').replace(/"/g, '″');
     items.push({ art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, c.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: +c.display_in_showcase === 1 ? { ua: c.link, ru: ru(c.link) } : null, img: c.images[0] }); }
   if (pend.length && !q.length) { wait.push({ art: s, name: v.name, why: pend }); continue; }
   const wu = W.art[s]; const wp = wu && W.pages[wu]; const w = wp && wp.setItems && wp.setItems.length ? wp.setItems.flatMap(i => i.rows) : null;
