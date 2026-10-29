@@ -10,7 +10,8 @@ const [, , LIVE, WORK, MODE, LISTF, B] = process.argv; const T0 = Date.now(), BU
 const L = Object.fromEntries(JSON.parse(fs.readFileSync(LIVE, 'utf8')).map(p => [p.article, p])); const SER = JSON.parse(fs.readFileSync(path.join(WORK, 'series.json'), 'utf8'));
 const D = JSON.parse(fs.readFileSync(path.join(WORK, 'decisions.json'), 'utf8')); const PF = path.join(WORK, 'add_plan.json');
 // products whose gallery differs from the series representative (own sheets, photos_audit/product_cmp.js)
-const OVERRIDE = { '05007671001': [7], '05007670001': [7], '05008750001': [7], '05009340001': [7, 9], '05009305001': [7, 10], '05110011001': [3, 4, 5, 6, 7, 8, 9, 10] };
+// decisions.json may carry its own per-product list (29.10.2026, Zyklop 8790 FA 6 mm: the size sits in «Розмір головки», not in «Профіль і розмір»)
+const OVERRIDE = { ...(D.override || {}), '05007671001': [7], '05007670001': [7], '05008750001': [7], '05009340001': [7, 9], '05009305001': [7, 10], '05110011001': [3, 4, 5, 6, 7, 8, 9, 10] };
 const sizes = a => ((L[a].characteristics || {}).rozmir_nakonechnyka || []).map(v => v.value.ua);
 const fits = (a, spec) => { const s = sizes(a); const m = spec.match(/^SL ×([\d,]+)$/); return m ? s.some(v => new RegExp('^SL [\\d,]+×' + m[1] + '$').test(v)) : s.includes(spec); };
 if (MODE === 'plan') { const plan = {}; const log = [];
