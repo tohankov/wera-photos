@@ -35,7 +35,9 @@ const fileOf = (a, i) => path.join(ADD, `${a}@${(L[a].images || []).length + i +
   const call = async (t, a) => { for (let k = 0; k < 20; k++) { await sleep(1500); const r = await S.call(t, a); const m = JSON.stringify(r || '').match(/[Rr]etry after (\d+)/); if (m) { console.log('429, wait', +m[1] + 5); await sleep((+m[1] + 5) * 1000); continue; } return r; } throw new Error('429 loop'); };
   const F = ['article', 'parent_article', 'title', 'mod_title', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description', 'characteristics', 'icons', 'short_description', 'seo_title', 'seo_description', 'slug'];
   const exp = async a => { const r = await call('horoshop_catalog_export', { expr: { article: [a] }, includedParams: F, limit: 5, allowLarge: true }); const p = ((r.response || {}).products || [])[0]; if (!p) stop('export ' + a); return p; };
-  const fname = u => u.split('/').pop(); const list = LISTF ? JSON.parse(fs.readFileSync(LISTF, 'utf8')) : Object.keys(plan);
+  const fname = u => u.split('/').pop();
+  // characteristics: the order of values inside one characteristic is not a change (Horoshop reorders them, 29.10.2026 05006611001)
+  const same = (k, x, y) => k === 'characteristics' ? JSON.stringify(Object.fromEntries(Object.entries(x || {}).map(([c, v]) => [c, v.map(z => z.value.ua).sort()]))) === JSON.stringify(Object.fromEntries(Object.entries(y || {}).map(([c, v]) => [c, v.map(z => z.value.ua).sort()]))) : JSON.stringify(x) === JSON.stringify(y); const list = LISTF ? JSON.parse(fs.readFileSync(LISTF, 'utf8')) : Object.keys(plan);
   // batches of 25 (the API allows few requests per hour: 4 requests per batch instead of 4 per product); a product cut off mid-batch keeps its
   // add_before_<art>.json and is finished one by one below (resume)
   const linksOf = a => plan[a].map((_, i) => 'https://raw.githubusercontent.com/tohankov/wera-photos/main/images/global_add/' + encodeURIComponent(path.basename(fileOf(a, i))));
@@ -50,7 +52,7 @@ const fileOf = (a, i) => path.join(ADD, `${a}@${(L[a].images || []).length + i +
     const r = await call('horoshop_catalog_import', { productsFile: TMP, dryRun: false }); if ((r.errors || []).length) stop(`batch import ${JSON.stringify(r.errors).slice(0, 300)}`); fs.unlinkSync(TMP);
     await sleep(4000); const r1 = await call('horoshop_catalog_export', { expr: { article: arts }, includedParams: F, limit: 100, allowLarge: true }); const A1 = Object.fromEntries(((r1.response || {}).products || []).map(p => [p.article, p]));
     for (const a of arts) { const before = B0[a], after = A1[a]; if (!after) stop(a + ' missing after'); const bi = before.images.map(fname), ai = after.images.map(fname); const n = plan[a].length;
-      const bad = F.filter(k => k !== 'images' && JSON.stringify(before[k]) !== JSON.stringify(after[k])); if (ai.slice(0, bi.length).join() !== bi.join()) bad.push('old photos changed or moved'); if (ai.length !== bi.length + n) bad.push(`photos ${bi.length} -> ${ai.length}, planned +${n}`);
+      const bad = F.filter(k => k !== 'images' && same(k, before[k], after[k]) === false); if (ai.slice(0, bi.length).join() !== bi.join()) bad.push('old photos changed or moved'); if (ai.length !== bi.length + n) bad.push(`photos ${bi.length} -> ${ai.length}, planned +${n}`);
       if (bad.length) stop(`${a}: ${bad.join('; ')}`); st[a] = { done: true, added: n, files: plan[a].map(x => x.file), at: new Date().toISOString() }; }
     save(); console.log(`batch ${arts[0]}…: ${arts.length} products, +${arts.reduce((s, a) => s + plan[a].length, 0)} photos, checked`); }
   for (const a of list) { if (st[a] && st[a].done) continue; if (Date.now() - T0 > BUD - 60000) break; const files = plan[a].map((_, i) => fileOf(a, i)); if (files.some(f => !fs.existsSync(f))) { console.log(a, 'files missing'); continue; }
@@ -66,7 +68,7 @@ const fileOf = (a, i) => path.join(ADD, `${a}@${(L[a].images || []).length + i +
       if (w.length !== 1 || w[0].article !== a || w[0].isNew || Object.keys(w[0].changes || {}).some(k => !/^images/.test(k))) stop(`${a}: dry ${JSON.stringify(dry).slice(0, 400)}`);
       const r = await call('horoshop_catalog_import', { productsFile: TMP, dryRun: false }); if ((r.errors || []).length) stop(`${a}: import ${JSON.stringify(r.errors).slice(0, 300)}`); fs.unlinkSync(TMP);
       await sleep(2500); after = await exp(a); }
-    const bi = before.images.map(fname), ai = after.images.map(fname); const bad = F.filter(k => k !== 'images' && JSON.stringify(before[k]) !== JSON.stringify(after[k]));
+    const bi = before.images.map(fname), ai = after.images.map(fname); const bad = F.filter(k => k !== 'images' && same(k, before[k], after[k]) === false);
     if (ai.slice(0, bi.length).join() !== bi.join()) bad.push('old photos changed or moved'); if (ai.length !== bi.length + files.length) bad.push(`photos ${bi.length} -> ${ai.length}, planned +${files.length}`);
     if (bad.length) stop(`${a}: ${bad.join('; ')}`);
     st[a] = { done: true, added: files.length, files: plan[a].map(x => x.file), at: new Date().toISOString() }; save(); console.log(a, '+' + files.length); }
