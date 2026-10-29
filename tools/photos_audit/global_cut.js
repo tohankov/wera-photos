@@ -5,7 +5,7 @@
 // (w/h > 1.4 — «в работе», not touched). Then sheets of 20 on the site's dark background (#191816) -> <work>/sheets/sheet_NN.jpg, each cell labelled with
 // the article; every sheet is looked at by eye, a doubtful photo goes to <work>/doubt.json and keeps its original.
 const fs = require('fs'), path = require('path'); const sharp = require('sharp'); const { cut } = require('../lib/cutout.js');
-const [, , LIVE, GJ, WORK, B] = process.argv; const T0 = Date.now(), BUD = (+B || 520) * 1000; const sleep = ms => new Promise(r => setTimeout(r, ms));
+const [, , LIVE, GJ, WORK, B] = process.argv; const OPT = process.env.CUTOPT ? JSON.parse(process.env.CUTOPT) : {}, PAD = +process.env.PAD || 0; const T0 = Date.now(), BUD = (+B || 520) * 1000; const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ORIG = 'C:/Users/Techlight/Desktop/wera-photos/backup/global_photo_orig/'; fs.mkdirSync(ORIG, { recursive: true }); for (const d of ['cut', 'sheets']) fs.mkdirSync(path.join(WORK, d), { recursive: true });
 const L = Object.fromEntries(JSON.parse(fs.readFileSync(LIVE, 'utf8')).map(p => [p.article, p])); const J = JSON.parse(fs.readFileSync(GJ, 'utf8'));
 const todo = J.products.filter(p => p.vis && p.list.some(f => f.item === 7 && /снять фон/.test(f.what))).map(p => p.art);
@@ -18,7 +18,9 @@ const SF = path.join(WORK, 'state.json'); const st = fs.existsSync(SF) ? JSON.pa
     if (m.width / m.height > 1.4) { st[a] = { skip: 'широкое фото («в работе»)', url, w: m.width, h: m.height }; save(); continue; }
     if (m.hasAlpha) { const { data, info } = await sharp(of).ensureAlpha().raw().toBuffer({ resolveWithObject: true }); const W = info.width, H = info.height;
       const corners = [0, W - 1, (H - 1) * W, H * W - 1].map(i => data[i * 4 + 3]); if (corners.every(x => x < 10)) { st[a] = { skip: 'уже без фона', url }; save(); continue; } }
-    const r = await cut(of); fs.writeFileSync(path.join(WORK, 'cut', a + '.png'), r.png); st[a] = { url, orig: of, w: m.width, h: m.height, stats: r.stats }; save(); }
+    // CUTOPT (env, JSON) — lib/cutout.js settings; PAD (env, px) — white margin first (a photo cropped tight to the tool, 28.10.2026 Zyklop)
+    const src = PAD ? await sharp(of).flatten({ background: '#ffffff' }).extend({ top: PAD, bottom: PAD, left: PAD, right: PAD, background: '#ffffff' }).png().toBuffer() : of;
+    const r = await cut(src, OPT); fs.writeFileSync(path.join(WORK, 'cut', a + '.png'), r.png); st[a] = { url, orig: of, w: m.width, h: m.height, stats: r.stats }; save(); }
   const done = todo.filter(a => st[a] && !st[a].skip); console.log('todo', todo.length, '| cut', done.length, '| skipped', todo.filter(a => st[a] && st[a].skip).length, '| left', todo.filter(a => !st[a]).length);
   if (todo.some(a => !st[a])) return;
   // sheets: 5 x 4 cells of 300 x 300 on #191816, label = article
