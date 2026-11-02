@@ -15,7 +15,8 @@ const SF = path.join(WORK, 'state.json'); const st = fs.existsSync(SF) ? JSON.pa
     const ext = path.extname(url.split('?')[0]).toLowerCase() || '.jpg'; const of = ORIG + a + ext;
     if (!fs.existsSync(of)) { await sleep(700); const r = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0' } }); if (!r.ok) { st[a] = { skip: 'HTTP ' + r.status, url }; save(); continue; } fs.writeFileSync(of, Buffer.from(await r.arrayBuffer())); }
     const m = await sharp(of).metadata();
-    if (m.width / m.height > 1.4) { st[a] = { skip: 'широкое фото («в работе»)', url, w: m.width, h: m.height }; save(); continue; }
+    // WIDE=1 (env): long tools (keys) are wide by shape, not «in use» (30.10.2026 Joker / L-keys)
+    if (!process.env.WIDE && m.width / m.height > 1.4) { st[a] = { skip: 'широкое фото («в работе»)', url, w: m.width, h: m.height }; save(); continue; }
     if (m.hasAlpha) { const { data, info } = await sharp(of).ensureAlpha().raw().toBuffer({ resolveWithObject: true }); const W = info.width, H = info.height;
       const corners = [0, W - 1, (H - 1) * W, H * W - 1].map(i => data[i * 4 + 3]); if (corners.every(x => x < 10)) { st[a] = { skip: 'уже без фона', url }; save(); continue; } }
     // CUTOPT (env, JSON) — lib/cutout.js settings; PAD (env, px) — white margin first (a photo cropped tight to the tool, 28.10.2026 Zyklop)
