@@ -47,6 +47,10 @@ const N = {
   '9480 Reißverschluss-Etui': { group: 'c:ACC', ua: '9480 Футляр на блискавці', ru: '9480 Футляр на молнии' },
   '9603 Nuss-Magnetleiste Impaktor, 3/8", unbestückt': { group: 'c:ACC', ua: '9603 Магнітний тримач для головок Impaktor 1/2″, без головок', ru: '9603 Магнитный держатель для головок Impaktor, 1/2″, неукомплектованный' },   // owner 29.10.2026: by the datasheet (1/2″)
   '873/1 Five Lobe Bits mit Bohrung': { group: 'FIVE', ua: 'Біти Five Lobe 873/1 з отвором', ru: 'Насадки Five Lobe 873/1 с отверстием' },
+  // L-keys (02.11.2026): holder / clips of the 950 PKL / SPKL sets
+  '9109 Wandhalter/Fuß für Winkelschlüsselclip': { group: 'c:ACC', ua: '9109 Настінний / настільний тримач для затискача Г-подібних ключів', ru: '9109 Держатель настенный / настольный под зажим для Г-образных ключей' },
+  '9536 Winkelschlüsselclip': { group: 'c:ACC', ua: '9536 Затискач для Г-подібних ключів', ru: '9536 Зажим для Г-образных ключей' },
+  '9539 Winkelschlüsselclip': { group: 'c:ACC', ua: '9539 Затискач для Г-подібних ключів', ru: '9539 Зажим для Г-образных ключей' },
   '840/2 Z Bits': { group: 'HEX', ua: 'Біти 840/2 Z', ru: 'Насадки 840/2 Z' },
   '867/4 BTZ TORX® Bits': { group: 'TX', ua: 'Біти TORX® 867/4 BTZ', ru: 'Насадки TORX® 867/4 BTZ' },
   '800/4 BTZ Bits': { group: 'SL', ua: 'Біти 800/4 BTZ', ru: 'Насадки 800/4 BTZ' },
@@ -58,6 +62,7 @@ const NA = {
   '8767 B TORX®': { group: 'TX', ua: 'Викруткова головка Zyklop 8767 B 3/8″ TORX® з подовженою робочою частиною', ru: 'Отвёрточная головка Zyklop 8767 B 3/8″ TORX® с вытянутой рабочей частью' },
   '8740 B Zyklop': { group: 'HEX', ua: 'Викруткова головка Zyklop 8740 B 3/8″ шестигранна з подовженою робочою частиною', ru: 'Отвёрточная головка Zyklop 8740 B 3/8″ шестигранная с вытянутой рабочей частью' },
   '851/0 Micro': { group: 'PH', ua: 'Біти 851/0 Micro для гвинтів Phillips', ru: 'Насадки 851/0 Micro для винтов Phillips' },
+  '3950 SPKL Multicolour Imperial': { group: 'HEX', ua: 'Г-подібний ключ Multicolour, дюймовий, нержавіюча сталь 3950 SPKL', ru: 'Г-образный ключ Multicolour, дюймовый, нержавеющая сталь 3950 SPKL' },
   '9575': { group: 'c:ACC', ua: '9575 М’який чохол Kraftform Kompakt VDE 24 Allrounder 1, без інструментів', ru: '9575 Мягкий чехол Kraftform Kompakt VDE 24 Allrounder 1, без инструментов' },
 };
 // KNIPEX in a set (owner 25.10.2026): our KNIPEX product on techlight-shop.com.ua — name = its h1 (UA / /ru/), link there, picture = its main photo without

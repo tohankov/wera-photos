@@ -14,6 +14,8 @@ function wmatch(s, g, x, wrows = wrowsOf(s)) {
   if (!w) { const c = code(g.head), sz = nsz(x.size); const cand = wrows.filter(r => nsz(r.size) === sz && r.qty === x.qty && (!c || code(r.name) === c));
     if (cand.length === 1) { w = cand[0]; how = 'size'; } else if (cand.length > 1) how = 'ambiguous ' + cand.length;
     // velcro strips: the datasheet «Набор полосок на липучках (№) N» = wera.de «Klettstreifen N» (sizes written in the other order)
+    // a 4-digit WERA code alone (9109 / 9536 / 9539 holders and clips, 02.11.2026): the wera.de row whose name starts with the same code, same qty
+    const c4 = !w && (g.head.match(/^(9\d{3})\s/) || [])[1]; if (c4) { const v = wrows.filter(r => r.name.startsWith(c4 + ' ') && r.qty === x.qty); if (v.length === 1) { w = v[0]; how = 'code'; } }
     const k = !w && g.head.match(/липучках\s+(?:№\s*)?(\d+)/); if (k) { const v = wrows.filter(r => r.name === 'Klettstreifen ' + k[1] && r.qty === x.qty); if (v.length === 1) { w = v[0]; how = 'velcro'; } } }
   return { w, how: how || 'none' }; }
 module.exports = { wmatch, wrowsOf };
