@@ -12,6 +12,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)); const nz = s => String(
 (async () => {
   const S = require('../lib/session.js').open(); const exp = async list => { const out = []; for (let i = 0; i < list.length; i += 100) { await sleep(1200);
       const r = await S.call('horoshop_catalog_export', { expr: { article: list.slice(i, i + 100) }, includedParams: ['article', 'title', 'parent', 'alt_parent', 'display_in_showcase', 'characteristics', 'link'], limit: 100, allowLarge: true });
+      const w = JSON.stringify(r || '').match(/[Rr]etry after (\d+)/); if (w) { console.log('429, wait', +w[1] + 5); await sleep((+w[1] + 5) * 1000); i -= 100; continue; }   // hour limit (03.11.2026)
       if (!r.response) throw new Error('export ' + JSON.stringify(r).slice(0, 200)); out.push(...r.response.products); } return out; };
   const now = await exp(arts); const ids = [...new Set([...now, ...L0.filter(p => arts.includes(p.article))].flatMap(secs))];   // sections before and after the write
   const need = [...new Set([...L0.filter(p => secs(p).some(id => ids.includes(id))).map(p => p.article), ...arts])];
