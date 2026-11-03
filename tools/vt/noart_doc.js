@@ -3,7 +3,7 @@
 const fs = require('fs'); const [, , OUT, ...WF] = process.argv; const J = require('./noart.json');
 const w = WF.flatMap(f => JSON.parse(fs.readFileSync(f, 'utf8')).wait); const f = {}, only = new Set();
 for (const x of w) { const fl = x.why.map(y => (y.match(/файл (\S+) не завантажено/) || [])[1]).filter(Boolean); if (fl.length && fl.length === x.why.length) only.add(x.art); for (const k of fl) (f[k] = f[k] || new Set()).add(x.art); }
-const nm = {}; for (const e of [...Object.values(J.names), ...Object.values(J.arts), ...Object.values(J.knipex || {})]) nm[e.file] = nm[e.file] || e.ua;
+const nm = {}; for (const e of [...Object.values(J.names), ...Object.values(J.arts), ...Object.values(J.knipex || {}), ...Object.values(J.heads || {})]) nm[e.file] = nm[e.file] || e.ua;
 const rows = Object.entries(f).sort((a, b) => b[1].size - a[1].size).map(([k, v]) => `| ${k} | ${nm[k]} | ${v.size} | ${[...v].join(', ')} |`);
 fs.writeFileSync(OUT, `# Файлы для блоков состава — загрузить в /content/uploads/images/icons/ (${new Date().toISOString().slice(0, 10)})
 

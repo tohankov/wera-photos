@@ -45,7 +45,8 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
       else { // KNIPEX — matched by its article in the head (28.10.2026: before, any KNIPEX head took the 87 01 250 card); else the WERA picture
         const head = s === '05150153001' ? g.head.replace('87 01 125', '87 01 250') : g.head;
         const kk = /KNIPEX/i.test(head) && Object.keys(NA.knipex || {}).find(k => head.includes(k));
-        const e = kk ? NA.knipex[kk] : (w && !w.art && NA.names[w.name]) || NA.arts[x.art || (w && w.art)];
+        // no wera.de row: the picture cut out of the set's datasheet (vt/noart_ds.js, owner 03.11.2026)
+        const e = kk ? NA.knipex[kk] : (w && !w.art && NA.names[w.name]) || NA.arts[x.art || (w && w.art)] || (!w && (NA.heads || {})[g.head]);
         if (!e || !e.group) { q.push(`${x.art || '—'} ${g.head}: немає нашого товару${/KNIPEX/i.test(g.head) ? ' (KNIPEX — немає в списку KNX, vt/noart_files.js)' : w ? ', назва / група не задані (vt/noart_files.js)' : ' і рядка wera.de'}`); continue; }
         if (!e.uploaded) { pend.push(`${x.art || (w && w.art) || kk || '—'} ${g.head.slice(0, 50)}: файл ${e.file} не завантажено`); continue; }
         items.push({ art: kk || x.art || (w && w.art) || null, qty: x.qty, gkey: e.group, size: kk ? '' : SB.size(x.size, e.ua, e.group), name: { ua: e.ua, ru: e.ru }, href: e.href || null, img: 'https://tl-shop.com.ua/content/uploads/images/icons/' + e.file }); continue; } }

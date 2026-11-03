@@ -74,7 +74,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // node vt/noart_files.js check — which files the owner has uploaded (HTTP 200 image from our domain) -> «uploaded» in vt/noart.json
 const ICONS = 'https://tl-shop.com.ua/content/uploads/images/icons/';
 if (RES === 'check') (async () => { const F = path.join(__dirname, 'noart.json'); const J = JSON.parse(fs.readFileSync(F, 'utf8')); const st = {};
-  for (const e of [...Object.values(J.names), ...Object.values(J.arts), ...Object.values(J.knipex || {})]) { if (!(e.file in st)) { await sleep(600); const r = await fetch(ICONS + e.file, { headers: { 'user-agent': 'Mozilla/5.0' } });
+  for (const e of [...Object.values(J.names), ...Object.values(J.arts), ...Object.values(J.knipex || {}), ...Object.values(J.heads || {})]) { if (!(e.file in st)) { await sleep(600); const r = await fetch(ICONS + e.file, { headers: { 'user-agent': 'Mozilla/5.0' } });
       st[e.file] = r.ok && /^image\//.test(r.headers.get('content-type') || ''); } e.uploaded = st[e.file]; }
   fs.writeFileSync(F, JSON.stringify(J, null, 1)); const n = Object.values(st); console.log('files', n.length, 'uploaded', n.filter(Boolean).length, '| missing', Object.keys(st).filter(k => !st[k]).join(' ')); })();
 else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], cells = []; const get = require('./fetchpage.js');
