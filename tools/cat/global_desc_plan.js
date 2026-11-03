@@ -41,6 +41,7 @@ const fmt = v => String(v).replace(/"$/, '″').replace(/^#\s?/, '#');
 const NOTE = { 'Kraftform-Griff, 1-komponentig': { ua: 'Ручка Kraftform, однокомпонентна', ru: 'Рукоятка Kraftform, однокомпонентная' } };
 // icon widths as in our existing tables (height 26)
 const ICON_W = { 'icon-hex': 26, 'icon-hex-socket': 26, 'icon-socket-vde-length': 22, 'icon-socket-d1': 21, 'icon-socket-d2': 26, 'icon-socket-length': 26, 'icon-socket-depth': 19, 'icon-wrench-size': 23, 'icon-combi-length': 9, 'icon-wrench-b': 20, 'icon-wrench-thickness': 12, 'icon-ring-b1': 19, 'icon-ring-height': 12, 'icon-length': 10, 'icon-length-inch': 10, 'icon-handle': 13 };
+const NOCOL = new Set();   // tables not built: a column without our heading
 function newTable(a, l) { const wp = W.pages[W.art[a]]; const t = wp.table; const D = ds(a);
   const rows = t.rows.filter(r => r.label !== 'Grifffarbe' && !/^Hinweis/.test(r.label)); const cols = [], keys = [];
   // sockets and screwdriver heads (Zyklop, VDE) — the columns of our existing tables of the same series (05004950001 sockets, 05004900001 heads)
@@ -74,7 +75,7 @@ for (const p of L) { const a = p.article; const nw = { ua: p.description.ua, ru:
         blk = blk.replace(/<sup>(\d+)\)<\/sup>[^<]*(?:<br>)?/g, (m, n) => usedN.has(n) ? m : '');
         h = sp[0] + blk + sp[2]; why.add('строки снятых WERA вариантов: ' + rows.filter(r => REMOVE.has(r.art)).map(r => r.art).join(', ')); } }
     // b)
-    if (NOTABLE.has(a) && !VT.splitTable(h)) { const t = newTable(a, l); const i = h.search(/<h3>(?:Дізнайтеся більше|Узнайте больше)/); h = i < 0 ? h + t : h.slice(0, i) + t + h.slice(i); why.add('новая таблица «Інші варіанти серії» (wera.de)'); }
+    if (NOTABLE.has(a) && !VT.splitTable(h)) { let t; try { t = newTable(a, l); } catch (e) { NOCOL.add(e.message); t = null; } if (t === null) { /* a wera.de column without our UA / RU heading — table left for later (03.11.2026, bits) */ } else { const i = h.search(/<h3>(?:Дізнайтеся більше|Узнайте больше)/); h = i < 0 ? h + t : h.slice(0, i) + t + h.slice(i); why.add('новая таблица «Інші варіанти серії» (wera.de)'); } }
     // c)
     const h2 = altEmpty(h); if (h2 !== h) { h = h2; why.add('alt="" у значков шапки таблицы'); }
     // d)
@@ -85,4 +86,4 @@ for (const p of L) { const a = p.article; const nw = { ua: p.description.ua, ru:
     nw[l] = h; }
   if (nw.ua === p.description.ua && nw.ru === p.description.ru) continue;
   plan.products[a] = { old: { ua: p.description.ua, ru: p.description.ru }, new: nw, why: [...why] }; for (const w of why) { const k = w.replace(/:.*/, ''); stat[k] = (stat[k] || 0) + 1; } }
-fs.writeFileSync(OUT, JSON.stringify(plan)); console.log('products', Object.keys(plan.products).length, stat); console.log('rows removed for', [...REMOVE].join(' '));
+fs.writeFileSync(OUT, JSON.stringify(plan)); console.log('products', Object.keys(plan.products).length, stat); console.log('rows removed for', [...REMOVE].join(' ')); if (NOCOL.size) { const k = {}; for (const m of NOCOL) { const c = m.replace(/^\d+: /, ''); k[c] = (k[c] || 0) + 1; } console.log('tables not built (column without heading):', k); }
