@@ -159,7 +159,7 @@ const NOSIZE_RU = ' (размер не указан)';
 const NOSIZE = prof => `${{ [TX]: 'TX', [TXBO]: 'TX BO', 'PlusMinus (PH/PZ + шліц)': 'PlusMinus' }[prof] || PR[prof][0]} (розмір не вказано)`;
 // owner 19.10.2026: 05133126001 — «Профіль і розмір» stays empty (no slot thickness anywhere)
 // owner 21.10.2026: accessories get no sizes — removers 1429 / 1529 ESD, handle 1014 (its bit values in «Мікробіти 4 мм Micro» stay)
-const EMPTY392 = ['05133126001', '05027456001', '05027450001', '05051278001'];
+const EMPTY392 = ['05133126001', '05027456001', '05027450001', '05051278001', '05002900001'];   // 05002900001 Vario 80 handle — owner 03.11.2026
 Object.assign(module.exports, { WERA_DE, FIX_SIZES, PROFIL_FIX, NOSIZE, NOSIZE_RU, EMPTY392 });
 function buildSklad(L, ctx) { const { cp, v } = ctx; const items = require('./g_sklad.js').items; const byA = Object.fromEntries(L.map(p => [p.article, p])); const out = [];
   for (const it of items) { const p = byA[it.a]; if (!p) continue; const c = hasComp(it.a) ? cp(it.a) : { pairs: [], unk: [] }; const pairs = [...c.pairs, ...(FIX_SIZES[it.a] || []), ...((WERA_DE[it.a] || {}).pairs || [])];

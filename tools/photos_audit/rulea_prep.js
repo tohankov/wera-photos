@@ -1,5 +1,5 @@
 // Rule А, write preparation for a group (owner 28.10.2026): from the decisions CSV (photos_audit/cmp_decide.js) — every «главное — …» product gets its new main
-// cut out (datasheet picture, or wera.de for a set without one) into <work>/cut/<art>.png, the size rule checked (new ≥ ours by the larger side and ≥ 800 px,
+// cut out (datasheet picture, or wera.de for a set without one) into <work>/cut/<art>.png, the size rule checked (new ≥ 95 % of ours by the larger side — owner 03.11.2026 — and ≥ 800 px,
 // else kept and listed), a dark sheet for the eye, <work>/list.json for photos_audit/main_replace.js.   node photos_audit/rulea_prep.js <decisions.csv> <cmp dir> <work dir>
 const fs = require('fs'), path = require('path'), crypto = require('crypto'); const sharp = require('sharp'); const { cut } = require('../lib/cutout.js');
 const [, , CSV, W, OUT] = process.argv; fs.mkdirSync(path.join(OUT, 'cut'), { recursive: true }); const c = JSON.parse(fs.readFileSync(path.join(W, 'cmp.json'), 'utf8'));
@@ -9,7 +9,7 @@ const cf = u => path.join(W, 'cache', crypto.createHash('md5').update(u).digest(
   for (const r of rows) { const a = r[0]; let src = /wera\.de/.test(r[3]) ? cf(c[a].wera) : path.join(W, 'ds', a + '.png'); if (!fs.existsSync(src)) { small.push(a + ' нет файла'); continue; }
     if (/\.webp$/.test(src)) { const p = path.join(OUT, a + '_src.png'); await sharp(src).png().toFile(p); src = p; }
     const n = await sharp(src).trim().toBuffer({ resolveWithObject: true }), o = await sharp(cf(c[a].ours)).trim().toBuffer({ resolveWithObject: true });
-    const nb = Math.max(n.info.width, n.info.height), ob = Math.max(o.info.width, o.info.height); if (nb < ob || nb < 800) { small.push(`${a} новое ${nb} px, наше ${ob} px`); continue; }
+    const nb = Math.max(n.info.width, n.info.height), ob = Math.max(o.info.width, o.info.height); if (nb < 0.95 * ob || nb < 800) { small.push(`${a} новое ${nb} px, наше ${ob} px`); continue; }
     const out = path.join(OUT, 'cut', a + '.png'); if (!fs.existsSync(out)) { const { png } = await cut(src); fs.writeFileSync(out, png); } list.push(a); }
   fs.writeFileSync(path.join(OUT, 'list.json'), JSON.stringify(list)); fs.writeFileSync(path.join(OUT, 'small.json'), JSON.stringify(small, null, 1));
   for (let s = 0; s * 40 < list.length; s++) { const part = list.slice(s * 40, s * 40 + 40); const comp = [];

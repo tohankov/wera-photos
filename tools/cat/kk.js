@@ -3,6 +3,8 @@
 const I = require('./1057_items.json'); const VC = require('./vyd_comp.js');
 // owner 22.10.2026: products of other groups are not touched — 05059293001 Kompakt 60 + torque screwdriver sits in «Набори з динамометричним інструментом» and the Kompakt root (tiles): no «Особливості викрутки» filter
 const RAP_SKIP = new Set(['05059293001']);
+// owner 03.11.2026: the Vario 80 handle has no profile / size (accessory rule 21.10); Vario 84 ends — «Кулькова головка» (wera.de «Kugelkopf»)
+const NOPROF = new Set(['05002900001']);
 const norm = s => s.replace(/ W[Ee][Rr][Aa] \S+$/, '').replace(/[​]/g, '').replace(/(\d)\.(\d)/g, '$1,$2').replace(/(\d) ?["”″]/g, '$1″');
 const dec = v => (/,/.test(v) ? v : v + ',0');
 const PROF = { SL: 'SL (шліц)', PH: 'PH (Phillips)', PZ: 'PZ (Pozidriv)', TX: 'TX (TORX®)', HEX: 'HEX (шестигранник)', SQ: 'Квадрат (Robertson)', TRI: 'TRI-WING®', TS: 'TORQ-SET® Mplus', SP: 'Spanner (натяжні гвинти)' };
@@ -24,6 +26,8 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title); let vyd, kind = 
   else if (/подовжувач|перехідник|адаптер(?!.*ручк)/i.test(n) && !/ручк/i.test(n)) vyd = 'Приладдя';
   else vyd = 'Ручка-тримач';
   const v = { a: it.a, title: it.title, secs: it.secs, sec: s, kind, vyd: [vyd], profile: [], size: [], feat: [] };
+  if (kind === 'end' && /Vario (?:84 |HEX-HEX )/.test(n)) v.feat.push('Кулькова головка');
+  if (NOPROF.has(it.a)) { out.push(v); continue; }
   if (kind === 'end') { const r = vario(it, n); if (r && r.ok) { v.profile = r.prof; v.size = r.size; } else disputed.push({ a: it.a, sec: s, what: 'Профіль / Розмір наконечника', why: 'не разобран из названия', title: it.title }); }
   else v.profile = tokens(n).map(k => PROF[k]);
   if (/\bRA\b|RA-R|RA S|тріскачк|тріщатк/i.test(n)) v.feat.push('З тріскачкою'); if (/магазин/i.test(n)) v.feat.push('Магазин біт у ручці'); if (VC.rapidaptor(it.a, n) && !RAP_SKIP.has(it.a)) v.feat.push('Патрон Rapidaptor');   // owner 22.10.2026: by the name, the datasheet or the WERA composition (cat/vyd_comp.js)
@@ -32,7 +36,7 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title); let vyd, kind = 
   out.push(v); }
 // non-products inside the Vario section get all its profile and size values (CLAUDE.md filters rule)
 const ends = out.filter(v => v.kind === 'end');
-for (const v of out.filter(v => v.sec === 1058 && !v.kind && v.vyd[0] !== 'Набір інструментів')) { v.profile = [...new Set(ends.flatMap(e => e.profile))]; v.size = [...new Set(ends.flatMap(e => e.size))]; }
+for (const v of out.filter(v => v.sec === 1058 && !v.kind && v.vyd[0] !== 'Набір інструментів' && !NOPROF.has(v.a))) { v.profile = [...new Set(ends.flatMap(e => e.profile))]; v.size = [...new Set(ends.flatMap(e => e.size))]; }
 module.exports = { out, disputed };
 if (require.main === module) { const c = k => { const m = {}; for (const v of out) for (const x of v[k]) m[x] = (m[x] || 0) + 1; return m; };
   console.log('items', out.length, 'disputed', disputed.length); for (const k of ['vyd', 'profile', 'size', 'feat']) console.log(k, JSON.stringify(c(k)));
