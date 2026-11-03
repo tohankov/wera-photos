@@ -115,11 +115,13 @@
 - **П. 2 — «не біти» в разделах бит:** пример TL64 — в отчёте ШАГА 0.
 
 
-## ГДЕ ОСТАНОВИЛСЯ (02.11.2026)
+## ГДЕ ОСТАНОВИЛСЯ (03.11.2026)
 
 **Готово** (отчёты docs/report_global_<группа>.md, docs/report_1030.md):
 - «Викрутки», «Діелектричні» + «Новинки», Zyklop, Joker, **Г-подібні ключі** (docs/report_global_lkeys.md), **Kraftform Kompakt** (docs/report_global_kompakt.md) — названия, характеристики, фото (правило А, фон, недостающие WERA, неактуальные убраны), описания, тексты по правилу Б, блоки состава, где все позиции без фона.
 - 02.11 — блоки после загрузки 46 файлов владельцем: 40 новых + 16 пересобраны.
+
+**03.11:** решения владельца по Г-ключам и Kompakt записаны (2a61e0e, c76cd38, 7f56f05); «Біти та бітотримачі» — анализ и пример (`docs/global_bits.md`, `docs/pilot/example_bits.html`), ждёт «ок» владельца; потом вся группа, затем «Сумки Wera 2go».
 
 **Дальше — только после команды владельца:** анализ новых групп (Сумки 2go, Біти та бітотримачі 1104, динамометрия, візок, велосипеди, ударні, молотки). Порядок для группы — как у Г-ключей / Kompakt: названия → характеристики (night_write) → правило А (rulea_prep → листы → main_replace TAG) → фон (global_cut → листы на тёмном и сером, концы крупно → main_replace) → недостающие WERA (series_cmp → decisions.json → wera_add plan / files → images/global_add в git → upload) → описания (global_desc_plan → desc_write) → фразы WERA лёгко (gvyk_phrase_scan → global_phrase_plan → замены → desc_write) → блоки (full_export → comp_state с деревом группы из inventory/menu_tree.json → setblock_plan → desc_write → block_site_check; blocks_wait_doc) → night_audit + plan_diff → global_items_csv → отчёт.
 
