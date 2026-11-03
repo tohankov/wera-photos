@@ -13,7 +13,7 @@ const [, , ALL, STF, OUT, NAME, ...only] = process.argv;
 const L = Object.fromEntries(JSON.parse(fs.readFileSync(ALL, 'utf8')).map(p => [p.article, p])); const ST = JSON.parse(fs.readFileSync(STF, 'utf8'));
 // the datasheet has no composition table (950/9 Hex-Plus Multicolour 1 …): the composition of wera.de «Werkzeuge in diesem Set» — also WERA (27.10.2026)
 // owner 29.10.2026: these sets take the composition of wera.de «Werkzeuge in diesem Set» (the datasheet table misses positions: 827 T i, 05071076001, 05003526001 / 527)
-const WERA_COMP = new Set(['05006640001', '05004177001', '05004016001']);
+const WERA_COMP = new Set(['05006640001', '05004177001', '05004016001', '05021728001', '05021721001']); // 950/13: by wera.de (owner 03.11.2026)
 const compOf = s => { const c = WERA_COMP.has(s) ? [] : (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
   return wp.setItems.filter(i => i.rows.length).map(i => ({ head: i.name, code: (i.name.match(/^\d{3,4}(?:\/\d+)?(?:\s[A-Z]{1,5}(?=\s|$))*/) || [''])[0], items: i.rows.map(r => ({ art: r.art, qty: r.qty, size: r.size.replace(/(\d),(\d)/g, '$1.$2').replace(/ mm$/, ' мм') })) })); };
 const NR = require('./noart_resolve.js'); const NA = fs.existsSync(path.join(__dirname, 'noart.json')) ? require('./noart.json') : { names: {}, arts: {} };
@@ -30,7 +30,7 @@ const strip = h => { const i = h.indexOf('<div class="wsb">'); if (i < 0) return
 const place = (h, blk) => { const s = strip(h).replace(OLDPIC, ''); const i = s.search(ANCHOR); return i < 0 ? s + blk : s.slice(0, i) + blk + s.slice(i); };
 const plan = { name: NAME || 'setblock', products: {} }; const wait = [], questions = [], notes = [];
 // CLAUDE.md «не трогать»: Bit-Check 30 Christmas, Christmas MIX, 05133126001
-const NOTOUCH = new Set(['05135824001', '05135826001', '05133126001']);
+const NOTOUCH = new Set(['05135824001', '05135826001', '05133126001', '05135825001']); // 05135825001 Hex-Plus Christmas — no block (owner 03.11.2026)
 const sets = (only.length ? only : Object.keys(ST.sets)).filter(s => !NOTOUCH.has(s));
 for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p.display_in_showcase !== 1) continue;
   // positions without our product ('no article' / 'not ours') are resolved below (wera.de article / WERA picture, vt/noart.json); others wait

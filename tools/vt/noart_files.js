@@ -50,7 +50,8 @@ const N = {
   // L-keys (02.11.2026): holder / clips of the 950 PKL / SPKL sets
   '9109 Wandhalter/Fuß für Winkelschlüsselclip': { group: 'c:ACC', ua: '9109 Настінний / настільний тримач для затискача Г-подібних ключів', ru: '9109 Держатель настенный / настольный под зажим для Г-образных ключей' },
   '9536 Winkelschlüsselclip': { group: 'c:ACC', ua: '9536 Затискач для Г-подібних ключів', ru: '9536 Зажим для Г-образных ключей' },
-  '9539 Winkelschlüsselclip': { group: 'c:ACC', ua: '9539 Затискач для Г-подібних ключів', ru: '9539 Зажим для Г-образных ключей' },
+  // wera.de serves the same picture for 9536 and 9539 (identical bytes; the clips look the same in both datasheets, 03.11.2026) — one file for both
+  '9539 Winkelschlüsselclip': { group: 'c:ACC', ua: '9539 Затискач для Г-подібних ключів', ru: '9539 Зажим для Г-образных ключей', file: 'wera_9536.png' },
   '840/2 Z Bits': { group: 'HEX', ua: 'Біти 840/2 Z', ru: 'Насадки 840/2 Z' },
   '867/4 BTZ TORX® Bits': { group: 'TX', ua: 'Біти TORX® 867/4 BTZ', ru: 'Насадки TORX® 867/4 BTZ' },
   '800/4 BTZ Bits': { group: 'SL', ua: 'Біти 800/4 BTZ', ru: 'Насадки 800/4 BTZ' },
@@ -85,6 +86,7 @@ else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], 
   for (const o of Object.values(R.pos)) { if (!o.wera) continue; const src = o.wera.img; const file = 'wera_' + path.basename(src).replace(/\.webp$/, '.png');
     let nm = null; if (o.key.startsWith('W:')) nm = N[o.wera.name]; else { const k = Object.keys(NA).find(k => o.head.startsWith(k + ' ')); nm = k && NA[k]; }
     if (!nm) { miss.push(`${o.key.slice(0, 70)} (${o.head.slice(0, 60)})`); continue; }
+    if (nm.file && nm.file !== file) { const e = { ...nm, src }; if (o.key.startsWith('W:')) out.names[o.wera.name] = e; else out.arts[o.art] = e; continue; }   // shared file (dictionary «file»)
     if (o.key.startsWith('W:')) out.names[o.wera.name] = { ...nm, file, src }; else out.arts[o.art] = { ...nm, file, src };
     const f = path.join(DIR, file); if (fs.existsSync(f)) continue; await sleep(1200);
     const r = await fetch(src, { headers: { 'user-agent': 'Mozilla/5.0' } }); if (!r.ok) { miss.push('HTTP ' + r.status + ' ' + src); continue; }
