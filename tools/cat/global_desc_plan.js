@@ -33,12 +33,23 @@ const COL = { 'Klingendicke|mm': { icon: 'icon-blade-thickness', w: 26, ua: 'Т�
   'Außenmaß (b1) - Ratschenringschlüssel|mm': { icon: 'icon-ring-b1', w: 19, ua: 'Зовнішній розмір накидної частини з тріскачкою (b1)', ru: 'Наружный размер накидной части с трещоткой (b1)', unit: 'mm' },
   'Max. Kopfhöhe - Ratschenringschlüssel|mm': { icon: 'icon-ring-height', w: 12, ua: 'Макс. висота головки накидної частини з тріскачкою', ru: 'Макс. высота головки накидной части с трещоткой', unit: 'mm' }, 'Grifflänge|mm': { icon: 'icon-handle', w: 13, ua: 'Довжина ручки', ru: 'Длина ручки', unit: 'mm' },
   'Klingendurchmesser|mm': { icon: 'icon-diameter', w: 26, ua: 'Діаметр робочого кінця', ru: 'Диаметр рабочего конца', unit: 'mm' }, 'Klingenbreite (in Zoll)|inch': { icon: null, ua: 'Ширина робочого кінця', ru: 'Ширина рабочего конца', unit: 'inch' },
-  'Klingenlänge (in Zoll)|inch': { icon: 'icon-length-inch', w: 10, ua: 'Довжина робочого кінця', ru: 'Длина рабочего конца', unit: 'inch' }, 'Gesamtlänge Klinge in Zoll|inch': { icon: null, ua: 'Загальна довжина стрижня', ru: 'Общая длина стержня', unit: 'inch' } };
+  'Klingenlänge (in Zoll)|inch': { icon: 'icon-length-inch', w: 10, ua: 'Довжина робочого кінця', ru: 'Длина рабочего конца', unit: 'inch' }, 'Gesamtlänge Klinge in Zoll|inch': { icon: null, ua: 'Загальна довжина стрижня', ru: 'Общая длина стержня', unit: 'inch' },
+  // bits (03.11.2026): adapters 780 / 781 / 784 / 899 — the WERA variant code and both drive sizes (as our characteristics «Приєднання насадки» /
+  // «Приєднання до інструмента»); Impaktor DC boxes — the box contents («5 x PZ 2x50» -> «5 × PZ 2×50»)
+  'Artikelnummer|art. no.': { icon: null, ua: 'Позначення WERA', ru: 'Обозначение WERA' }, 'Artikelnummer|art no': { icon: null, ua: 'Позначення WERA', ru: 'Обозначение WERA' },
+  'Aufnahmegröße|inch': { icon: null, ua: 'Приєднання насадки', ru: 'Присоединение насадки', unit: 'inch' }, 'Aufnahmegröße Werkzeugseitig|inch': { icon: null, ua: 'Приєднання до інструмента', ru: 'Присоединение к инструменту', unit: 'inch' },
+  'Details|': { icon: null, ua: 'Вміст упаковки', ru: 'Содержимое упаковки', x: true } };
 const UNIT = { mm: { ua: 'мм', ru: 'мм' }, inch: { ua: 'дюйми', ru: 'дюймы' } };
 const PROF_ICON = v => /^PH/.test(v) ? 'icon-ph' : /^PZ/.test(v) ? 'icon-pz' : /^TX/.test(v) ? 'icon-torx' : /IP$/.test(v) ? 'icon-torx-plus' : /^#/.test(v) ? 'icon-square' : null;
-const fmt = v => String(v).replace(/"$/, '″').replace(/^#\s?/, '#');
+const fmt = (v, x) => { v = String(v).replace(/"$/, '″').replace(/^#\s?/, '#'); return x ? v.replace(/^(\d+) x /, '$1 × ').replace(/(\d)x(\d)/g, '$1×$2') : v; };
 // footnotes of the series table (wera.de «Hinweis»): UA / RU text by hand from the datasheet RU line, keyed by the German note text
-const NOTE = { 'Kraftform-Griff, 1-komponentig': { ua: 'Ручка Kraftform, однокомпонентна', ru: 'Рукоятка Kraftform, однокомпонентная' } };
+const NOTE = { 'Kraftform-Griff, 1-komponentig': { ua: 'Ручка Kraftform, однокомпонентна', ru: 'Рукоятка Kraftform, однокомпонентная' },
+  // bits (03.11.2026) — the RU lines of the datasheets (851/1 J, 851/4 A, 870/4); «Mit Stift» has no RU line — the 870/4 datasheet words
+  'Optimiert für japanische PH-Schrauben': { ua: 'Оптимізовано під азіатські гвинти PH', ru: 'Оптимизировано под азиатские винты PH' },
+  'Länge Antriebssechskant 100 mm': { ua: 'Довжина приводного шестигранника 100 мм', ru: 'Длина приводного шестигранника 100 мм' },
+  'Länge Antriebssechskant 20 mm': { ua: 'Довжина шестигранника 20 мм', ru: 'Длина шестигранника 20 мм' },
+  'Mit Kugel; für handbetätigte Steckschlüsseleinsätze': { ua: 'З кульковим фіксатором; для торцевих головок, що використовуються в ручному режимі', ru: 'С шариковым фиксатором; для торцовых головок, используемых в ручном режиме' },
+  'Mit Stift, für maschinenbetätigte Steckschlüsseleinsätze': { ua: 'Зі штифтом; для торцевих головок із машинним режимом застосування', ru: 'Со штифтом; для торцовых головок с машинным режимом применения' } };
 // icon widths as in our existing tables (height 26)
 const ICON_W = { 'icon-hex': 26, 'icon-hex-socket': 26, 'icon-socket-vde-length': 22, 'icon-socket-d1': 21, 'icon-socket-d2': 26, 'icon-socket-length': 26, 'icon-socket-depth': 19, 'icon-wrench-size': 23, 'icon-combi-length': 9, 'icon-wrench-b': 20, 'icon-wrench-thickness': 12, 'icon-ring-b1': 19, 'icon-ring-height': 12, 'icon-length': 10, 'icon-length-inch': 10, 'icon-handle': 13 };
 const NOCOL = new Set();   // tables not built: a column without our heading
@@ -55,7 +66,7 @@ function newTable(a, l) { const wp = W.pages[W.art[a]]; const t = wp.table; cons
     if (/^Abtriebsgröße/.test(r.label)) { const ic = PROF_ICON(r.vals[0]); cols.push({ icon: ic, w: 26, ua: 'Профіль', ru: 'Профиль' }); keys.push(r); continue; }
     const c = COL[k]; if (!c) throw new Error(`${a}: no column for «${k}»`); cols.push({ ...c, unit: UNIT[c.unit] }); keys.push(r); }
   const hint = t.rows.find(r => /^Hinweis/.test(r.label)); const used = new Set();
-  const trows = t.arts.map((x, i) => { const nn = hint ? (hint.vals[i].match(/\d+/g) || []) : []; nn.forEach(n => used.add(n)); return [x, ...keys.map(r => fmt(r.vals[i] || '–')), nn.join(',')]; });
+  const trows = t.arts.map((x, i) => { const nn = hint ? (hint.vals[i].match(/\d+/g) || []) : []; nn.forEach(n => used.add(n)); return [x, ...keys.map((r, j) => fmt(r.vals[i] || '–', cols[j].x)), nn.join(',')]; });
   const notes = { ua: [], ru: [] }; for (const n of [...used].sort()) { const de = wp.notesText[n]; const tr = NOTE[de]; if (!tr) throw new Error(`${a}: footnote ${n} «${de}» has no UA/RU text`); notes.ua.push(`<sup>${n})</sup> ${tr.ua}`); notes.ru.push(`<sup>${n})</sup> ${tr.ru}`); }
   const links = Object.fromEntries(t.arts.map(x => [x, linkOf(x, l)]).filter(([, u]) => u));
   return table({ name: 'WERA ' + (D.series || ''), cols: cols.map(c => ({ icon: c.icon, w: ICON_W[c.icon] || c.w, ua: c.ua, ru: c.ru, unit: c.unit })), rows: trows, notes }, l, a, links); }
