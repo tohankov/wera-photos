@@ -12,7 +12,7 @@ const call = async (t, a) => { for (let k = 0; k < 20; k++) { await sleep(1500);
 const stop = m => { save(); console.log('STOP', m); S.close(); process.exit(2); };
 const fields = ['article', 'parent_article', 'title', 'mod_title', 'price', 'presence', 'display_in_showcase', 'parent', 'alt_parent', 'images', 'gtin', 'link', 'description', 'characteristics'];
 const exp = async arts => { const r = await call('horoshop_catalog_export', { expr: { article: arts }, includedParams: fields, limit: 200, allowLarge: true }); if (!r.response) stop('export ' + JSON.stringify(r).slice(0, 200)); return r.response.products; };
-const ws = s => s.replace(/\s+/g, ' ').replace(/> </g, '><').trim();
+const ws = s => s.replace(/\s+/g, ' ').replace(/> </g, '><').trim(); const { sameHtml } = require('../vt/html_same.js');
 // the import may return the values of a multi-select characteristic in another order (26.10.2026: «PH 2, PH 1» -> «PH 1, PH 2») — the same values are the same
 const same = (f, v) => f !== 'characteristics' || !v ? JSON.stringify(v) : JSON.stringify(Object.keys(v).sort().map(k => [k, Array.isArray(v[k]) ? v[k].map(x => JSON.stringify(x)).sort() : v[k]]));
 (async () => {
@@ -29,7 +29,9 @@ const same = (f, v) => f !== 'characteristics' || !v ? JSON.stringify(v) : JSON.
     const after = await exp(go); fs.writeFileSync(BK + `${plan.name}_c${k}_after.json`, JSON.stringify(after)); const bad = [];
     for (const a of go) { const b = before.find(x => x.article === a), y = after.find(x => x.article === a); if (!y) { bad.push(a + ' missing'); continue; }
       for (const f of fields) if (f !== 'description' && same(f, b[f]) !== same(f, y[f])) bad.push(`${a} ${f}`);
-      for (const l of ['ua', 'ru']) { const e = plan.products[a].new[l]; if (y.description[l] === e) continue; if (ws(y.description[l]) === ws(e)) console.log(`note: ${a} ${l}: only whitespace normalised`); else bad.push(`${a} description.${l} ≠ plan`); } }
+      for (const l of ['ua', 'ru']) { const e = plan.products[a].new[l]; if (y.description[l] === e) continue; if (ws(y.description[l]) === ws(e)) console.log(`note: ${a} ${l}: only whitespace normalised`);
+        // 09.11.2026 (05049065001): Horoshop may decode entities (&quot; -> ") — the same HTML by vt/html_same.js
+        else if (!sameHtml(y.description[l], e).length) console.log(`note: ${a} ${l}: only entities / whitespace re-serialised (html_same)`); else bad.push(`${a} description.${l} ≠ plan`); } }
     if (bad.length) stop('verify: ' + bad.slice(0, 10).join('; '));
     st.done.push(...go); st.chunks++; save(); fs.unlinkSync(TMP);
     fs.appendFileSync(BK + 'variants_log.jsonl', JSON.stringify({ at: new Date().toISOString(), task: `${plan.name} chunk ${k}: ${go.length} descriptions` }) + '\n');
