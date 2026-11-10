@@ -39,7 +39,7 @@ const COL = { 'Klingendicke|mm': { icon: 'icon-blade-thickness', w: 26, ua: 'Т�
   'Artikelnummer|art. no.': { icon: null, ua: 'Позначення WERA', ru: 'Обозначение WERA' }, 'Artikelnummer|art no': { icon: null, ua: 'Позначення WERA', ru: 'Обозначение WERA' },
   'Aufnahmegröße|inch': { icon: null, ua: 'Приєднання насадки', ru: 'Присоединение насадки', unit: 'inch' }, 'Aufnahmegröße Werkzeugseitig|inch': { icon: null, ua: 'Приєднання до інструмента', ru: 'Присоединение к инструменту', unit: 'inch' },
   'Details|': { icon: null, ua: 'Вміст упаковки', ru: 'Содержимое упаковки', x: true } };
-const UNIT = { mm: { ua: 'мм', ru: 'мм' }, inch: { ua: 'дюйми', ru: 'дюймы' } };
+const UNIT = { mm: { ua: 'мм', ru: 'мм' }, inch: { ua: 'дюйми', ru: 'дюймы' }, nm: { ua: 'Н·м', ru: 'Н·м' }, inlb: { ua: 'in·lb', ru: 'in·lb' } };
 const PROF_ICON = v => /^PH/.test(v) ? 'icon-ph' : /^PZ/.test(v) ? 'icon-pz' : /^TX/.test(v) ? 'icon-torx' : /IP$/.test(v) ? 'icon-torx-plus' : /^#/.test(v) ? 'icon-square' : null;
 const fmt = (v, x) => { v = String(v).replace(/"$/, '″').replace(/^#\s?/, '#'); return x ? v.replace(/^(\d+) x /, '$1 × ').replace(/(\d)x(\d)/g, '$1×$2') : v; };
 // footnotes of the series table (wera.de «Hinweis»): UA / RU text by hand from the datasheet RU line, keyed by the German note text
@@ -49,7 +49,13 @@ const NOTE = { 'Kraftform-Griff, 1-komponentig': { ua: 'Ручка Kraftform, о
   'Länge Antriebssechskant 100 mm': { ua: 'Довжина приводного шестигранника 100 мм', ru: 'Длина приводного шестигранника 100 мм' },
   'Länge Antriebssechskant 20 mm': { ua: 'Довжина шестигранника 20 мм', ru: 'Длина шестигранника 20 мм' },
   'Mit Kugel; für handbetätigte Steckschlüsseleinsätze': { ua: 'З кульковим фіксатором; для торцевих головок, що використовуються в ручному режимі', ru: 'С шариковым фиксатором; для торцовых головок, используемых в ручном режиме' },
-  'Mit Stift, für maschinenbetätigte Steckschlüsseleinsätze': { ua: 'Зі штифтом; для торцевих головок із машинним режимом застосування', ru: 'Со штифтом; для торцовых головок с машинным режимом применения' } };
+  'Mit Stift, für maschinenbetätigte Steckschlüsseleinsätze': { ua: 'Зі штифтом; для торцевих головок із машинним режимом застосування', ru: 'Со штифтом; для торцовых головок с машинным режимом применения' },
+  // torque screwdrivers (10.11.2026) — note 1: the text of our existing tables of the series (05074728001); 1 / 2 of the «…010» models — wera.de, light translation
+  'Das voreingestellte Drehmoment kann verändert werden. Dafür ist aber der Einsatz von Sonderwerkzeug sowie Torque Test Equipment erforderlich. Bitte an den Wera Torque Service wenden.':
+    { ua: 'Заводське налаштування моменту затягування можна змінити. Для цього потрібен спеціальний інструмент і обладнання для перевірки інструментів (Torque Test Equipment).', ru: 'Заводскую уставку момента затяжки можно изменить. Для этого потребуется специальный инструмент, а также оборудование для проверки инструментов (Torque Test Equipment).' },
+  'Auf Kundenwunsch innerhalb des angegebenen Messbereichs einstellbar': { ua: 'Налаштовується за бажанням замовника в межах зазначеного діапазону вимірювання', ru: 'Настраивается по желанию заказчика в пределах указанного диапазона измерения' },
+  'Die Wunscheinstellung kann in folgenden Einheiten vorgenommen werden: Nm, kgf. m, lbf. ft., ozf. in., dN. m, kgf. cm, lbf. in, in. oz, cN. m, gf. m, ft. lb, gf. cm, in. lb.':
+    { ua: 'Бажане налаштування можна виконати в таких одиницях: Nm, kgf. m, lbf. ft., ozf. in., dN. m, kgf. cm, lbf. in, in. oz, cN. m, gf. m, ft. lb, gf. cm, in. lb.', ru: 'Желаемую настройку можно выполнить в следующих единицах: Nm, kgf. m, lbf. ft., ozf. in., dN. m, kgf. cm, lbf. in, in. oz, cN. m, gf. m, ft. lb, gf. cm, in. lb.' } };
 // icon widths as in our existing tables (height 26)
 const ICON_W = { 'icon-hex': 26, 'icon-hex-socket': 26, 'icon-socket-vde-length': 22, 'icon-socket-d1': 21, 'icon-socket-d2': 26, 'icon-socket-length': 26, 'icon-socket-depth': 19, 'icon-wrench-size': 23, 'icon-combi-length': 9, 'icon-wrench-b': 20, 'icon-wrench-thickness': 12, 'icon-ring-b1': 19, 'icon-ring-height': 12, 'icon-length': 10, 'icon-length-inch': 10, 'icon-handle': 13 };
 const NOCOL = new Set();   // tables not built: a column without our heading
@@ -57,10 +63,25 @@ function newTable(a, l) { const wp = W.pages[W.art[a]]; const t = wp.table; cons
   const rows = t.rows.filter(r => r.label !== 'Grifffarbe' && !/^Hinweis/.test(r.label)); const cols = [], keys = [];
   // sockets and screwdriver heads (Zyklop, VDE) — the columns of our existing tables of the same series (05004950001 sockets, 05004900001 heads)
   // Zyklop (27.10.2026): «Farbe» is left out as the handle colour; a column without a value in any row («-» — the metric heads' inch size) too
-  const t0 = A[a].mod_title.ua; const kind = /викруткова головка/i.test(t0) ? 'head' : /торцев\S* (?:[^ ]+ ){0,3}?головк/i.test(t0) ? 'socket' : /Joker/.test(t0) && /ключ/i.test(t0) ? 'wrench' : '';
+  const t0 = A[a].mod_title.ua; const kind = /викруткова головка/i.test(t0) ? 'head' : /торцев\S* (?:[^ ]+ ){0,3}?головк/i.test(t0) ? 'socket' : /Joker/.test(t0) && /ключ/i.test(t0) ? 'wrench'
+    : /^Динамометрична викрутка/.test(t0) ? (t.rows.some(r => r.label === 'Höhe Drehmomentschlüssel') ? 'dynP' : 'dyn') : /^Насадка TORX®/.test(t0) ? 'att' : '';
   const KCOL = { socket: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Abtriebsgröße (in Zoll)|inch': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'inch' }, 'Gesamtlänge|mm': { icon: 'icon-socket-vde-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } },
     wrench: { 'Gesamtlänge|mm': { icon: 'icon-combi-length', w: 9, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } },
     head: { 'Abtriebsgröße (metrisch)|mm': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'mm' }, 'Abtriebsgröße (in Zoll)|inch': { icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: 'inch' }, 'Gesamtlänge|mm': { icon: 'icon-socket-length', w: 26, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' } } };
+  // torque screwdrivers and the 7776 / 7786 TORX® inserts (10.11.2026) — the columns of our existing tables of the group (05074842001, 05074728001 pistol, 05078664001)
+  const DYN = { 'Artikelnummer|art. no.': { icon: null, ua: 'Модель', ru: 'Модель' }, 'Aufnahmegröße|inch': { icon: 'icon-hex-socket', w: 26, ua: 'Розмір затиску', ru: 'Размер зажима', unit: 'inch' },
+    'Voreingestellter Messwert Hauptskala|Nm': { icon: 'icon-torque-preset', w: 30, ua: 'Попередньо встановлене значення (основна шкала)', ru: 'Предустановленное значение (основная шкала)', unit: 'nm' },
+    'Hauptskala Messbereich|Nm': { icon: 'icon-torque-scale', w: 50, ua: 'Основна шкала / діапазон вимірювання', ru: 'Основная шкала / диапазон измерения', unit: 'nm' },
+    'Hauptskala Messbereich|in. lbs.': { icon: 'icon-torque-scale', w: 50, ua: 'Основна шкала / діапазон вимірювання', ru: 'Основная шкала / диапазон измерения', unit: 'inlb' },
+    'Grifflänge|mm': { icon: 'icon-handle', w: 13, ua: 'Довжина ручки', ru: 'Длина ручки', unit: 'mm' },
+    'Länge Drehmomentschlüssel|mm': { icon: 'icon-torque-length', w: 10, ua: 'Довжина динамометричного ключа', ru: 'Длина динамометрического ключа', unit: 'mm' },
+    'Länge Drehmomentschlüssel (in Zoll)|inch': { icon: 'icon-torque-length', w: 10, ua: 'Довжина динамометричного ключа', ru: 'Длина динамометрического ключа', unit: 'inch' } };
+  KCOL.dyn = DYN; KCOL.dynP = { ...DYN, 'Länge Drehmomentschlüssel|mm': { ...DYN['Länge Drehmomentschlüssel|mm'], icon: 'icon-pistol-length', w: 44 }, 'Länge Drehmomentschlüssel (in Zoll)|inch': { ...DYN['Länge Drehmomentschlüssel (in Zoll)|inch'], icon: 'icon-pistol-length', w: 44 },
+    'Höhe Drehmomentschlüssel|mm': { icon: 'icon-pistol-height', w: 45, ua: 'Висота динамометричного ключа', ru: 'Высота динамометрического ключа', unit: 'mm' }, 'Höhe Drehmomentschlüssel (in Zoll)|inch': { icon: 'icon-pistol-height', w: 45, ua: 'Висота динамометричного ключа', ru: 'Высота динамометрического ключа', unit: 'inch' } };
+  KCOL.att = { 'Antriebsvierkant|mm': { icon: null, ua: 'Привід (під ключ)', ru: 'Привод (под ключ)', unit: 'mm', x: true }, 'Abtriebsgröße|': { icon: 'icon-insert-torx', w: 26, ua: 'Профіль', ru: 'Профиль' },
+    'Stichmass|mm': { icon: 'icon-insert-torx-pitch', w: 30, ua: 'Міжосьова відстань', ru: 'Межосевое расстояние', unit: 'mm' }, 'Gesamtlänge|mm': { icon: 'icon-insert-torx-length', w: 34, ua: 'Загальна довжина', ru: 'Общая длина', unit: 'mm' },
+    'Gesamtlänge Kopf|mm': { icon: 'icon-insert-torx-head-length', w: 34, ua: 'Загальна довжина головки', ru: 'Общая длина головки', unit: 'mm' }, 'Breite|mm': { icon: 'icon-insert-torx-width', w: 39, ua: 'Ширина', ru: 'Ширина', unit: 'mm' },
+    'Höhe|mm': { icon: 'icon-insert-height', w: 54, ua: 'Висота', ru: 'Высота', unit: 'mm' } };
   for (const r of rows) { const k = r.label + '|' + r.unit; if (r.label === 'Farbe' || r.vals.every(v => !v || v === '-' || v === '–')) continue; const kc = (KCOL[kind] || {})[k]; if (kc) { cols.push({ ...kc, unit: UNIT[kc.unit] }); keys.push(r); continue; }
     if (k === 'Abtriebsgröße (metrisch)|mm') { cols.push({ icon: 'icon-hex', w: 26, ua: 'Розмір', ru: 'Размер', unit: UNIT.mm }); keys.push(r); continue; }   // Kompakt VDE 64 i hex blades — as our [icon-hex] «Розмір мм»
     if (/^Abtriebsgröße/.test(r.label)) { const ic = PROF_ICON(r.vals[0]); cols.push({ icon: ic, w: 26, ua: 'Профіль', ru: 'Профиль' }); keys.push(r); continue; }

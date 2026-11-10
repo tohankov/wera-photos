@@ -31,6 +31,8 @@
 
 - Динамометрия (1195): выгрузка scratchpad dyn/live.json, wera.de 265/265, inventory/global_1195*.json. Правило А: 11 листов просмотрены — 23 → фото паспорта, 1 вопрос (docs/global_dyn_photos.csv; scratchpad dyn/ra.txt). Дальше, названия, описания, пример, docs/global_dyn.md.
 
+- Динамометрия: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_dyn.md (4 вопроса), docs/pilot/example_dyn.html, docs/global_dyn_items.csv. Планы: names/set_global_dyn.json (132, генератор names/global_dyn_plan.js), cat/gdyn_chars.json (05075832001 +PH 2), cat/gdyn_desc_plan.json (192; extra cat/gdesc_dyn.js; global_desc_plan: колонки dyn / 7786), фразы 0, админка — ничего (night_audit dyn по свежему скану scratchpad dyn/scan.json). Блоки: 3 сразу, 20 после фона группы. Дальше п.5: Візок 1055 — анализ + правило А + пример.
+
 ## Остановился на
 
 ## Дальше
