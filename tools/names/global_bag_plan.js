@@ -40,6 +40,11 @@ for (const p of L) { const a = p.article; const d = ds(a); const t = d && d.titl
   // the drive of our current name («8006 SC 1 1/2″», «8100 SA Zyklop Speed 1/4″») is not in the datasheet title — kept, after a comma
   // («для 8006 SC 1, 1/2″»: «1 1/2″» would read as one and a half inches)
   const drv = (p.mod_title.ua.match(/(\d\/\d″)/) || [])[1]; if (drv && !/″/.test(rest)) { rest += ', ' + drv; restUa += ', ' + drv; }
+  // owner 10.11.2026: the contents of the set the bag is for, as our name had it — kept in brackets after «для …»
+  // («(16 предметів)», «(тріскачка та 10 головок)»; «… на 15 предметів» -> «(15 предметів)»)
+  const kit = (s, re) => { const b = s.replace(/\s*WERA\s+\d{11}\s*$/, '').match(/\(([^()]*\d[^()]*)\)\s*$/); if (b) return b[1]; const n = s.match(re); return n ? n[1] : ''; };
+  const ku = kit(p.mod_title.ua, /(?:^|\s)на (\d+ предмет\S*)/), kr = kit(p.mod_title.ru, /(?:^|\s)на (\d+ предмет\S*)/);
+  if (ku && !restUa.includes(ku)) restUa += ` (${ku})`; if (kr && !rest.includes(kr)) rest += ` (${kr})`;
   const sz = dims.length ? `, ${dims.join('×')} мм` : '';
   const ua = `${ty[1]} ${m[1]} ${forRu ? 'для ' : ''}${restUa}, без інструментів${sz} WERA ${a}`.replace(/\s+/g, ' ').replace(/ ,/g, ',');
   const ru = `${ty[2]} ${m[1]} ${forRu}${rest}, без инструментов${sz} WERA ${a}`.replace(/\s+/g, ' ').replace(/ ,/g, ',');
