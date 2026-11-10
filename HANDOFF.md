@@ -23,6 +23,10 @@
 
 ## Решения владельца 10.11 по блокам (в CLAUDE.md): серия+размер+длина при полном совпадении; паспорт≠wera.de → wera.de; группы «Свердла» / «Мітчики» / «Ударний гвинтоверт»; 14 позиций — вырезка из паспорта; KNIPEX 74 01 140 / 87 01 125 — фото WERA без ссылки. Применять в блоках бит и в ждущих блоках других групп. Потом items.csv + отчёт «Біти», затем «Сумки Wera 2go» (анализ + пример).
 
+## 10.11 в работе — блоки по решениям владельца
+- готово: tools/vt/catmatch.js (серия+размер+длина, 142 позиции из 706 без артикула), группы Свердла / Мітчики / Ударний гвинтоверт в tools/vt/setgroup.js.
+- дальше: подключить catmatch в vt/comp_state.js и vt/setblock_plan.js; паспорт≠wera.de → состав wera.de; noart_ds (вырезки из паспорта, 14 наборов) + KNIPEX 74 01 140 / 87 01 125 (фото WERA) → файлы владельцу (docs/ список + архив); затем блоки бит (151 набор, comp_state готов: scratchpad bits_state.json) и пересборка ждущих других групп.
+
 ## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.
