@@ -46,6 +46,7 @@ const CAT = {
   TAP: { ua: 'Мітчики', ru: 'Метчики', one: { ua: 'Мітчик', ru: 'Метчик' } },
   IMPACT: { ua: 'Ударний гвинтоверт', ru: 'Ударный винтовёрт' },
   // 10.11.2026, by analogy with the owner's drills / taps (845 / 846 countersink bits in bit sets) — reported to the owner
+  BIT41: { ua: 'Біти 4 в 1', ru: 'Биты 4 в 1', one: { ua: 'Біта 4 в 1', ru: 'Бита 4 в 1' } },   // owner 10.11.2026: 9506 / 9507 — a text group, no icon
   SINK: { ua: 'Зенкери', ru: 'Зенкеры', one: { ua: 'Зенкер', ru: 'Зенкер' } },
 };
 const BY_VYD = { 'Ручка-тримач': 'HANDLE', 'Ручка-вороток': 'HANDLE', 'Викрутка': 'SCREWDRIVER', 'Тріскачка': 'RATCHET',

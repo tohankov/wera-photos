@@ -65,7 +65,9 @@ const N = {
   '828/1 Bits-Handhalter, mit starkem Dauermagnet; Magazin für 6 Bits im Griff': { group: 'c:HANDLE', ua: '828/1 Ручка-тримач із сильним постійним магнітом і магазином на 6 біт у ручці', ru: '828/1 Ручка-битодержатель с сильным постоянным магнитом и магазином в ручке на 6 битов' },
   '9504 Reifenheber mit Bit-Aufnahme 2': { group: 'c:ACC', ua: '9504 Лопатка-монтажка з бітотримачем 2', ru: '9504 Лопатка-монтировка с битодержателем 2' },
   '9505 Reifenheber mit Ventilausdreher 3': { group: 'c:ACC', ua: '9505 Лопатка-монтажка з вузлом для викручування ніпеля 3', ru: '9505 Лопатка-монтировка с узлом для вывинчивания ниппеля 3' },
-  '9506 4-in-1 Bit 1': { group: 'HEX', ua: '9506 Біта «4 в 1» 1', ru: '9506 Бит «4-в-1» 1' },
+  '9506 4-in-1 Bit 1': { group: 'c:BIT41', ua: '9506 Біта «4 в 1» 1', ru: '9506 Бит «4-в-1» 1' },
+  // owner 10.11.2026: 9507 «4 в 1» — group «Біти 4 в 1»; the picture — the main photo of our 9507 SB 05073202001 (the same bit, on our domain), no link
+  '9507 4-in-1 Bit 2': { group: 'c:BIT41', ua: '9507 Біта «4 в 1» 2', ru: '9507 Бит «4-в-1» 2', file: 'our_05073202001', img: 'https://tl-shop.com.ua/content/images/8/92863658346709_+c04f2770d5.png' },
   'Belt 781 0/5 (Textilgurt), 5-teilig, unbestückt': { group: 'c:ACC', ua: 'Пояс 781 0/5 (текстильний) на 5 головок, без інструментів', ru: 'Пояс 781 0/5 (матерчатый), на 5 головок, неукомплектованный' },
   '1440 Schraubkralle für Schraubendreherklingen, lange Bits und Winkelschlüssel mit Festhaltefunktion für Schrauben': { group: 'c:ACC', ua: '1440 Фіксатор гвинтів', ru: '1440 Фиксатор винтов' },
   '1442 Schraubkralle für Schraubendreherklingen, lange Bits und Winkelschlüssel mit Festhaltefunktion für Schrauben': { group: 'c:ACC', ua: '1442 Фіксатор гвинтів', ru: '1442 Фиксатор винтов' },
@@ -121,7 +123,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // node vt/noart_files.js check — which files the owner has uploaded (HTTP 200 image from our domain) -> «uploaded» in vt/noart.json
 const ICONS = 'https://tl-shop.com.ua/content/uploads/images/icons/';
 if (RES === 'check') (async () => { const F = path.join(__dirname, 'noart.json'); const J = JSON.parse(fs.readFileSync(F, 'utf8')); const st = {};
-  for (const e of [...Object.values(J.names), ...Object.values(J.arts), ...Object.values(J.knipex || {}), ...Object.values(J.heads || {})]) { if (!(e.file in st)) { await sleep(600); const r = await fetch(ICONS + e.file, { headers: { 'user-agent': 'Mozilla/5.0' } });
+  for (const e of [...Object.values(J.names), ...Object.values(J.arts), ...Object.values(J.knipex || {}), ...Object.values(J.heads || {})]) { if (!(e.file in st)) { await sleep(600); const r = await fetch(e.img || ICONS + e.file, { headers: { 'user-agent': 'Mozilla/5.0' } });
       st[e.file] = r.ok && /^image\//.test(r.headers.get('content-type') || ''); } e.uploaded = st[e.file]; }
   fs.writeFileSync(F, JSON.stringify(J, null, 1)); const n = Object.values(st); console.log('files', n.length, 'uploaded', n.filter(Boolean).length, '| missing', Object.keys(st).filter(k => !st[k]).join(' ')); })();
 else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], cells = []; const get = require('./fetchpage.js');
@@ -149,7 +151,7 @@ else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], 
     const f = path.join(DIR, file); if (fs.existsSync(f)) continue; await sleep(1200); const r = await fetch(it.img, { headers: { 'user-agent': 'Mozilla/5.0' } });
     if (!r.ok) { miss.push('HTTP ' + r.status + ' ' + it.img); continue; } fs.writeFileSync(f, (await cut(Buffer.from(await r.arrayBuffer()))).png); }
   fs.writeFileSync(path.join(__dirname, 'noart.json'), JSON.stringify(out, null, 1));
-  const files = [...new Set([...Object.values(out.names), ...Object.values(out.arts), ...Object.values(out.knipex)].map(x => x.file))].sort();
+  const files = [...new Set([...Object.values(out.names), ...Object.values(out.arts), ...Object.values(out.knipex)].map(x => x.file))].filter(f => fs.existsSync(path.join(DIR, f))).sort();   // an entry with img (our product photo) has no local file
   for (const [i, f] of files.entries()) { const x = (i % 6) * 250, y = Math.floor(i / 6) * 200;
     cells.push({ input: await sharp(path.join(DIR, f)).resize(230, 150, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer(), left: x + 10, top: y + 10 });
     cells.push({ input: Buffer.from(`<svg width="240" height="20"><text x="2" y="14" font-family="Arial" font-size="12" fill="#bbb">${f}</text></svg>`), left: x + 5, top: y + 170 }); }

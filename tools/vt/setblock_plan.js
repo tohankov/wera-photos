@@ -57,7 +57,7 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
         const e = kk ? NA.knipex[kk] : (w && !w.art && NA.names[w.name]) || NA.arts[x.art || (w && w.art)] || (!w && ((NA.heads || {})[s + '|' + g.head] || (NA.heads || {})[g.head]));
         if (!e || !e.group) { q.push(`${x.art || '—'} ${g.head}: немає нашого товару${/KNIPEX/i.test(g.head) ? ' (KNIPEX — немає в списку KNX, vt/noart_files.js)' : w ? ', назва / група не задані (vt/noart_files.js)' : ' і рядка wera.de'}`); continue; }
         if (!e.uploaded) { pend.push(`${x.art || (w && w.art) || kk || '—'} ${g.head.slice(0, 50)}: файл ${e.file} не завантажено`); continue; }
-        items.push({ art: kk || x.art || (w && w.art) || null, qty: x.qty, gkey: e.group, size: kk ? '' : SB.size(x.size, e.ua, e.group), name: { ua: e.ua, ru: e.ru }, href: e.href || null, img: 'https://tl-shop.com.ua/content/uploads/images/icons/' + e.file }); continue; } }
+        items.push({ art: kk || x.art || (w && w.art) || null, qty: x.qty, gkey: e.group, size: kk ? '' : SB.size(x.size, e.ua, e.group), name: { ua: e.ua, ru: e.ru }, href: e.href || null, img: e.img || 'https://tl-shop.com.ua/content/uploads/images/icons/' + e.file }); continue; } }
     const gr = G.group(c, g.head); if (gr.question) { q.push(`${x.art || '—'} ${g.head}: ${gr.question}`); continue; }
     // a straight quote in a name (1" ) is written as ″: Horoshop turns &quot; inside alt="" back into " and the attribute breaks (29.10.2026, 05005581001)
     const nm = l => SB.withCode(SB.baseName(c.mod_title[l], art), g.code).replace(/(\d)\s?"/g, '$1″').replace(/"/g, '″');
