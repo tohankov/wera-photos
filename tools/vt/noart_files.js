@@ -85,6 +85,8 @@ const N = {
   '851/1 J Bits': { group: 'PH', ua: 'Біти 851/1 J', ru: 'Насадки 851/1 J' },
   '896/4/1 Bit-Abstandhalter Trockenbau': { group: 'c:ACC', ua: '896/4/1 Обмежувач довжини для гіпсокартону', ru: '896/4/1 Ограничитель длины для гипсокартона' },
   '9599 Textiler Eimereinsatz, unbestückt': { group: 'c:ACC', ua: '9599 Текстильний органайзер для відра, без інструментів', ru: '9599 Органайзер для ведра, пустой' },
+  '869/9 Steckschlüsseleinsätze': { group: 'c:SOCKET', ua: 'Торцеві головки 869/9', ru: 'Торцовые головки 869/9' },
+  '867/9 IPR TORX PLUS® Bits': { group: 'IPR', ua: 'Біти 867/9 TORX PLUS® IPR', ru: 'Насадки 867/9 TORX PLUS® IPR' },
   '814 RA-R Pistolengriff mit Ratschenfunktion': { group: 'c:HANDLE', ua: '814 RA-R Пістолетна ручка з тріскачкою', ru: '814 RA-R Ручка пистолетной формы с трещоткой' },
 };
 // datasheet articles that are not in our catalog (the wera.de row has the same article) — the datasheet name
