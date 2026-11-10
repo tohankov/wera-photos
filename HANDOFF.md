@@ -27,6 +27,8 @@
 
 - Сумки: описания 5 (2 факта + × 3) записаны; блоки 13 записаны (12 ждали фото сумок + модуль 2go 1); 2go 2 / 2 XL ждут загрузки wera_wera_2go_container.png / wera_wera_2go_xl_container.png (2 XL — WERA_COMP). 3 набора с вопросами (05136071001, 05134025001, 05134011001): KNIPEX без techlight → фото WERA без ссылки (как 74 01 140), вложенный набор Kompakt Turbo i 1 Tool Finder → группа «Набори» (setgroup: Вид «Викрутка з набором біт»), Bit-Safe 61 Wood 1 — вырезка из паспорта. Дальше: эти 3, sec_check, отчёт сумок, items csv, global_plan.
 
+- Сумки ЗАКРЫТЫ: отчёт docs/report_global_bags.md, items csv, global_plan. Дальше п.5: Динамометрія (анализ + правило А + пример), затем Візок.
+
 ## Остановился на
 
 ## Дальше
