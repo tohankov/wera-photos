@@ -33,6 +33,8 @@
 
 - 10.11: noart_ds — 33 вырезки из паспортов (календари 2020 / 2023 / 2024, Micro IPR, 816 RA, Joker Black Edition, Tool-Check Modular Hex-Plus 1 / Micro 1, 335, 9817) + reuse файлов WERA (велонаборы, 867/1 HF); ключ heads «набор|заголовок» (05136607001|мм). Всего на загрузку владельцу 73 файла. Дальше: пересобрать планы (биты + другие группы), список + архив docs/, отчёт.
 
+- 10.11: ещё 2 блока записаны (05073220001 Tool-Check 1 SB, 05004172001 Bicycle Set 3 — файлы WERA переиспользованы). Ждут загрузки 75 файлов: биты 15 наборов, другие группы 32; фото других групп 39; вопросы 2 (05135973001 — теперь только загрузка, 05004182001 — 9507 два профиля).
+
 ## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.
