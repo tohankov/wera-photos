@@ -37,6 +37,8 @@
 
 - 10.11: витрина 88/88, sec_check 0; отчёт docs/report_1110_blocks.md, архив docs/setblock_files_1110.zip (72), список docs/global_noart_upload_1110.md, wait-доки по группам (+ bits). ДАЛЬШЕ: items CSV «Біти» + отчёт п. 9, потом «Сумки Wera 2go» (анализ + пример, ждать ок).
 
+- 10.11: «Біти» закрыты — items CSV (docs/global_bits_items.csv), отчёт п. 9–11 (админка: у «Набори ударних біт Bit-Check Impaktor» убрать свой список). ДАЛЬШЕ: «Сумки Wera 2go» — анализ + пример (без записи), ждать «ок».
+
 ## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.
