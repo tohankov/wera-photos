@@ -45,13 +45,15 @@ const CAT = {
   DRILL: { ua: 'Свердла', ru: 'Свёрла', one: { ua: 'Свердло', ru: 'Сверло' } },
   TAP: { ua: 'Мітчики', ru: 'Метчики', one: { ua: 'Мітчик', ru: 'Метчик' } },
   IMPACT: { ua: 'Ударний гвинтоверт', ru: 'Ударный винтовёрт' },
+  // 10.11.2026, by analogy with the owner's drills / taps (845 / 846 countersink bits in bit sets) — reported to the owner
+  SINK: { ua: 'Зенкери', ru: 'Зенкеры', one: { ua: 'Зенкер', ru: 'Зенкер' } },
 };
 const BY_VYD = { 'Ручка-тримач': 'HANDLE', 'Ручка-вороток': 'HANDLE', 'Викрутка': 'SCREWDRIVER', 'Тріскачка': 'RATCHET',
   'Торцева головка': 'SOCKET', 'Торцева головка подовжена': 'SOCKET', 'Торцева головка з фіксуючою функцією': 'SOCKET', 'Торцева головка ударна Impaktor': 'SOCKET', 'Торцева головка ударна Impaktor подовжена': 'SOCKET',
   'Двосторонній ріжковий ключ': 'KEY', 'Ріжковий ключ': 'KEY', 'Комбінований ключ': 'KEY', 'Г-подібний ключ': 'KEY', 'Динамометричний ключ': 'TORQUE',
   'Динамометрична викрутка': 'TORQUE', 'Індикатор крутного моменту': 'TORQUE', 'Індикатор напруги': 'TESTER',
   'Приладдя': 'ACC', 'Перехідник': 'ACC', 'Бітотримач': 'ACC', 'Ложемент': 'ACC', 'Підставка / тримач': 'ACC', 'Оправка-хвостовик': 'ACC', 'Ремкомплект / запчастина': 'ACC', 'Знімач': 'ACC',
-  'Спіральне свердло': 'DRILL', 'Свердло по дереву': 'DRILL', 'Східчасте свердло': 'DRILL', 'Комбінований мітчик': 'TAP', 'Однопрохідний мітчик': 'TAP', 'Ударно-поворотна викрутка': 'IMPACT' };
+  'Спіральне свердло': 'DRILL', 'Свердло по дереву': 'DRILL', 'Східчасте свердло': 'DRILL', 'Комбінований мітчик': 'TAP', 'Однопрохідний мітчик': 'TAP', 'Ударно-поворотна викрутка': 'IMPACT', 'Конічний зенкер (3 канавки)': 'SINK', 'Конічний зенкер (1 канавка)': 'SINK' };
 // not on our site: by the datasheet head
 const BY_HEAD = [[/клещи|кліщі|zange/i, 'PLIERS'], [/трещотк|тріскачк/i, 'RATCHET'], [/торцов\S* головк/i, 'SOCKET'], [/ключ/i, 'KEY'], [/ложемент|держател|переходник|удлинител|сумк|чехол/i, 'ACC']];
 function group(p, head = '') {
@@ -59,6 +61,8 @@ function group(p, head = '') {
   const ch = p.characteristics || {}; const pr = [...new Set((ch.profil || []).map(x => BY_PROFIL[x.value.ua] || '?' + x.value.ua))];
   const vy = (ch.vyd_instrumentu || []).map(x => x.value.ua).join(' ');
   if (pr.length > 1 && /^Набір|Ложемент|Інструментальний візок/.test(vy)) return { key: 'c:SET' };
+  // a handle carries the profiles of its section (1014 Kraftform Micro 05051278001) — still a handle
+  if (pr.length > 1 && (ch.vyd_instrumentu || []).some(x => BY_VYD[x.value.ua] === 'HANDLE')) return { key: 'c:HANDLE' };
   if (pr.length > 1) return { question: 'два профілі: ' + (ch.profil || []).map(x => x.value.ua).join(' + ') };
   if (pr.length === 1) return pr[0].startsWith('?') ? { question: 'профіль без групи: ' + pr[0].slice(1) } : { key: pr[0] };
   const v = [...new Set((ch.vyd_instrumentu || []).map(x => BY_VYD[x.value.ua] || '?' + x.value.ua))];

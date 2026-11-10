@@ -23,7 +23,8 @@ const ru = u => u.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/');
 const ANCHOR = /<h3>(?:Інші варіанти|Другие варианты|Дізнайтеся більше|Узнайте больше)/;
 const OLDPIC = /<p>(?:\s*<img(?![^>]*\/icons\/)[^>]*>\s*)+<\/p>/g;
 // WERA's count «N предметів» — from the datasheet TITLE (page 1 lines before «EAN:»), not from the page footers («1 предметов»); none — the sum of qty
-const dsCount = a => { const t = fs.readFileSync(T + 'batch/ds/' + a + '.txt', 'utf8').split('\n').filter(l => l.startsWith('p1 ')).map(l => l.slice(3)); const e = t.findIndex(l => /^EAN:/.test(l));
+const dsCount = a => { const F = T + 'batch/ds/' + a + '.txt'; if (!fs.existsSync(F)) return undefined;   // our own set without a WERA datasheet (TL105)
+  const t = fs.readFileSync(F, 'utf8').split('\n').filter(l => l.startsWith('p1 ')).map(l => l.slice(3)); const e = t.findIndex(l => /^EAN:/.test(l));
   const m = t.slice(0, e < 0 ? 3 : e).join(' ').match(/(\d+)\s+предмет/); return m ? +m[1] : undefined; };
 // a block already in the description (an earlier write) is replaced, at the same place
 const strip = h => { const i = h.indexOf('<div class="wsb">'); if (i < 0) return h; const k = h.search(/(Склад — за|Состав — по) технічн|(Склад — за|Состав — по) техническ/); const j = h.indexOf('</p></div>', k); if (k < i || j < 0) throw new Error('block end not found'); return h.slice(0, i) + h.slice(j + 10); };
