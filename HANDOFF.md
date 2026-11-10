@@ -15,7 +15,7 @@
 ## 10.11 сделано после выключения
 - Описания бит 895 записаны (desc_write, state tools/cat/desc_gbit_desc_state.json), витрина 12/12, sec_check 27 — 0; отчёт docs/report_global_bits.md п. 5–7.
 
-- Фразы WERA бит: 106 описаний (Take it easy 103 в лёгкой формулировке, Hex-Plus 1, магнит 2; Bit-Box 20 V 05057790001 исключён — строка паспорта не про этот набор), desc_write 106/106 (state tools/cat/desc_gbit_phrase_light_state.json), витрина 8/8. sec_check фраз прерван выключением — перезапустить (только чтение).
+- Фразы WERA бит: 106 описаний (Take it easy 103 в лёгкой формулировке, Hex-Plus 1, магнит 2; Bit-Box 20 V 05057790001 исключён — строка паспорта не про этот набор), desc_write 106/106 (state tools/cat/desc_gbit_phrase_light_state.json), витрина 8/8. sec_check фраз 9 разделов — 0 (10.11). Отчёт bits п. 8.
 
 ## Остановился на (09.11, уже сделано — см. выше)
 План описаний бит построен (НЕ записан): `node cat/global_desc_plan.js <bits_live.json> <all.json> ../inventory/global_1061.json <out>` → 895 товаров: новые таблицы 175, alt="" 843, «×» 6, строки снятых вариантов 124; не построено 39 таблиц (сноска «Auf den Merkzettel» без UA/RU — 29, нет колонки «Klingenlänge|25» — 10).
