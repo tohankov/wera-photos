@@ -41,6 +41,8 @@
 
 - 10.11: «Сумки 2go» (1269) — анализ: выгрузка (scratchpad bags/live.json), wera.de 100/100, inventory/global_1269*.json (check / deep / desc / tails). Дальше: названия, фото (правило А), план описаний, пример, docs/global_bags.md.
 
+- 10.11: «Сумки» — план названий tools/names/global_bag_plan.js → tools/names/set_global_bag.json (88; 2go-модули и липучки без изменений). Вопрос владельцу: состав набора в скобках у 10 сумок (нет в паспорте сумки). Дальше: фото правило А, описания, пример, docs/global_bags.md.
+
 ## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.
