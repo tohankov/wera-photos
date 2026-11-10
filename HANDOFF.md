@@ -21,6 +21,8 @@
 План описаний бит построен (НЕ записан): `node cat/global_desc_plan.js <bits_live.json> <all.json> ../inventory/global_1061.json <out>` → 895 товаров: новые таблицы 175, alt="" 843, «×» 6, строки снятых вариантов 124; не построено 39 таблиц (сноска «Auf den Merkzettel» без UA/RU — 29, нет колонки «Klingenlänge|25» — 10).
 Файлы сессии (scratchpad, могут пропасть): `C:/Users/TECHLI~1/AppData/Local/Temp/claude/C--Users-Techlight-Desktop-wera-photos/68eaa11c-6b4a-4219-99e6-c88c3b8054e2/scratchpad/s1/` — all.json (полная выгрузка 09.11), bits_live.json, gbit_desc.json.
 
+## Решения владельца 10.11 по блокам (в CLAUDE.md): серия+размер+длина при полном совпадении; паспорт≠wera.de → wera.de; группы «Свердла» / «Мітчики» / «Ударний гвинтоверт»; 14 позиций — вырезка из паспорта; KNIPEX 74 01 140 / 87 01 125 — фото WERA без ссылки. Применять в блоках бит и в ждущих блоках других групп. Потом items.csv + отчёт «Біти», затем «Сумки Wera 2go» (анализ + пример).
+
 ## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.
