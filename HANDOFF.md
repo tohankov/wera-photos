@@ -29,7 +29,7 @@
 
 - Сумки ЗАКРЫТЫ: отчёт docs/report_global_bags.md, items csv, global_plan. Дальше п.5: Динамометрія (анализ + правило А + пример), затем Візок.
 
-- Динамометрия (1195): выгрузка scratchpad dyn/live.json, wera.de 265/265, inventory/global_1195*.json. Дальше: разбор находок, правило А (wera_cmp → листы), названия, описания, пример, docs/global_dyn.md.
+- Динамометрия (1195): выгрузка scratchpad dyn/live.json, wera.de 265/265, inventory/global_1195*.json. Правило А: 11 листов просмотрены — 23 → фото паспорта, 1 вопрос (docs/global_dyn_photos.csv; scratchpad dyn/ra.txt). Дальше, названия, описания, пример, docs/global_dyn.md.
 
 ## Остановился на
 
