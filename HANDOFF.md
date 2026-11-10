@@ -33,6 +33,8 @@
 
 - Динамометрия: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_dyn.md (4 вопроса), docs/pilot/example_dyn.html, docs/global_dyn_items.csv. Планы: names/set_global_dyn.json (132, генератор names/global_dyn_plan.js), cat/gdyn_chars.json (05075832001 +PH 2), cat/gdyn_desc_plan.json (192; extra cat/gdesc_dyn.js; global_desc_plan: колонки dyn / 7786), фразы 0, админка — ничего (night_audit dyn по свежему скану scratchpad dyn/scan.json). Блоки: 3 сразу, 20 после фона группы. Дальше п.5: Візок 1055 — анализ + правило А + пример.
 
+- Візок 1055 (начат): выгрузка scratchpad trol/live.json (87), wera.de 87/87, анализ inventory/global_1055*.json. Тексты: тележки Stainless — «250 кг» нет в паспорте (только у 9800), «на ящик 25 кг» → 30 кг (9805/9705/9706); 9760 — ок. Названия: names/global_trol_plan.js → names/set_global_trol.json (75: серия, число предметов по заголовку паспорта, «без інструментів») — ПРОСМОТРЕТЬ результат. Дальше: правило А (wera_cmp → cmp_sheets → глазами), описания (global_desc_plan + extra для 250/30 кг), составы паспорт≠wera.de (пустой ложемент в составе — по wera.de), блоки (comp_state), night_audit trolley + plan_diff, пример, docs/global_trol.md, items csv.
+
 ## Остановился на
 
 ## Дальше
