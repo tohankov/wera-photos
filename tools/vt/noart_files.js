@@ -4,7 +4,8 @@
 // Writes vt/noart.json { names: { <wera.de name>: { ua, ru, file } } } and a sheet on the site's dark background. Read-only for the site.
 //   node vt/noart_files.js <noart_resolve out.json> <sheet.jpg>
 const fs = require('fs'), path = require('path'); const sharp = require('sharp'); const { cut } = require('../lib/cutout.js');
-const [, , RES, SHEET] = process.argv; const R = RES === 'check' ? null : JSON.parse(fs.readFileSync(RES, 'utf8'));
+// ALLF (optional): a full export — wera.de rows of our articles are skipped
+const [, , RES, SHEET, ALLF] = process.argv; const R = RES === 'check' ? null : JSON.parse(fs.readFileSync(RES, 'utf8'));
 const DIR = path.join(__dirname, '../../images/setblock_wera'); fs.mkdirSync(DIR, { recursive: true });
 const STAIN = { ua: 'нержавіюча сталь', ru: 'нержавеющая сталь' };
 const KK = (s) => ({ ua: `Kraftform Kompakt VDE ${s} Take it easy, ${STAIN.ua}`, ru: `Kraftform Kompakt VDE ${s} Take it easy, ${STAIN.ru}` });
@@ -139,6 +140,13 @@ else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], 
     const f = path.join(DIR, file); if (fs.existsSync(f)) continue; await sleep(1200);
     const r = await fetch(src, { headers: { 'user-agent': 'Mozilla/5.0' } }); if (!r.ok) { miss.push('HTTP ' + r.status + ' ' + src); continue; }
     const c = await cut(Buffer.from(await r.arrayBuffer())); fs.writeFileSync(f, c.png); }
+  // 10.11.2026: a set whose block takes the wera.de composition (datasheet ≠ wera.de, owner 10.11) — its wera.de rows are not datasheet positions
+  // (noart_resolve does not list them): a named wera.de row without our article gets its file too
+  const WP = require('../../inventory/wera/pages.json'); const ours = new Set(ALLF ? JSON.parse(fs.readFileSync(ALLF, 'utf8')).map(p => p.article) : []);
+  for (const pg of Object.values(WP.pages)) for (const it of pg.setItems || []) { if (!N[it.name] || out.names[it.name] || it.rows.every(r => r.art && ours.has(r.art))) continue;
+    const file = N[it.name].file || 'wera_' + path.basename(it.img).replace(/\.webp$/, '.png'); out.names[it.name] = { ...N[it.name], file, src: it.img };
+    const f = path.join(DIR, file); if (fs.existsSync(f)) continue; await sleep(1200); const r = await fetch(it.img, { headers: { 'user-agent': 'Mozilla/5.0' } });
+    if (!r.ok) { miss.push('HTTP ' + r.status + ' ' + it.img); continue; } fs.writeFileSync(f, (await cut(Buffer.from(await r.arrayBuffer()))).png); }
   fs.writeFileSync(path.join(__dirname, 'noart.json'), JSON.stringify(out, null, 1));
   const files = [...new Set([...Object.values(out.names), ...Object.values(out.arts), ...Object.values(out.knipex)].map(x => x.file))].sort();
   for (const [i, f] of files.entries()) { const x = (i % 6) * 250, y = Math.floor(i / 6) * 200;
