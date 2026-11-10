@@ -20,7 +20,8 @@ const SKLAD = ['sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'skl
 const SETSIZE = new Set(['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir']);   // replaced by «… у складі» in set sections
 const CORE = new Set(['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky', 'rozmir_kliucha', 'rozmir_pid_kliuch', 'rozmir', 'diapazon_momentu']);   // a product without it disappears when it is filtered
 // owner's own lists (22.10.2026, docs/filters_rule_check.md п. 6, 7; 1231 + «Особливості викрутки» — as the owner set it in the admin, 22.10 (i)): Ручки-тримачі Kompakt VDE, Спеціальні вставки Kompakt VDE; «Спеціальні викрутки … Kraftform Micro» (+ ESD) — the list of 20.10
-const OWNER_LIST = { 1231: ['vyd_instrumentu', 'diapazon_momentu', 'osoblyvosti_vykrutky'], 1232: ['vyd_instrumentu', 'profil', 'dovzhyna_robochoho_kintsia'],
+const OWNER_LIST = { 1087: ['typ_bit_u_nabori', 'dovzhyna', 'sklad_ph', 'sklad_pz', 'sklad_tx', 'sklad_sl', 'sklad_hex', 'sklad_kvadrat', 'sklad_tx_bo', 'sklad_plusminus'],   // owner 10.11.2026 (Набори ударних біт Bit-Check Impaktor)
+  1231:['vyd_instrumentu', 'diapazon_momentu', 'osoblyvosti_vykrutky'], 1232: ['vyd_instrumentu', 'profil', 'dovzhyna_robochoho_kintsia'],
   1130: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'], 1148: ['vyd_instrumentu', 'rozmir_nakonechnyka', 'dovzhyna_stryzhnia'],
   // owner 23.10.2026: «Поперечна ручка-тримач Rapidaptor» (серія 400) and «Тріскачки та набори Zyklop VDE ¼» — «Хіти продажів → Ціна»; Zyklop Pocket — as he set it:
   // no «Привід», «PH у складі» after «TX у складі»

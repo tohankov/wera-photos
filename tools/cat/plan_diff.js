@@ -6,5 +6,7 @@ for (const g of process.argv.slice(2)) { const N = require(path.join(__dirname, 
   if (JSON.stringify(N.rootList) !== JSON.stringify(C.rootList)) out.push(`- **${N.name || g}** (раздел группы): было ${(C.rootList || []).map(t).join(' → ')} → **${(N.rootList || []).map(t).join(' → ')}**`);
   for (const id of new Set([...Object.keys(n), ...Object.keys(c)])) { const a = n[id], b = c[id]; const la = a ? a.list : null, lb = b ? b.list : null;
     if (JSON.stringify(la) === JSON.stringify(lb)) continue; const p = (a || b).path;
-    out.push(!a ? `- **${p}**: свой список убрать (наследует список группы)` : !b ? `- **${p}**: задать свой список — Хіти продажів → Ціна → ${la.map(t).join(' → ')}` : `- **${p}**: было ${['Хіти продажів', 'Ціна', ...lb.map(t)].join(' → ')} → **${['Хіти продажів', 'Ціна', ...la.map(t)].join(' → ')}**`); }
+    // owner 10.11.2026: an emptied list of a «Набори з бітами» sub-section did not inherit (1087) — never «убрать», always the full list to set
+    const full = () => { const pl = N.plans[id] || {}; return (N.rootList || []).filter(k => (pl.present || []).includes(k) || /^sklad_/.test(k)); };
+    out.push(!a ? `- **${p}**: задать полный список (не очищать — пустой список может не наследоваться) — Хіти продажів → Ціна → ${full().map(t).join(' → ')}` : !b ? `- **${p}**: задать свой список — Хіти продажів → Ціна → ${la.map(t).join(' → ')}` : `- **${p}**: было ${['Хіти продажів', 'Ціна', ...lb.map(t)].join(' → ')} → **${['Хіти продажів', 'Ціна', ...la.map(t)].join(' → ')}**`); }
   console.log(`## ${g}\n` + (out.length ? out.join('\n') : 'изменений нет')); }

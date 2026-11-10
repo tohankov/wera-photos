@@ -19,6 +19,8 @@
 
 - п.7: план числа предметов — tools/names/set_count_plan.js → scratchpad set_count.json (355; вопросы TL105, 05134011001), docs/global_set_counts.csv; правило CLAUDE.md. ЗАПИСАНО 355 (names/write.js set, state key set_set_count1110), h1 10/10, sec_check 42 раздела — 0.
 
+- п.2: Impaktor 1087 — витрина UA/ru = список владельца, все 8 разделов «Набори з бітами» = план; OWNER_LIST 1087, plan_diff даёт полный список вместо «убрать», _configured bitsets обновлён, правило CLAUDE.md.
+
 ## Остановился на
 
 ## Дальше
