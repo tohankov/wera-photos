@@ -12,11 +12,14 @@
   - 561 фото WERA у 284 товаров (`photos_audit/wera_add.js … upload`, state в старой папке `…/3974fcee-8247-4979-acb3-54b84df3d9c5/scratchpad/g13/bw/add_state.json`, 284/284 done), sec_check 23 раздела — 0.
   - 4 перезаписи галерей (05134021001, 05130002001, 05073980001 — упаковка главной + наше вторым, 05160901001), бэкап `backup/gallery_bits_x1109_before.json`, verify 0, главные прозрачные, sec_check 4 раздела — 0. Файл `images/rulea/05073980001/g_01.png` — коммит.
 
-## Остановился на
+## 10.11 сделано после выключения
+- Описания бит 895 записаны (desc_write, state tools/cat/desc_gbit_desc_state.json), витрина 12/12, sec_check 27 — 0; отчёт docs/report_global_bits.md п. 5–7.
+
+## Остановился на (09.11, уже сделано — см. выше)
 План описаний бит построен (НЕ записан): `node cat/global_desc_plan.js <bits_live.json> <all.json> ../inventory/global_1061.json <out>` → 895 товаров: новые таблицы 175, alt="" 843, «×» 6, строки снятых вариантов 124; не построено 39 таблиц (сноска «Auf den Merkzettel» без UA/RU — 29, нет колонки «Klingenlänge|25» — 10).
 Файлы сессии (scratchpad, могут пропасть): `C:/Users/TECHLI~1/AppData/Local/Temp/claude/C--Users-Techlight-Desktop-wera-photos/68eaa11c-6b4a-4219-99e6-c88c3b8054e2/scratchpad/s1/` — all.json (полная выгрузка 09.11), bits_live.json, gbit_desc.json.
 
-## Осталось
+## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.
 3. Фразы WERA лёгко: `gvyk_phrase_scan` → `global_phrase_plan` → замены → `desc_write`.
