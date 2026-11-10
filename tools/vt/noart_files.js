@@ -90,6 +90,9 @@ const N = {
   '9599 Textiler Eimereinsatz, unbestückt': { group: 'c:ACC', ua: '9599 Текстильний органайзер для відра, без інструментів', ru: '9599 Органайзер для ведра, пустой' },
   '869/9 Steckschlüsseleinsätze': { group: 'c:SOCKET', ua: 'Торцеві головки 869/9', ru: 'Торцовые головки 869/9' },
   '867/9 IPR TORX PLUS® Bits': { group: 'IPR', ua: 'Біти 867/9 TORX PLUS® IPR', ru: 'Насадки 867/9 TORX PLUS® IPR' },
+  // owner 10.11.2026: Wera 2go 2 / 2 XL modules get a block by wera.de — the container itself has no article
+  'Wera 2go Werkzeug-Container': { group: 'c:ACC', ua: 'Контейнер для інструментів Wera 2go', ru: 'Контейнер для инструментов Wera 2go' },
+  'Wera 2go XL Werkzeug-Container': { group: 'c:ACC', ua: 'Контейнер для інструментів Wera 2go XL', ru: 'Контейнер для инструментов Wera 2go XL' },
   '814 RA-R Pistolengriff mit Ratschenfunktion': { group: 'c:HANDLE', ua: '814 RA-R Пістолетна ручка з тріскачкою', ru: '814 RA-R Ручка пистолетной формы с трещоткой' },
 };
 // datasheet articles that are not in our catalog (the wera.de row has the same article) — the datasheet name

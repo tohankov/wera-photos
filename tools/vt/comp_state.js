@@ -10,8 +10,10 @@ const transp=async a=>{if(st.img[a]!==undefined)return st.img[a];const p=L[a];co
  if(!/\.png$/i.test(u)){return st.img[a]='jpg'}await sleep(400);const r=await fetch(u,{headers:{'user-agent':'Mozilla/5.0'}});if(!r.ok)return st.img[a]='HTTP '+r.status;
  const {data,info}=await sharp(Buffer.from(await r.arrayBuffer())).ensureAlpha().raw().toBuffer({resolveWithObject:true});const W=info.width,H=info.height;
  const c=[0,W-1,(H-1)*W,H*W-1].map(i=>data[i*4+3]);st.img[a]=c.every(x=>x<10)?'cut':'png white';save();return st.img[a]};
-(async()=>{const sets=A.filter(p=>+p.display_in_showcase===1&&inG(p)&&C[p.article]&&C[p.article].some(g=>g.items&&g.items.length));
- for(const s of sets){const comps=[];const seen=new Set();for(const g of C[s.article])for(const x of g.items){const k=x.art||g.head+'|'+x.size;if(seen.has(k))continue;seen.add(k);
+// owner 10.11.2026: Wera 2go 2 modules get a block — composition only on wera.de (no datasheet table)
+const WEXTRA=new Set(['05004351001']);
+(async()=>{const sets=A.filter(p=>+p.display_in_showcase===1&&inG(p)&&(WEXTRA.has(p.article)||C[p.article]&&C[p.article].some(g=>g.items&&g.items.length)));
+ for(const s of sets){const comps=[];const seen=new Set();for(const g of C[s.article]||[])for(const x of g.items||[]){const k=x.art||g.head+'|'+x.size;if(seen.has(k))continue;seen.add(k);
    // owner 10.11.2026: no article — our product by series + size + length (vt/catmatch.js, full match only)
    if(!x.art&&!/KNIPEX/.test(g.head)){const m=CM.match(g.code,x.size);if(m){const p=L[m];seen.add(m);comps.push({art:m,via:'catalog',head:g.head,vis:+p.display_in_showcase,state:await transp(m),grp:secs(p).some(z=>ids.has(z))});continue}}
    if(!x.art){comps.push({head:g.head,state:/KNIPEX/.test(g.head)?'knipex':'no article'});continue}
