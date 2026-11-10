@@ -36,6 +36,10 @@ const sets = (only.length ? only : Object.keys(ST.sets)).filter(s => !NOTOUCH.ha
 for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p.display_in_showcase !== 1) continue;
   // positions without our product ('no article' / 'not ours') are resolved below (wera.de article / WERA picture, vt/noart.json); others wait
   if (v.comps.some(c => !OKST.includes(c.state))) { wait.push({ art: s, name: v.name, why: v.comps.filter(c => !OKST.includes(c.state)).map(c => (c.art || c.head.slice(0, 40)) + ': ' + c.state) }); continue; }
+  // 10.11.2026: a pack of one bit (Impaktor DC 5 шт., DIY 10 / 100 шт. — the datasheet lists the bit itself) is not a set — no block;
+  // a «Набір біт» of identical bits (Bit-Box 20) is a set and gets it
+  const vyd = ((p.characteristics || {}).vyd_instrumentu || []).map(x => x.value.ua).join(' ');
+  if (v.comps.length <= 1 && !/^Набір/.test(vyd)) { notes.push(`${s}: не набор (одна позиция, вид «${vyd || '—'}») — без блока`); continue; }
   if (/class="wsb"/.test(p.description.ua + p.description.ru)) notes.push(`${s}: блок уже есть — заменяется`);
   // useW (owner 10.11.2026): the datasheet ≠ wera.de -> the wera.de composition
   const build = useW => { const items = []; const seen = new Set(); const q = [], pend = [];
