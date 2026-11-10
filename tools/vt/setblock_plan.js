@@ -14,9 +14,9 @@ const L = Object.fromEntries(JSON.parse(fs.readFileSync(ALL, 'utf8')).map(p => [
 // the datasheet has no composition table (950/9 Hex-Plus Multicolour 1 …): the composition of wera.de «Werkzeuge in diesem Set» — also WERA (27.10.2026)
 // owner 29.10.2026: these sets take the composition of wera.de «Werkzeuge in diesem Set» (the datasheet table misses positions: 827 T i, 05071076001, 05003526001 / 527)
 const WERA_COMP = new Set(['05006640001', '05004177001', '05004016001', '05021728001', '05021721001']); // 950/13: by wera.de (owner 03.11.2026)
-const compOf = s => { const c = WERA_COMP.has(s) ? [] : (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
+const compOf = (s, useW) => { const c = WERA_COMP.has(s) || useW ? [] : (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
   return wp.setItems.filter(i => i.rows.length).map(i => ({ head: i.name, code: (i.name.match(/^\d{3,4}(?:\/\d+)?(?:\s[A-Z]{1,5}(?=\s|$))*/) || [''])[0], items: i.rows.map(r => ({ art: r.art, qty: r.qty, size: r.size.replace(/(\d),(\d)/g, '$1.$2').replace(/ mm$/, ' мм') })) })); };
-const NR = require('./noart_resolve.js'); const NA = fs.existsSync(path.join(__dirname, 'noart.json')) ? require('./noart.json') : { names: {}, arts: {} };
+const CM = require('./catmatch.js')(Object.values(L)); const NR = require('./noart_resolve.js'); const NA = fs.existsSync(path.join(__dirname, 'noart.json')) ? require('./noart.json') : { names: {}, arts: {} };
 const OKST = ['cut', 'knipex', 'no article', 'not ours'];
 const VELCRO = { 70: '05670446001', 120: '05670447001', 240: '05670448001' };
 const ru = u => u.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/');
@@ -36,12 +36,15 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
   // positions without our product ('no article' / 'not ours') are resolved below (wera.de article / WERA picture, vt/noart.json); others wait
   if (v.comps.some(c => !OKST.includes(c.state))) { wait.push({ art: s, name: v.name, why: v.comps.filter(c => !OKST.includes(c.state)).map(c => (c.art || c.head.slice(0, 40)) + ': ' + c.state) }); continue; }
   if (/class="wsb"/.test(p.description.ua + p.description.ru)) notes.push(`${s}: блок уже есть — заменяется`);
-  const items = []; const seen = new Set(); const q = [], pend = [];
-  for (const g of compOf(s)) for (const x of g.items) { const key = x.art || g.head + '|' + x.size; if (seen.has(key)) continue; seen.add(key);
-    let art = x.art, c = x.art ? L[x.art] : null;
+  // useW (owner 10.11.2026): the datasheet ≠ wera.de -> the wera.de composition
+  const build = useW => { const items = []; const seen = new Set(); const q = [], pend = [];
+  for (const g of compOf(s, useW)) for (const x of g.items) { const key = x.art || g.head + '|' + x.size; if (seen.has(key)) continue; seen.add(key);
+    let art = x.art, c = x.art ? L[x.art] : null, cat = false;
     // owner 29.10.2026: «Klettstreifen 70 / 120 / 240» of WERA sets = our «Смужка на липучці № 1 / 2 / 3» (link + our photo); Klettstreifen 30 — WERA file
     const vk = !c && (g.head.match(/(?:липучках\s+(?:№\s*)?|^Klettstreifen\s+)(70|120|240)\b/) || [])[1]; if (vk) { art = VELCRO[vk]; c = L[art]; }
-    if (!c) { const { w } = NR.wmatch(s, g, x); if (w && w.art && L[w.art]) { art = w.art; c = L[w.art]; } // the wera.de row names our product (CLAUDE.md)
+    if (!c) { const { w } = NR.wmatch(s, g, x); const cm = !x.art && !(w && w.art) && !/KNIPEX/i.test(g.head) && CM.match(g.code, x.size);
+      if (w && w.art && L[w.art]) { art = w.art; c = L[w.art]; } // the wera.de row names our product (CLAUDE.md)
+      else if (cm) { art = cm; c = L[cm]; cat = true; } // owner 10.11.2026: no article anywhere — our product by series + size + length (vt/catmatch.js)
       else { // KNIPEX — matched by its article in the head (28.10.2026: before, any KNIPEX head took the 87 01 250 card); else the WERA picture
         const head = s === '05150153001' ? g.head.replace('87 01 125', '87 01 250') : g.head;
         const kk = /KNIPEX/i.test(head) && Object.keys(NA.knipex || {}).find(k => head.includes(k));
@@ -53,11 +56,16 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
     const gr = G.group(c, g.head); if (gr.question) { q.push(`${x.art || '—'} ${g.head}: ${gr.question}`); continue; }
     // a straight quote in a name (1" ) is written as ″: Horoshop turns &quot; inside alt="" back into " and the attribute breaks (29.10.2026, 05005581001)
     const nm = l => SB.withCode(SB.baseName(c.mod_title[l], art), g.code).replace(/(\d)\s?"/g, '$1″').replace(/"/g, '″');
-    items.push({ art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, c.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: +c.display_in_showcase === 1 ? { ua: c.link, ru: ru(c.link) } : null, img: c.images[0] }); }
-  if (pend.length && !q.length) { wait.push({ art: s, name: v.name, why: pend }); continue; }
+    items.push({ art, qty: x.qty, gkey: gr.key, size: SB.size(x.size, c.mod_title.ua, gr.key), name: { ua: nm('ua'), ru: nm('ru') }, href: +c.display_in_showcase === 1 ? { ua: c.link, ru: ru(c.link) } : null, img: c.images[0], cat }); }
+  return { items, q, pend }; };
+  let { items, q, pend } = build(false);
   const wu = W.art[s]; const wp = wu && W.pages[wu]; const w = wp && wp.setItems && wp.setItems.length ? wp.setItems.flatMap(i => i.rows) : null;
-  const da = items.filter(i => /^\d{11}$/.test(i.art) && !Object.values(VELCRO).includes(i.art)).map(i => i.art + ':' + i.qty).sort().join(','), wa = w ? w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',') : null;
-  if (w && da !== wa) q.push(`паспорт ≠ wera.de: только паспорт ${da.split(',').filter(x => !wa.split(',').includes(x)).join(' ') || '—'}; только wera.de ${wa.split(',').filter(x => !da.split(',').includes(x)).join(' ') || '—'}`);
+  // positions found by series + size (cat) have no WERA article — not compared
+  const arts = it => it.filter(i => /^\d{11}$/.test(i.art) && !i.cat && !Object.values(VELCRO).includes(i.art)).map(i => i.art + ':' + i.qty).sort().join(',');
+  const wa = w ? w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',') : null;
+  if (w && arts(items) !== wa && !WERA_COMP.has(s)) { const da = arts(items); notes.push(`${s}: паспорт ≠ wera.de (только паспорт ${da.split(',').filter(x => !wa.split(',').includes(x)).join(' ') || '—'}; только wera.de ${wa.split(',').filter(x => !da.split(',').includes(x)).join(' ') || '—'}) — состав по wera.de`); ({ items, q, pend } = build(true)); }
+  if (pend.length && !q.length) { wait.push({ art: s, name: v.name, why: pend }); continue; }
+  const da = arts(items); if (w && da !== wa) q.push(`паспорт ≠ wera.de: только паспорт ${da.split(',').filter(x => !wa.split(',').includes(x)).join(' ') || '—'}; только wera.de ${wa.split(',').filter(x => !da.split(',').includes(x)).join(' ') || '—'}`);
   if (!w) notes.push(`${s}: на wera.de нет «Werkzeuge in diesem Set» — состав по паспорту`);
   if (q.length) { questions.push({ art: s, name: v.name, q }); continue; }
   const count = dsCount(s);
