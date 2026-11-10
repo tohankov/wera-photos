@@ -17,7 +17,7 @@
 
 - п.6: старые скриншоты — 50 убраны (desc_write oldpic1110, витрина 8/8), гитара 05134015001 оставлена (фото в работе), вопрос: старая HTML-таблица в 05136609001; vt/oldpic.js в setblock_plan; правило CLAUDE.md; docs/report_1110_oldpics.md.
 
-- п.7: план числа предметов — tools/names/set_count_plan.js → scratchpad set_count.json (355; вопросы TL105, 05134011001), docs/global_set_counts.csv; правило CLAUDE.md. Дальше: SETPLAN=<set_count.json> node names/write.js set, h1 витрины, sec_check не нужен (только названия) — но по правилу: sec_check порциями.
+- п.7: план числа предметов — tools/names/set_count_plan.js → scratchpad set_count.json (355; вопросы TL105, 05134011001), docs/global_set_counts.csv; правило CLAUDE.md. ЗАПИСАНО 355 (names/write.js set, state key set_set_count1110), h1 10/10, sec_check 42 раздела — 0.
 
 ## Остановился на
 
