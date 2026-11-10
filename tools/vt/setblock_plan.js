@@ -21,14 +21,14 @@ const OKST = ['cut', 'knipex', 'no article', 'not ours'];
 const VELCRO = { 70: '05670446001', 120: '05670447001', 240: '05670448001' };
 const ru = u => u.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/');
 const ANCHOR = /<h3>(?:Інші варіанти|Другие варианты|Дізнайтеся більше|Узнайте больше)/;
-const OLDPIC = /<p>(?:\s*<img(?![^>]*\/icons\/)[^>]*>\s*)+<\/p>/g;
+const OP = require('./oldpic.js');   // old composition pictures: bare <img> or the linked WERA screenshot (owner 10.11.2026)
 // WERA's count «N предметів» — from the datasheet TITLE (page 1 lines before «EAN:»), not from the page footers («1 предметов»); none — the sum of qty
 const dsCount = a => { const F = T + 'batch/ds/' + a + '.txt'; if (!fs.existsSync(F)) return undefined;   // our own set without a WERA datasheet (TL105)
   const t = fs.readFileSync(F, 'utf8').split('\n').filter(l => l.startsWith('p1 ')).map(l => l.slice(3)); const e = t.findIndex(l => /^EAN:/.test(l));
   const m = t.slice(0, e < 0 ? 3 : e).join(' ').match(/(\d+)\s+предмет/); return m ? +m[1] : undefined; };
 // a block already in the description (an earlier write) is replaced, at the same place
 const strip = h => { const i = h.indexOf('<div class="wsb">'); if (i < 0) return h; const k = h.search(/(Склад — за|Состав — по) технічн|(Склад — за|Состав — по) техническ/); const j = h.indexOf('</p></div>', k); if (k < i || j < 0) throw new Error('block end not found'); return h.slice(0, i) + h.slice(j + 10); };
-const place = (h, blk) => { const s = strip(h).replace(OLDPIC, ''); const i = s.search(ANCHOR); return i < 0 ? s + blk : s.slice(0, i) + blk + s.slice(i); };
+const place = (h, blk) => { const s = OP.strip(strip(h)); const i = s.search(ANCHOR); return i < 0 ? s + blk : s.slice(0, i) + blk + s.slice(i); };
 const plan = { name: NAME || 'setblock', products: {} }; const wait = [], questions = [], notes = [];
 // CLAUDE.md «не трогать»: Bit-Check 30 Christmas, Christmas MIX, 05133126001
 const NOTOUCH = new Set(['05135824001', '05135826001', '05133126001', '05135825001']); // 05135825001 Hex-Plus Christmas — no block (owner 03.11.2026)
@@ -76,7 +76,7 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
   const count = dsCount(s);
   const html = l => SB.blockG(items.map(i => ({ ...i, href: i.href && i.href[l] })), l, { count });
   const nw = { ua: place(p.description.ua, html('ua')), ru: place(p.description.ru, html('ru')) };
-  const removed = (p.description.ua.match(OLDPIC) || []).length;
+  const removed = OP.find(p.description.ua).length;
   plan.products[s] = { old: { ua: p.description.ua, ru: p.description.ru }, new: nw, why: [`блок состава: ${items.length} поз., групп ${new Set(items.map(i => i.gkey)).size}` + (removed ? `, убрано старых картинок ${removed}` : '')] }; }
 fs.writeFileSync(OUT, JSON.stringify(plan)); fs.writeFileSync(OUT.replace(/\.json$/, '_wait.json'), JSON.stringify({ wait, questions, notes }, null, 1));
 // every picture of a planned block must be on our domain
