@@ -55,6 +55,37 @@ const N = {
   '840/2 Z Bits': { group: 'HEX', ua: 'Біти 840/2 Z', ru: 'Насадки 840/2 Z' },
   '867/4 BTZ TORX® Bits': { group: 'TX', ua: 'Біти TORX® 867/4 BTZ', ru: 'Насадки TORX® 867/4 BTZ' },
   '800/4 BTZ Bits': { group: 'SL', ua: 'Біти 800/4 BTZ', ru: 'Насадки 800/4 BTZ' },
+  // 10.11.2026: bit sets and the sets waiting since 09.11 (docs/report_1109_blocks.md; owner 10.11 — a doubt -> the WERA picture)
+  '394 S Bits-Handhalter, mit Magazin und extra langer, starrer Klinge': { group: 'c:HANDLE', ua: '394 S Ручка-тримач із магазином і дуже довгим жорстким стрижнем', ru: '394 S Ручка-держатель с магазином и особо длинным жёстким стержнем' },
+  '9512 Kettenfixierhaken': { group: 'c:ACC', ua: '9512 Гачок для ланцюга', ru: '9512 Крючок для цепи' },
+  '9513 Kettennieter': { group: 'c:ACC', ua: '9513 Вичавка ланцюга', ru: '9513 Выжимка цепи' },
+  '9534 Ersatz-Nietstift für Kettennieter 9513': { group: 'c:ACC', ua: '9534 Запасний наконечник для вичавки ланцюга 9513', ru: '9534 Запасной наконечник для выжимки цепи 9513' },
+  '840/4 BTZ Bits': { group: 'HEX', ua: 'Біти 840/4 BTZ', ru: 'Насадки 840/4 BTZ' },
+  '828/1 Bits-Handhalter, mit starkem Dauermagnet; Magazin für 6 Bits im Griff': { group: 'c:HANDLE', ua: '828/1 Ручка-тримач із сильним постійним магнітом і магазином на 6 біт у ручці', ru: '828/1 Ручка-битодержатель с сильным постоянным магнитом и магазином в ручке на 6 битов' },
+  '9504 Reifenheber mit Bit-Aufnahme 2': { group: 'c:ACC', ua: '9504 Лопатка-монтажка з бітотримачем 2', ru: '9504 Лопатка-монтировка с битодержателем 2' },
+  '9505 Reifenheber mit Ventilausdreher 3': { group: 'c:ACC', ua: '9505 Лопатка-монтажка з вузлом для викручування ніпеля 3', ru: '9505 Лопатка-монтировка с узлом для вывинчивания ниппеля 3' },
+  '9506 4-in-1 Bit 1': { group: 'HEX', ua: '9506 Біта «4 в 1» 1', ru: '9506 Бит «4-в-1» 1' },
+  'Belt 781 0/5 (Textilgurt), 5-teilig, unbestückt': { group: 'c:ACC', ua: 'Пояс 781 0/5 (текстильний) на 5 головок, без інструментів', ru: 'Пояс 781 0/5 (матерчатый), на 5 головок, неукомплектованный' },
+  '1440 Schraubkralle für Schraubendreherklingen, lange Bits und Winkelschlüssel mit Festhaltefunktion für Schrauben': { group: 'c:ACC', ua: '1440 Фіксатор гвинтів', ru: '1440 Фиксатор винтов' },
+  '1442 Schraubkralle für Schraubendreherklingen, lange Bits und Winkelschlüssel mit Festhaltefunktion für Schrauben': { group: 'c:ACC', ua: '1442 Фіксатор гвинтів', ru: '1442 Фиксатор винтов' },
+  '881/4/1 Bithalter mit variabler Einschraubtiefenbegrenzung': { group: 'c:ACC', ua: '881/4/1 Бітотримач зі змінною глибиною загвинчування', ru: '881/4/1 Битодержатель с изменяемой глубиной завинчивания' },
+  '9201 Filzring für 881/4/1': { group: 'c:ACC', ua: '9201 Повстяна прокладка для 881/4/1', ru: '9201 Войлочная прокладка для 881/4/1' },
+  '3867/1 TS P TORX® Bits mit Zapfen, Edelstahl': { group: 'TX', ua: 'Біти TORX® 3867/1 TS P з цапфою, нержавіюча сталь', ru: 'Насадки TORX® 3867/1 TS P с цапфой, нержавеющая сталь' },
+  '3855/4 Bits, Edelstahl': { group: 'PZ', ua: 'Біти 3855/4, нержавіюча сталь', ru: 'Насадки 3855/4, нержавеющая сталь' },
+  '3867/4 TORX® Bits, Edelstahl': { group: 'TX', ua: 'Біти TORX® 3867/4, нержавіюча сталь', ru: 'Насадки TORX® 3867/4, нержавеющая сталь' },
+  '3840/4 Bits, Edelstahl': { group: 'HEX', ua: 'Біти 3840/4, нержавіюча сталь', ru: 'Насадки 3840/4, нержавеющая сталь' },
+  '815 R Bits-Handhalter mit Rapidaptor Schnellwechselfutter': { group: 'c:HANDLE', ua: '815 R Ручка-тримач зі швидкозатискним патроном Rapidaptor', ru: '815 R Ручка-держатель с быстрозажимным патроном Rapidaptor' },
+  '9103 Saitenkurbel': { group: 'c:ACC', ua: '9103 Ключ для гітарних кілків', ru: '9103 Ключ для гитарных колков' },
+  '9105 Fühlerlehre 0,05 - 1,00mm, 13 Blatt': { group: 'c:ACC', ua: '9105 Щуп 0,05–1,00 мм, 13 пластин', ru: '9105 Толщиномер 0,05–1,00 мм, 13 пластин' },
+  '9104 Input-Jacker': { group: 'c:ACC', ua: '9104 З’єднувальний штекер', ru: '9104 Соединительный штекер' },
+  '9101 Plektrum Wera': { group: 'c:ACC', ua: '9101 Медіатор Wera', ru: '9101 Медиатор Wera' },
+  '9102 Plektrum Tool Rebel': { group: 'c:ACC', ua: '9102 Медіатор Tool Rebel', ru: '9102 Медиатор Tool Rebel' },
+  '9110 Deckeldose Wera': { group: 'c:ACC', ua: '9110 Коробка з кришкою Wera', ru: '9110 Коробка с крышкой Wera' },
+  '851/9 C J PH Bits, Halfmoon': { group: 'PH', ua: 'Біти 851/9 C J PH Halfmoon', ru: 'Насадки 851/9 C J PH, Halfmoon' },
+  '851/1 J Bits': { group: 'PH', ua: 'Біти 851/1 J', ru: 'Насадки 851/1 J' },
+  '896/4/1 Bit-Abstandhalter Trockenbau': { group: 'c:ACC', ua: '896/4/1 Обмежувач довжини для гіпсокартону', ru: '896/4/1 Ограничитель длины для гипсокартона' },
+  '9599 Textiler Eimereinsatz, unbestückt': { group: 'c:ACC', ua: '9599 Текстильний органайзер для відра, без інструментів', ru: '9599 Органайзер для ведра, пустой' },
+  '814 RA-R Pistolengriff mit Ratschenfunktion': { group: 'c:HANDLE', ua: '814 RA-R Пістолетна ручка з тріскачкою', ru: '814 RA-R Ручка пистолетной формы с трещоткой' },
 };
 // datasheet articles that are not in our catalog (the wera.de row has the same article) — the datasheet name
 const NA = {
@@ -65,11 +96,24 @@ const NA = {
   '851/0 Micro': { group: 'PH', ua: 'Біти 851/0 Micro для гвинтів Phillips', ru: 'Насадки 851/0 Micro для винтов Phillips' },
   '3950 SPKL Multicolour Imperial': { group: 'HEX', ua: 'Г-подібний ключ Multicolour, дюймовий, нержавіюча сталь 3950 SPKL', ru: 'Г-образный ключ Multicolour, дюймовый, нержавеющая сталь 3950 SPKL' },
   '9575': { group: 'c:ACC', ua: '9575 М’який чохол Kraftform Kompakt VDE 24 Allrounder 1, без інструментів', ru: '9575 Мягкий чехол Kraftform Kompakt VDE 24 Allrounder 1, без инструментов' },
+  // 10.11.2026
+  '9533': { group: 'c:PLIERS', ua: '9533 Кліщі для велосипедного ланцюга', ru: '9533 Клещи для велосипедной цепи' },
+  '867/1 TORX® HF': { group: 'TX', ua: 'Біти TORX® 867/1 HF з фіксуючою функцією', ru: 'Насадки TORX® 867/1 HF с фиксирующей функцией' },
+  '867/4 TORX® HF': { group: 'TX', ua: 'Біти TORX® 867/4 HF з фіксуючою функцією', ru: 'Насадки TORX® 867/4 HF с фиксирующей функцией' },
+  '3800/4': { group: 'SL', ua: 'Біти 3800/4, нержавіюча сталь', ru: 'Насадки 3800/4, нержавеющая сталь' },
+  '3840/1 TS': { group: 'HEX', ua: 'Біти 3840/1 TS, нержавіюча сталь', ru: 'Насадки 3840/1 TS, нержавеющая сталь' },
+  '8790 HMA Deep': { group: 'c:SOCKET', ua: 'Торцева головка Zyklop 8790 HMA Deep 1/4″, подовжена', ru: 'Торцовая головка 8790 HMA Deep 1/4″, удлинённая' },
+  '869/9': { group: 'c:SOCKET', ua: 'Торцеві головки 869/9', ru: 'Торцовые головки 869/9' },
+  '9570': { group: 'c:ACC', ua: '9570 Складна сумка для набору комбінованих мітчиків 847/7, без інструментів', ru: '9570 Складная сумка для комбинированных насадок-метчиков 847/7, без инструментов' },
+  '9499': { group: 'c:ACC', ua: '9499 Складна сумка для набору мітчиків 844/7, без інструментів', ru: '9499 Складная сумка для насадок-метчиков 844/7, без инструментов' },
 };
 // KNIPEX in a set (owner 25.10.2026): our KNIPEX product on techlight-shop.com.ua — name = its h1 (UA / /ru/), link there, picture = its main photo without
 // background; key = the KNIPEX article as the WERA datasheet writes it (matched in the head of the position)
 const KNX = { '87 01 250': 'https://techlight-shop.com.ua/vysokotekhnolohichni-santekhnichni-klishchi-cobra-knipex-87-01-250/', '13 96 200': 'https://techlight-shop.com.ua/elektromontazhni-klishchi-knipex-13-96-200/',
   '08 26 185': 'https://techlight-shop.com.ua/pasatyzhi-podovzheni-185-mm-knipex-08-26-185/' };
+// KNIPEX that techlight-shop does not sell (owner 10.11.2026): the WERA picture of the wera.de row, no link; key = the article in the datasheet head
+const WKNX = { '74 01 140': { src: 'https://www.wera.de/prodimg/480x480/knipex__74_01_140.webp', ua: 'KNIPEX 74 01 140 Бокорізи', ru: 'KNIPEX 74 01 140 Боковые кусачки' },
+  '87 01 125': { src: 'https://www.wera.de/prodimg/480x480/knipex_cobra_hightech_wasserpumpenzange_87_01_125.webp', ua: 'KNIPEX Cobra® 87 01 125 Сантехнічні кліщі', ru: 'KNIPEX Cobra® 87 01 125 Сантехнические клещи' } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // node vt/noart_files.js check — which files the owner has uploaded (HTTP 200 image from our domain) -> «uploaded» in vt/noart.json
 const ICONS = 'https://tl-shop.com.ua/content/uploads/images/icons/';
@@ -83,6 +127,8 @@ else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], 
       if (l === 'ua') e.src = ((h.match(/property="og:image" content="([^"]+)"/) || [])[1] || '').replace(/\/content\/images\/(\d+)\/[^/]+\//, '/content/images/$1/'); }
     if (!e.ua || !e.ru || !e.src) { miss.push('KNIPEX ' + k + ': h1 / photo not found'); continue; } out.knipex[k] = e;
     const fp = path.join(DIR, file); if (!fs.existsSync(fp)) { const r = await fetch(e.src, { headers: { 'user-agent': 'Mozilla/5.0' } }); fs.writeFileSync(fp, (await cut(Buffer.from(await r.arrayBuffer()))).png); } }
+  for (const [k, w] of Object.entries(WKNX)) { const file = 'knipex_' + k.replace(/ /g, '_') + '.png'; out.knipex[k] = { group: 'c:PLIERS', file, ua: w.ua, ru: w.ru, src: w.src };
+    const fp = path.join(DIR, file); if (!fs.existsSync(fp)) { await sleep(1200); const r = await fetch(w.src, { headers: { 'user-agent': 'Mozilla/5.0' } }); if (!r.ok) { miss.push('HTTP ' + r.status + ' ' + w.src); continue; } fs.writeFileSync(fp, (await cut(Buffer.from(await r.arrayBuffer()))).png); } }
   for (const o of Object.values(R.pos)) { if (!o.wera) continue; const src = o.wera.img; const file = 'wera_' + path.basename(src).replace(/\.webp$/, '.png');
     let nm = null; if (o.key.startsWith('W:')) nm = N[o.wera.name]; else { const k = Object.keys(NA).find(k => o.head.startsWith(k + ' ')); nm = k && NA[k]; }
     if (!nm) { miss.push(`${o.key.slice(0, 70)} (${o.head.slice(0, 60)})`); continue; }
