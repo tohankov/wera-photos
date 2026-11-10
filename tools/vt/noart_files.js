@@ -145,6 +145,7 @@ else (async () => { const out = { names: {}, arts: {}, knipex: {} }, miss = [], 
   const WP = require('../../inventory/wera/pages.json'); const ours = new Set(ALLF ? JSON.parse(fs.readFileSync(ALLF, 'utf8')).map(p => p.article) : []);
   for (const pg of Object.values(WP.pages)) for (const it of pg.setItems || []) { if (!N[it.name] || out.names[it.name] || it.rows.every(r => r.art && ours.has(r.art))) continue;
     const file = N[it.name].file || 'wera_' + path.basename(it.img).replace(/\.webp$/, '.png'); out.names[it.name] = { ...N[it.name], file, src: it.img };
+    for (const r of it.rows) if (r.art && !ours.has(r.art) && !out.arts[r.art]) out.arts[r.art] = { ...N[it.name], file, src: it.img };   // looked up by the row article
     const f = path.join(DIR, file); if (fs.existsSync(f)) continue; await sleep(1200); const r = await fetch(it.img, { headers: { 'user-agent': 'Mozilla/5.0' } });
     if (!r.ok) { miss.push('HTTP ' + r.status + ' ' + it.img); continue; } fs.writeFileSync(f, (await cut(Buffer.from(await r.arrayBuffer()))).png); }
   fs.writeFileSync(path.join(__dirname, 'noart.json'), JSON.stringify(out, null, 1));
