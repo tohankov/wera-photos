@@ -45,6 +45,8 @@
 
 - 10.11: «Сумки» — правило А: 13 листов просмотрены, 6 → главное фото паспорта (наше вторым), 93 — то же, снять фон; docs/global_bags_photos.csv. Дальше: план описаний, пример, docs/global_bags.md.
 
+- 10.11: «Сумки» — анализ и пример ГОТОВЫ: docs/global_bags.md, docs/pilot/example_bags.html; ждём «ок» владельца и ответы (4 вопроса). Ничего не записано.
+
 ## Осталось (пункты 1–2 сделаны 10.11)
 1. Свежая полная выгрузка: `node lib/full_export.js <all.json> article,title,mod_title,parent,alt_parent,display_in_showcase,characteristics,link,images,description` (из `tools/`).
 2. bits_live.json = товары разделов «Біти та бітотримачі» (menu_tree, path начинается с него) → `global_desc_plan.js` (как выше) → просмотреть 2–3 примера → `node cat/desc_write.js <plan> 50 540` (повторять до done) → `vt/block_site_check`-подобная проверка витрины выборочно → sec_check порциями.

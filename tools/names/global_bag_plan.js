@@ -37,9 +37,12 @@ for (const p of L) { const a = p.article; const d = ds(a); const t = d && d.titl
   if (lead) rest = /Joker Switch/.test(lead[3]) ? `${lead[2]} ${lead[1]} ${lead[3]}` : /Joker/.test(lead[3]) ? `${lead[2]} ${lead[3].replace('Joker', 'Joker ' + lead[1])}` : `${lead[2]} ${lead[3]} ${lead[1]}`;
   const forRu = /^(для|на|под)\s/.test(rest) || !rest ? '' : 'для ';
   let restUa = rest; for (const [re, b] of PH) restUa = restUa.replace(re, b); restUa = restUa.replace(/^для /, 'для ').replace(/^на /, 'на ');
+  // the drive of our current name («8006 SC 1 1/2″», «8100 SA Zyklop Speed 1/4″») is not in the datasheet title — kept, after a comma
+  // («для 8006 SC 1, 1/2″»: «1 1/2″» would read as one and a half inches)
+  const drv = (p.mod_title.ua.match(/(\d\/\d″)/) || [])[1]; if (drv && !/″/.test(rest)) { rest += ', ' + drv; restUa += ', ' + drv; }
   const sz = dims.length ? `, ${dims.join('×')} мм` : '';
   const ua = `${ty[1]} ${m[1]} ${forRu ? 'для ' : ''}${restUa}, без інструментів${sz} WERA ${a}`.replace(/\s+/g, ' ').replace(/ ,/g, ',');
   const ru = `${ty[2]} ${m[1]} ${forRu}${rest}, без инструментов${sz} WERA ${a}`.replace(/\s+/g, ' ').replace(/ ,/g, ',');
   if (ua === p.mod_title.ua && ru === p.mod_title.ru) continue;
-  plan[a] = { oldTitle: p.title, oldMod: p.mod_title, ua, ru, ds: t }; }
+  plan[a] = { oldTitle: p.title, oldMod: p.mod_title, ua, ru, ds: t, why: [`паспорт WERA: «${t}»`] }; }
 fs.writeFileSync(OUT, JSON.stringify(plan, null, 1)); console.log('names', Object.keys(plan).length, '| kept', skip.length); for (const s of skip) console.log('  ', s);
