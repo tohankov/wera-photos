@@ -48,4 +48,6 @@
 
 - 11.11 (2): блоки 2go SHK/E/H + 4 dyn записаны; SHK 1 → 30 предметів; полоски 70/120/240 — во всех блоках уже наш товар. Візок ЗАКРЫТ (docs/report_global_trol.md), ждут 18 файлов (docs/global_noart_upload_1111c.md). Дальше: Велосипеди (1056) — анализ + пример.
 
+- Велосипеди 1056: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_bike.md (1 вопрос: текстовый «Склад набору:» рядом с блоком, ещё 22 набора), docs/pilot/example_bike.html. Планы: names/set_global_bike.json (2), блок scratchpad bike/blk.json (Bicycle Set 5), фон 5, WERA 3.
+
 ## Дальше
