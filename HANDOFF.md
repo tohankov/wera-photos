@@ -44,4 +44,6 @@
 
 - Динамометрия ЗАКРЫТА: описания 204, блоки 19 записаны; отчёт docs/report_global_dyn.md; ждут 8 файлов (docs/global_noart_upload_1111b.md). Дальше: Візок 1055 — names/global_trol_plan.js (75, просмотреть), правило А, тексты тележек (250 кг только 9800; 30 кг у 9805/9705/9706), составы, блоки, пример, docs/global_trol.md.
 
+- Візок 1055: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_trol.md (1 вопрос: Tool-Check PLUS в 9750), docs/pilot/example_trol.html, docs/global_trol_items.csv. Планы: names/set_global_trol.json (75), cat/gtrol_desc_plan.json (51; extra cat/gdesc_trol.js), фразы 7 (переводов нет в global_phrase_plan — добавить), правило А 0, фон 87, WERA у 65, блоки 15+22+7.
+
 ## Дальше
