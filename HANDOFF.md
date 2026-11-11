@@ -46,4 +46,6 @@
 
 - Візок 1055: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_trol.md (1 вопрос: Tool-Check PLUS в 9750), docs/pilot/example_trol.html, docs/global_trol_items.csv. Планы: names/set_global_trol.json (75), cat/gtrol_desc_plan.json (51; extra cat/gdesc_trol.js), фразы 7 (переводов нет в global_phrase_plan — добавить), правило А 0, фон 87, WERA у 65, блоки 15+22+7.
 
+- 11.11 (2): блоки 2go SHK/E/H + 4 dyn записаны; SHK 1 → 30 предметів; полоски 70/120/240 — во всех блоках уже наш товар. Візок ЗАКРЫТ (docs/report_global_trol.md), ждут 18 файлов (docs/global_noart_upload_1111c.md). Дальше: Велосипеди (1056) — анализ + пример.
+
 ## Дальше
