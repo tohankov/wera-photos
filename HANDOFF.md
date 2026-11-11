@@ -36,5 +36,6 @@
 - Візок 1055 (начат): выгрузка scratchpad trol/live.json (87), wera.de 87/87, анализ inventory/global_1055*.json. Тексты: тележки Stainless — «250 кг» нет в паспорте (только у 9800), «на ящик 25 кг» → 30 кг (9805/9705/9706); 9760 — ок. Названия: names/global_trol_plan.js → names/set_global_trol.json (75: серия, число предметов по заголовку паспорта, «без інструментів») — ПРОСМОТРЕТЬ результат. Дальше: правило А (wera_cmp → cmp_sheets → глазами), описания (global_desc_plan + extra для 250/30 кг), составы паспорт≠wera.de (пустой ложемент в составе — по wera.de), блоки (comp_state), night_audit trolley + plan_diff, пример, docs/global_trol.md, items csv.
 
 ## Остановился на
+- 11.11 (решения владельца 10.11, 2-й промпт): Сумки — 9425 «Kompakt 41» записано; блоки 2go 2 / 2 XL записаны; 2go SHK 1 / E 1 / H 1 ждут 28 файлов (docs/global_noart_upload_1111.md). ДАЛЬШЕ: Динамометрия — писать всё (названия names/set_global_dyn.json → характеристики cat/gdyn_chars.json + длины 60/65/90 индикаторам → фото: правило А 24 (вкл. 7783 E → WERA) → фон → недостающие WERA → описания cat/gdyn_desc_plan.json пересобрать + полные таблицы XP → блоки 20). Потом Візок 1055: анализ + пример.
 
 ## Дальше
