@@ -48,6 +48,10 @@ const CAT = {
   // 10.11.2026, by analogy with the owner's drills / taps (845 / 846 countersink bits in bit sets) — reported to the owner
   BIT41: { ua: 'Біти 4 в 1', ru: 'Биты 4 в 1', one: { ua: 'Біта 4 в 1', ru: 'Бита 4 в 1' } },   // owner 10.11.2026: 9506 / 9507 — a text group, no icon
   SINK: { ua: 'Зенкери', ru: 'Зенкеры', one: { ua: 'Зенкер', ru: 'Зенкер' } },
+  // owner 11.11.2026: other brands in Wera 2go SHK 1 / E 1 / H 1 (STABILA, Lyra, PICARD, PUK, BESSEY, KIRSCHEN, Jung) — text groups at the end
+  MEASURE: { ua: 'Вимірювальний і розмічальний інструмент', ru: 'Измерительный и разметочный инструмент' },
+  HAMMER: { ua: 'Молотки', ru: 'Молотки', one: { ua: 'Молоток', ru: 'Молоток' } },
+  CUT: { ua: 'Ріжучий інструмент', ru: 'Режущий инструмент' },
 };
 const BY_VYD = { 'Ручка-тримач': 'HANDLE', 'Ручка-вороток': 'HANDLE', 'Викрутка': 'SCREWDRIVER', 'Тріскачка': 'RATCHET',
   'Торцева головка': 'SOCKET', 'Торцева головка подовжена': 'SOCKET', 'Торцева головка з фіксуючою функцією': 'SOCKET', 'Торцева головка ударна Impaktor': 'SOCKET', 'Торцева головка ударна Impaktor подовжена': 'SOCKET',
@@ -61,7 +65,8 @@ function group(p, head = '') {
   if (!p) { const m = BY_HEAD.find(([re]) => re.test(head)); return m ? { key: 'c:' + m[1] } : { question: 'не на сайті, вид за паспортом не визначено: ' + head }; }
   const ch = p.characteristics || {}; const pr = [...new Set((ch.profil || []).map(x => BY_PROFIL[x.value.ua] || '?' + x.value.ua))];
   const vy = (ch.vyd_instrumentu || []).map(x => x.value.ua).join(' ');
-  if (pr.length > 1 && /^Набір|Ложемент|Інструментальний візок/.test(vy)) return { key: 'c:SET' };
+  // owner 29.10.2026: a nested set is one position of the group «Набори» — also «Викрутка з набором біт» (Kompakt Turbo i 1 Tool Finder in Wera 2go E 1, 11.11.2026)
+  if (pr.length > 1 && /^Набір|Ложемент|Інструментальний візок|^Викрутка з набором біт/.test(vy)) return { key: 'c:SET' };
   // a handle carries the profiles of its section (1014 Kraftform Micro 05051278001) — still a handle
   if (pr.length > 1 && (ch.vyd_instrumentu || []).some(x => BY_VYD[x.value.ua] === 'HANDLE')) return { key: 'c:HANDLE' };
   if (pr.length > 1) return { question: 'два профілі: ' + (ch.profil || []).map(x => x.value.ua).join(' + ') };
