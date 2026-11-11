@@ -19,6 +19,9 @@ const compOf = (s, useW) => { const c = WERA_COMP.has(s) || useW ? [] : (C[s] ||
 const CM = require('./catmatch.js')(Object.values(L)); const NR = require('./noart_resolve.js'); const NA = fs.existsSync(path.join(__dirname, 'noart.json')) ? require('./noart.json') : { names: {}, arts: {} };
 const OKST = ['cut', 'knipex', 'no article', 'not ours'];
 const VELCRO = { 70: '05670446001', 120: '05670447001', 240: '05670448001' };
+// owner 11.11.2026: a named WERA set without an article in a composition = our product (9750: «Tool-Check PLUS, 39 предметов» = Tool-Check PLUS 1 05049055001,
+// the old one is withdrawn on wera.de, the new version since 01.06.2025)
+const NAMED = { 'Tool-Check PLUS, 39 предметов': '05049055001', 'Tool-Check PLUS': '05049055001' };
 const ru = u => u.replace('tl-shop.com.ua/', 'tl-shop.com.ua/ru/');
 const ANCHOR = /<h3>(?:Інші варіанти|Другие варианты|Дізнайтеся більше|Узнайте больше)/;
 const OP = require('./oldpic.js');   // old composition pictures: bare <img> or the linked WERA screenshot (owner 10.11.2026)
@@ -47,6 +50,7 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
     let art = x.art, c = x.art ? L[x.art] : null, cat = false;
     // owner 29.10.2026: «Klettstreifen 70 / 120 / 240» of WERA sets = our «Смужка на липучці № 1 / 2 / 3» (link + our photo); Klettstreifen 30 — WERA file
     const vk = !c && (g.head.match(/(?:липучках\s+(?:№\s*)?|^Klettstreifen\s+)(70|120|240)\b/) || [])[1]; if (vk) { art = VELCRO[vk]; c = L[art]; }
+    if (!c && NAMED[g.head.trim()]) { art = NAMED[g.head.trim()]; c = L[art]; }
     if (!c) { const { w } = NR.wmatch(s, g, x); const cm = !x.art && !(w && w.art) && !/KNIPEX/i.test(g.head) && CM.match(g.code, x.size);
       if (w && w.art && L[w.art]) { art = w.art; c = L[w.art]; } // the wera.de row names our product (CLAUDE.md)
       else if (cm) { art = cm; c = L[cm]; cat = true; } // owner 10.11.2026: no article anywhere — our product by series + size + length (vt/catmatch.js)
@@ -66,7 +70,7 @@ for (const s of sets) { const v = ST.sets[s]; const p = L[s]; if (!v || !p || +p
   let { items, q, pend } = build(false);
   const wu = W.art[s]; const wp = wu && W.pages[wu]; const w = wp && wp.setItems && wp.setItems.length ? wp.setItems.flatMap(i => i.rows) : null;
   // positions found by series + size (cat) have no WERA article — not compared
-  const arts = it => it.filter(i => /^\d{11}$/.test(i.art) && !i.cat && !Object.values(VELCRO).includes(i.art)).map(i => i.art + ':' + i.qty).sort().join(',');
+  const arts = it => it.filter(i => /^\d{11}$/.test(i.art) && !i.cat && !Object.values(VELCRO).includes(i.art) && !Object.values(NAMED).includes(i.art)).map(i => i.art + ':' + i.qty).sort().join(',');
   const wa = w ? w.filter(r => r.art).map(r => r.art + ':' + r.qty).sort().join(',') : null;
   if (w && arts(items) !== wa && !WERA_COMP.has(s)) { const da = arts(items); notes.push(`${s}: паспорт ≠ wera.de (только паспорт ${da.split(',').filter(x => !wa.split(',').includes(x)).join(' ') || '—'}; только wera.de ${wa.split(',').filter(x => !da.split(',').includes(x)).join(' ') || '—'}) — состав по wera.de`); ({ items, q, pend } = build(true)); }
   if (pend.length && !q.length) { wait.push({ art: s, name: v.name, why: pend }); continue; }

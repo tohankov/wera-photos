@@ -53,6 +53,9 @@ const CAT = {
   HAMMER: { ua: 'Молотки', ru: 'Молотки', one: { ua: 'Молоток', ru: 'Молоток' } },
   CUT: { ua: 'Ріжучий інструмент', ru: 'Режущий инструмент' },
   // 11.11.2026: inserts of the torque wrenches (7870 / 7880 Joker, 7772 …; «Вид» «Змінна насадка») in the dyn sets 9530 / 9558 — a text group
+  // 11.11.2026: other brands in the inlays 9782 (PICARD, RENNSTEIG) / 9783 (PFERD)
+  METAL: { ua: 'Слюсарний інструмент', ru: 'Слесарный инструмент' },
+  FILE: { ua: 'Напилки', ru: 'Напильники', one: { ua: 'Напилок', ru: 'Напильник' } },
   INSERT: { ua: 'Змінні насадки', ru: 'Сменные насадки', one: { ua: 'Змінна насадка', ru: 'Сменная насадка' } },
 };
 const BY_VYD = { 'Змінна насадка': 'INSERT', 'Ручка-тримач': 'HANDLE', 'Ручка-вороток': 'HANDLE', 'Викрутка': 'SCREWDRIVER', 'Тріскачка': 'RATCHET',
