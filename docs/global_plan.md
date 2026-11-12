@@ -139,12 +139,6 @@
 
 **Дальше — только после команды владельца:** анализ новых групп (Сумки 2go, Біти та бітотримачі 1104, динамометрия, візок, велосипеди, ударні, молотки). Порядок для группы — как у Г-ключей / Kompakt: названия → характеристики (night_write) → правило А (rulea_prep → листы → main_replace TAG) → фон (global_cut → листы на тёмном и сером, концы крупно → main_replace) → недостающие WERA (series_cmp → decisions.json → wera_add plan / files → images/global_add в git → upload) → описания (global_desc_plan → desc_write) → фразы WERA лёгко (gvyk_phrase_scan → global_phrase_plan → замены → desc_write) → блоки (full_export → comp_state с деревом группы из inventory/menu_tree.json → setblock_plan → desc_write → block_site_check; blocks_wait_doc) → night_audit + plan_diff → global_items_csv → отчёт.
 
-**Ждут владельца:**
-- вопросы Г-ключей (docs/report_global_lkeys.md п. 1, 5) и Kompakt (docs/report_global_kompakt.md п. 3, 6);
-- 4 новых файла для блоков (docs/global_noart_upload.md) → потом `node vt/noart_files.js check`, comp_state, setblock_plan, desc_write;
-- фото позиций без строки wera.de (docs/report_1030.md, Kompakt п. 6.4);
-- удалить дубль фото в общей галерее 05049065001;
-- Joker: новое значение «З фіксуючою функцією» в «Особливості гайкового ключа» (65 ключей)?
-- вопросы в docs/report_global_vde.md / docs/report_global_zyklop.md, которые не закрыты решениями 29.10.
+**Ждут владельца:** один список — docs/report_1112_final.md («Открытые вопросы»).
 
-**Блоки ждут** — docs/global_<группа>_blocks_wait.md: «Викрутки» 12, VDE 36, Zyklop 90 и Kompakt 78 (почти все — фото бит), Г-ключі 5, Joker 1 (Black Edition).
+**Блоки ждут** — docs/global_blocks_wait_1112.md (12.11: 3 набора ждут 4 файла).
