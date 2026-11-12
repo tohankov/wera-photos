@@ -15,7 +15,11 @@ const H = {
   '300 V Держатель клапана, 0,25 Nm': ['c:TORQUE', 'Тримач клапана 300 V', 'Держатель клапана 300 V', '05074746001_p3_14', 'wera_ds_300_v.png'] };
 // an article of the datasheet that is not ours (comp_state «not ours») — vt/noart.json «arts»
 const ART = { '05160111001': ['c:ACC', 'Тримач клапана 327', 'Держатель клапана 327', '05074745001_p3_14', 'wera_ds_327.png'] };
-const WN = { '8894 SC Verlängerung, kurz, 1/2"': ['c:ACC', '8894 SC Подовжувач короткий, 1/2″', '8894 SC Удлинитель короткий, 1/2″', 'https://www.wera.de/prodimg/480x480/8894_sc.webp', 'wera_8894_sc.png'] };
+const WN = {
+  // 12.11.2026: 2090/17 05072017001 (Ударні) — bits without our product
+  '800/2 Schlitz-Bits': ['SL', 'Біти шліцеві 800/2', 'Биты шлицевые 800/2', 'https://www.wera.de/prodimg/480x480/800_2.webp', 'wera_800_2.png'],
+  '840/2 Innensechskant-Bits': ['HEX', 'Біти шестигранні 840/2', 'Биты шестигранные 840/2', 'https://www.wera.de/prodimg/480x480/840_2.webp', 'wera_840_2.png'],
+  '8894 SC Verlängerung, kurz, 1/2"': ['c:ACC', '8894 SC Подовжувач короткий, 1/2″', '8894 SC Удлинитель короткий, 1/2″', 'https://www.wera.de/prodimg/480x480/8894_sc.webp', 'wera_8894_sc.png'] };
 const save = async (buf, file, pad) => { let b = buf; if (pad) b = await sharp(buf).flatten({ background: '#fff' }).extend({ top: 6, bottom: 6, left: 6, right: 6, background: '#fff' }).png().toBuffer();
   const t = await sharp((await cut(b)).png).trim().png().toBuffer(); await sharp(t).extend({ top: 4, bottom: 4, left: 4, right: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(path.join(DIR, file)); };
 (async () => { const J = JSON.parse(fs.readFileSync(F, 'utf8')); J.heads = J.heads || {};
