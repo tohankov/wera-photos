@@ -16,6 +16,9 @@ const H = {
 // an article of the datasheet that is not ours (comp_state «not ours») — vt/noart.json «arts»
 const ART = { '05160111001': ['c:ACC', 'Тримач клапана 327', 'Держатель клапана 327', '05074745001_p3_14', 'wera_ds_327.png'] };
 const WN = {
+  // 12.11.2026: Photovoltaic set 1 05136043001 (8790 HMC Deep with the shaft cut-out) and 3967/9 TX SXL HF Stainless 1 05022689001 — no our product
+  '8790 HMC Deep Steckschlüsseleinsatz mit Ausschnitt am Schaft, mit 1/2"-Antrieb': ['c:SOCKET', 'Торцева головка Zyklop 8790 HMC Deep 1/2″ з вирізом на хвостовику', 'Торцевая головка Zyklop 8790 HMC Deep 1/2″ с вырезом на хвостовике', 'https://www.wera.de/prodimg/480x480/8790_hmc_deep_open.webp', 'wera_8790_hmc_deep_open.png'],
+  '3967 SXL TORX® HF Winkelschlüssel Multicolour mit Haltefunktion, lang, Edelstahl': ['TX', 'Г-подібний ключ 3967 SXL TORX® HF Multicolour з фіксуючою функцією, подовжений, нержавіюча сталь', 'Г-образный ключ 3967 SXL TORX® HF Multicolour с фиксирующей функцией, удлинённый, нержавеющая сталь', 'https://www.wera.de/prodimg/480x480/3967_sxl_hf_torx_multicolour.webp', 'wera_3967_sxl_hf_torx_multicolour.png'],
   // 12.11.2026: 2090/17 05072017001 (Ударні) — bits without our product
   '800/2 Schlitz-Bits': ['SL', 'Біти шліцеві 800/2', 'Биты шлицевые 800/2', 'https://www.wera.de/prodimg/480x480/800_2.webp', 'wera_800_2.png'],
   '840/2 Innensechskant-Bits': ['HEX', 'Біти шестигранні 840/2', 'Биты шестигранные 840/2', 'https://www.wera.de/prodimg/480x480/840_2.webp', 'wera_840_2.png'],
@@ -27,4 +30,8 @@ const save = async (buf, file, pad) => { let b = buf; if (pad) b = await sharp(b
     if (fs.existsSync(path.join(DIR, file))) return; if (web) { const r = await fetch(src, { headers: { 'user-agent': 'Mozilla/5.0' } }); await save(Buffer.from(await r.arrayBuffer()), file, false); }
     else await save(fs.readFileSync(path.join(IMG, src + '.png')), file, true); };
   for (const [k, v] of Object.entries(H)) await put(J.heads, k, v); for (const [k, v] of Object.entries(ART)) await put(J.arts, k, v); for (const [k, v] of Object.entries(WN)) await put(J.names, k, v);
+  // wera.de rows WITH an article that is not ours are looked up by the article (setblock_plan: NA.arts)
+  const BYART = { '05138007001': '8790 HMC Deep Steckschlüsseleinsatz mit Ausschnitt am Schaft, mit 1/2"-Antrieb' };
+  for (let i = 0; i <= 8; i++) BYART['0502268' + i + '001'] = '3967 SXL TORX® HF Winkelschlüssel Multicolour mit Haltefunktion, lang, Edelstahl';
+  for (const [a, w] of Object.entries(BYART)) J.arts[a] = { ...J.names[w] };
   fs.writeFileSync(F, JSON.stringify(J, null, 1)); console.log('heads', Object.keys(H).length, 'arts', Object.keys(ART).length, 'names', Object.keys(WN).length); })();

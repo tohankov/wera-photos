@@ -13,7 +13,7 @@ const [, , ALL, STF, OUT, NAME, ...only] = process.argv;
 const L = Object.fromEntries(JSON.parse(fs.readFileSync(ALL, 'utf8')).map(p => [p.article, p])); const ST = JSON.parse(fs.readFileSync(STF, 'utf8'));
 // the datasheet has no composition table (950/9 Hex-Plus Multicolour 1 …): the composition of wera.de «Werkzeuge in diesem Set» — also WERA (27.10.2026)
 // owner 29.10.2026: these sets take the composition of wera.de «Werkzeuge in diesem Set» (the datasheet table misses positions: 827 T i, 05071076001, 05003526001 / 527)
-const WERA_COMP = new Set(['05006640001', '05004177001', '05004016001', '05021728001', '05021721001', '05004357001']);   // 05004357001 Wera 2go 2 XL: by wera.de, owner 10.11.2026 // 950/13: by wera.de (owner 03.11.2026)
+const WERA_COMP = new Set(['05022699001', '05022210001', '05022089001', '05022689001', '05006640001', '05004177001', '05004016001', '05021728001', '05021721001', '05004357001']);   // 05004357001 Wera 2go 2 XL: by wera.de, owner 10.11.2026 // 950/13: by wera.de (owner 03.11.2026)
 const compOf = (s, useW) => { const c = WERA_COMP.has(s) || useW ? [] : (C[s] || []).filter(g => g.items && g.items.length); if (c.length) return c; const wp = W.pages[W.art[s]]; if (!wp || !wp.setItems) return [];
   return wp.setItems.filter(i => i.rows.length).map(i => ({ head: i.name, code: (i.name.match(/^\d{3,4}(?:\/\d+)?(?:\s[A-Z]{1,5}(?=\s|$))*/) || [''])[0], items: i.rows.map(r => ({ art: r.art, qty: r.qty, size: r.size.replace(/(\d),(\d)/g, '$1.$2').replace(/ mm$/, ' мм') })) })); };
 const CM = require('./catmatch.js')(Object.values(L)); const NR = require('./noart_resolve.js'); const NA = fs.existsSync(path.join(__dirname, 'noart.json')) ? require('./noart.json') : { names: {}, arts: {} };
