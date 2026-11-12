@@ -10,7 +10,7 @@ const fs = require('fs'), path = require('path'), X = require('xlsx');
 const [, , GK, LIVE, SCAN, TREE] = process.argv; const L = JSON.parse(fs.readFileSync(LIVE, 'utf8')), SC = JSON.parse(fs.readFileSync(SCAN, 'utf8')), MT = JSON.parse(fs.readFileSync(TREE, 'utf8'));
 const TITLE = { vyd_instrumentu: 'Вид інструменту', profil: 'Профіль', rozmir_nakonechnyka: 'Профіль і розмір', rozmir_robochoho_kintsia: 'Розмір робочого кінця', dovzhyna_robochoho_kintsia: 'Довжина робочого кінця',
   dovzhyna_stryzhnia: 'Довжина стрижня', osoblyvosti_vykrutky: 'Особливості викрутки', pryvid: 'Привід', rozmir_holovky: 'Розмір головки', dovzhyna_holovky: 'Довжина головки', rozmir_pid_kliuch: 'Розмір під ключ',
-  systema_rozmiriv: 'Система розмірів', osoblyvosti_haikovoho_kliucha: 'Особливості гайкового ключа', rozmir_kliucha: 'Розмір ключа', dovzhyna_kliucha: 'Довжина ключа', pokryttia: 'Покриття', osoblyvosti_kliucha: 'Особливості ключа',
+  systema_rozmiriv: 'Система розмірів', osoblyvosti_haikovoho_kliucha: 'Особливості гайкового ключа', osoblyvosti_holovky: 'Особливості головки', rozmir_kliucha: 'Розмір ключа', dovzhyna_kliucha: 'Довжина ключа', pokryttia: 'Покриття', osoblyvosti_kliucha: 'Особливості ключа',
   rozmir: 'Розмір', dovzhyna: 'Довжина', typ_bity: 'Тип біти', khvostovyk: 'Хвостовик', osoblyvosti: 'Особливості', dovzhyna_bitotrymacha: 'Довжина бітотримача', osoblyvosti_bitotrymacha: 'Особливості бітотримача',
   pryiednannia_do_instrumenta: 'Приєднання до інструмента', pryiednannia_nasadky: 'Приєднання насадки', diametr_sverdla: 'Діаметр свердла', rizba: 'Різьба', typ_bit_u_nabori: 'Тип біт у наборі',
   diapazon_momentu: 'Діапазон моменту', nalashtuvannia_momentu: 'Налаштування моменту', typ_nasadky: 'Тип насадки', rozmir_nasadky: 'Розмір насадки', osoblyvosti_dynamometra: 'Особливості динамометра',
@@ -34,7 +34,7 @@ const SIZE = ['rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'rozmir_holovky
 const GROUPS = {
   vde: { root: 1224, name: 'Діелектричні інструменти', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia', 'dovzhyna_robochoho_kintsia', 'pryvid', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka', 'rozmir_robochoho_kintsia'] },
   // 21.10.2026: screwdriver heads and sets carry «Профіль і розмір» (cat/zyk_pr.js), «Розмір головки» — nut sockets
-  zyklop: { root: 1270, name: 'Тріскачки та приладдя Zyklop', order: ['vyd_instrumentu', 'pryvid', 'profil', 'rozmir_nakonechnyka', 'rozmir_holovky', 'dovzhyna_holovky'], link: ['pryvid', 'rozmir_nakonechnyka', 'rozmir_holovky'] },
+  zyklop: { root: 1270, name: 'Тріскачки та приладдя Zyklop', order: ['vyd_instrumentu', 'pryvid', 'profil', 'rozmir_nakonechnyka', 'rozmir_holovky', 'dovzhyna_holovky', 'osoblyvosti_holovky'], link: ['pryvid', 'rozmir_nakonechnyka', 'rozmir_holovky'] },
   joker: { root: 1185, name: 'Гайкові ключі Joker', order: ['vyd_instrumentu', 'rozmir_pid_kliuch', 'systema_rozmiriv', 'osoblyvosti_haikovoho_kliucha'], link: ['rozmir_pid_kliuch'] },
   lkeys: { root: 1152, name: 'Г-подібні ключі', order: ['vyd_instrumentu', 'profil', 'rozmir_kliucha', 'dovzhyna_kliucha', 'pokryttia', 'osoblyvosti_kliucha'], link: ['profil', 'rozmir_kliucha'] },
   kk: { root: 1057, name: 'Інструменти серії Kraftform Kompakt', order: ['vyd_instrumentu', 'profil', 'rozmir_nakonechnyka', 'osoblyvosti_vykrutky'], link: ['profil', 'rozmir_nakonechnyka'] },

@@ -1,9 +1,9 @@
 // Group definition «Тріскачки та приладдя Zyklop» (1270) for cat/import_group.js.
-const { out, disputed, VYD_RU, DRV_RU } = require('./zyklop.js');
+const { out, disputed, VYD_RU, DRV_RU } = require('./zyklop.js'); const ZF = require('./zyk_feat.js');   // «Особливості головки» since 12.11.2026
 const VYD_ORDER = ['Торцева головка', 'Торцева головка подовжена', 'Торцева головка з фіксуючою функцією', 'Торцева головка ударна Impaktor', 'Торцева головка ударна Impaktor подовжена', 'Викруткова головка', 'Тріскачка', 'Набір з тріскачкою', 'Набір головок', 'Перехідник', 'Приладдя'];
 const DRV_ORDER = ['квадрат 1/4″', 'квадрат 3/8″', 'квадрат 1/2″', 'шестигранник 1/4″', 'Zyklop Mini 2 (пряме приєднання головок)'];
 const items = out.map(v => ({ a: v.a, title: v.title, secs: v.secs, sec: v.sec, kind: v.kind, vals: {
-  vyd_instrumentu: [].concat(v.vyd || []), pryvid: v.drv, profil: v.profile ? [v.profile] : [], rozmir_holovky: v.size[0] ? [v.size[0]] : [], dovzhyna_holovky: v.len[0] ? [v.len[0]] : [] } }));
+  vyd_instrumentu: [].concat(v.vyd || []), pryvid: v.drv, profil: v.profile ? [v.profile] : [], rozmir_holovky: v.size[0] ? [v.size[0]] : [], dovzhyna_holovky: v.len[0] ? [v.len[0]] : [], osoblyvosti_holovky: ZF.HF.has(v.a) ? [ZF.VALUES[0]] : ZF.RING.has(v.a) ? [ZF.VALUES[1]] : [] } }));
 module.exports = {
   name: 'zyklop', root: 1270, seed: '05003365001', testArticle: '05049002001',
   chars: [
@@ -13,10 +13,11 @@ module.exports = {
     { key: 'rozmir_holovky', title: 'Розмір головки', titleRu: 'Размер головки', order: 'asc' },
     { key: 'rozmir_nakonechnyka', title: 'Профіль і розмір', book: 392 },   // screwdriver heads and sets since 21.10.2026 (cat/zyk_pr.js)
     { key: 'dovzhyna_holovky', title: 'Довжина головки', titleRu: 'Длина головки', order: 'asc' },
+    { key: 'osoblyvosti_holovky', title: 'Особливості головки', titleRu: 'Особенности головки', order: 'given', values: ZF.VALUES, ru: ZF.RU },
   ],
   items, disputed,
   required: it => it.kind ? ['vyd_instrumentu', 'pryvid', 'profil', (it.vals.rozmir_nakonechnyka || []).length ? 'rozmir_nakonechnyka' : 'rozmir_holovky', 'dovzhyna_holovky'] : ['vyd_instrumentu', 'pryvid'],
-  filterOrder: ['Хіти продажів', 'Вид інструменту', 'Ціна', 'Привід', 'Профіль', 'Профіль і розмір', 'Розмір головки', 'Довжина головки'],
+  filterOrder: ['Хіти продажів', 'Вид інструменту', 'Ціна', 'Привід', 'Профіль', 'Профіль і розмір', 'Розмір головки', 'Довжина головки', 'Особливості головки'],
 };
 // sets get all values of their composition (cat/sets_fill.js)
 { const F = require('./sets_fill.js')(module.exports.name, module.exports.items, module.exports.chars); module.exports.items = F.items; module.exports.disputed = [...module.exports.disputed, ...F.disputed]; module.exports.setsReport = F.report; }
