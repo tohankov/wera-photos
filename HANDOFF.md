@@ -52,4 +52,6 @@
 
 - 12.11: 7 блоков ложементов дописаны; 250 кг Stainless возвращено (текст + картинка WERA); текстовые списки состава рядом с блоком убраны (64, docs/report_1112_textcomp.md, правило CLAUDE.md, vt/textcomp_plan.js); Велосипеди записаны (docs/report_global_bike.md). Ударні 1313: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_impact.md, example_impact.html; планы names/set_global_imp.json, cat/gimp_vyd_plan.json; после фона (2090 → фото паспорта, 2090/16, головка 05005506001) — блоки 5 наборов.
 
+- 12.11 (3-й промпт): Ударні ЗАПИСАНЫ (report_global_impact.md); п.3 старые картинки-таблицы 9 убраны (report_1112_oldtable.md); п.4 одиночные биты — список docs/global_singlebits.md (IMP DC не проходят (г) — вопрос, без записи); п.5 битых картинок 0 (vt/img_check.js), промо-кандидаты scratchpad promo.json (106), Vario 22 рабочих конца — предложение; п.6 блоки: +4, общий список docs/global_blocks_wait_1112.md, файлы docs/global_noart_upload_1112.md. ОСТАЛОСЬ: Молотки 1268 анализ+пример; сверка «Ждут владельца» global_plan vs CLAUDE.md → один список открытого; итоговый отчёт docs/report_1112_final.md.
+
 ## Дальше
