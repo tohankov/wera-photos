@@ -54,4 +54,6 @@
 
 - 12.11 (3-й промпт): Ударні ЗАПИСАНЫ (report_global_impact.md); п.3 старые картинки-таблицы 9 убраны (report_1112_oldtable.md); п.4 одиночные биты — список docs/global_singlebits.md (IMP DC не проходят (г) — вопрос, без записи); п.5 битых картинок 0 (vt/img_check.js), промо-кандидаты scratchpad promo.json (106), Vario 22 рабочих конца — предложение; п.6 блоки: +4, общий список docs/global_blocks_wait_1112.md, файлы docs/global_noart_upload_1112.md. ОСТАЛОСЬ: Молотки 1268 анализ+пример; сверка «Ждут владельца» global_plan vs CLAUDE.md → один список открытого; итоговый отчёт docs/report_1112_final.md.
 
+- 12.11 ЗАКРЫТО: Молотки — анализ+пример (docs/global_hammers.md); итог и ОДИН список открытых вопросов — docs/report_1112_final.md; global_plan «Ждут владельца» → ссылка туда.
+
 ## Дальше
