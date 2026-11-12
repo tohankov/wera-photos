@@ -30,7 +30,7 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title); const isSet = s 
   if (!v.sys.length) { if (/дюйм|Imperial/i.test(n)) v.sys.push('Дюймова'); else if (/\d мм/.test(n)) v.sys.push('Метрична'); }
   if (/Switch|реверсн|реверсив/i.test(n)) v.feat.push('З реверсною тріскачкою (Switch)'); else if (/тріскачк/i.test(n)) v.feat.push('З тріскачкою');
   if (/подовжен/i.test(n)) v.feat.push('Подовжений'); if (/самоналашт/i.test(n)) v.feat.push('Самоналаштування'); if (/VDE|ізольован/i.test(n)) v.feat.push('VDE (ізольований)');
-  if (/Магнітний тримач/i.test(n)) v.feat.push('З магнітним тримачем'); if (/Black Edition/i.test(n)) v.feat.push('Black Edition');
+  if (/Магнітний тримач/i.test(n)) v.feat.push('З магнітним тримачем'); if (/Black Edition/i.test(n)) v.feat.push('Black Edition'); if (require('./joker_hf.js').has(it.a)) v.feat.push('З фіксуючою функцією');
   out.push(v); }
 module.exports = { out, disputed };
 if (require.main === module) { const c = k => { const m = {}; for (const v of out) for (const x of v[k]) m[x] = (m[x] || 0) + 1; return m; }; const { cmp } = require('../lib/valsort.js');
