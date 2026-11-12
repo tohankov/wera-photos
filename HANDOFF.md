@@ -50,4 +50,6 @@
 
 - Велосипеди 1056: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_bike.md (1 вопрос: текстовый «Склад набору:» рядом с блоком, ещё 22 набора), docs/pilot/example_bike.html. Планы: names/set_global_bike.json (2), блок scratchpad bike/blk.json (Bicycle Set 5), фон 5, WERA 3.
 
+- 12.11: 7 блоков ложементов дописаны; 250 кг Stainless возвращено (текст + картинка WERA); текстовые списки состава рядом с блоком убраны (64, docs/report_1112_textcomp.md, правило CLAUDE.md, vt/textcomp_plan.js); Велосипеди записаны (docs/report_global_bike.md). Ударні 1313: АНАЛИЗ ГОТОВ, ждём «ок» — docs/global_impact.md, example_impact.html; планы names/set_global_imp.json, cat/gimp_vyd_plan.json; после фона (2090 → фото паспорта, 2090/16, головка 05005506001) — блоки 5 наборов.
+
 ## Дальше
