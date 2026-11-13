@@ -1,7 +1,7 @@
 # HANDOFF — 13.11.2026 (6-й промпт владельца, идёт)
 
 ## ИДЁТ СЕЙЧАС (13.11)
-- П.1 квадраты 762: работа scratchpad sq/ (cut/<art>.png, list.json, replace_state.json, checked.json). Цикл: node sqnext.js sq 25 → TAG=sq1113 main_replace sq sq/p.json 540 → bash sqcheck.sh (refresh + sec_check + checked). Сделано 253 / 762, sec_check 0.
+- П.1 квадраты 762: работа scratchpad sq/ (cut/<art>.png, list.json, replace_state.json, checked.json). Цикл: node sqnext.js sq 25 → TAG=sq1113 main_replace sq sq/p.json 540 → bash sqcheck.sh (refresh + sec_check + checked). Сделано 505 / 762, sec_check 0.
 - П.2 блоки: setblock.js уже даёт wsq/wsc (vt/square_ratio.js). ДАЛЬШЕ после квадратов: точечная замена src в блоках (старый главный → текущий; + 200 устаревших в 19 блоках), стиль .wsb img.wsq/wsc, desc_write порциями, block_site_check. Порог cover — w/h ≥ 1,62 (обрезка ≤ 0,5 px), ниже — contain (1 позиция 05074705001).
 - П.3 HEX IMP DC — сделано. П.4 Zyklop — витрина = план, _configured обновлён.
 
