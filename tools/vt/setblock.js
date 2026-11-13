@@ -19,9 +19,13 @@ const SHOW = 8, ALL = 10, CLS = 'wsb';
 const items_ = (n, lang) => { const d = n % 10, h = n % 100; const k = d === 1 && h !== 11 ? 0 : d >= 2 && d <= 4 && (h < 12 || h > 14) ? 1 : 2; return (lang === 'ua' ? ['предмет', 'предмети', 'предметів'] : ['предмет', 'предмета', 'предметов'])[k]; };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const GRID = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(max(260px,calc(50% - 6px)),1fr));gap:10px';
+// owner 12–13.11.2026: a main photo on a square transparent canvas (photos_audit/square_prep.js -> vt/square_ratio.js) is cropped to its centre in the
+// 76×46 cell (object-fit: cover, class wsq) when its content is at least 1.62 : 1 (crop <= 0.5 px a side); a nearly square one — contain (class wsc)
+const SQR = require('./square_ratio.js'); const SQ = it => { const r = it.art && !/\/icons\//.test(it.img || '') && SQR[it.art]; return r ? (r[0] / r[1] >= 1.62 ? 'wsq' : 'wsc') : ''; };
+const SQCSS = `.${CLS} img.wsq{width:76px;height:46px;object-fit:cover;object-position:center}.${CLS} img.wsc{width:76px;height:46px;object-fit:contain;object-position:center}`;
 const card = (it, lang) => {
   const pic = `<span style="flex:0 0 76px;width:76px;height:46px;display:flex;align-items:center;justify-content:center">`
-    + (it.img ? `<img src="${esc(it.img)}" alt="${esc(it.name[lang])}" loading="lazy" style="max-width:76px;max-height:46px;width:auto;height:auto;display:block">` : '') + '</span>';
+    + (it.img ? (SQ(it) ? `<img class="${SQ(it)}" src="${esc(it.img)}" alt="${esc(it.name[lang])}" loading="lazy" style="display:block">` : `<img src="${esc(it.img)}" alt="${esc(it.name[lang])}" loading="lazy" style="max-width:76px;max-height:46px;width:auto;height:auto;display:block">`) : '') + '</span>';
   const name = it.href ? `<a href="${esc(it.href)}" style="color:${C.green}">${esc(it.name[lang])}</a>` : `<span style="color:${C.text}">${esc(it.name[lang])}</span>`;
   const meta = [it.art ? `${LBL.art[lang]} ${it.art}` : '', `${it.qty} ${LBL.pcs[lang]}`].filter(Boolean).join(' · ');
   return `<div style="display:flex;gap:12px;align-items:center;min-width:0;padding:8px 10px;border:1px solid ${C.line};border-radius:8px;background:${C.card}">${pic}`
@@ -30,7 +34,7 @@ const card = (it, lang) => {
 function block(items, lang, { count } = {}) {
   const n = count || items.reduce((s, x) => s + (+x.qty || 1), 0);
   const style = `<style>.${CLS} details>summary{list-style:none}.${CLS} details>summary::-webkit-details-marker{display:none}`
-    + `.${CLS} details[open]>summary .${CLS}-more{display:none}.${CLS} details:not([open])>summary .${CLS}-less{display:none}</style>`;
+    + `.${CLS} details[open]>summary .${CLS}-more{display:none}.${CLS} details:not([open])>summary .${CLS}-less{display:none}${SQCSS}</style>`;
   const grid = list => `<div style="${GRID}">${list.map(it => card(it, lang)).join('')}</div>`;
   let h = `<div class="${CLS}">${style}<h3>${LBL.title[lang]} · ${n} ${items_(n, lang)}</h3>`;
   if (items.length <= ALL) h += grid(items);
@@ -55,7 +59,7 @@ function blockG(items, lang, { count, iconBase = '/content/uploads/images/icons/
   const flat = order.flatMap(k => items.filter(it => it.gkey === k)); const cnt = k => items.filter(it => it.gkey === k).length;
   const title = k => { const d = G.def(k); return cnt(k) === 1 && d.one ? d.one[lang] : d[lang]; };
   const style = `<style>.${CLS} details>summary{list-style:none}.${CLS} details>summary::-webkit-details-marker{display:none}`
-    + `.${CLS} details[open]>summary .${CLS}-more{display:none}.${CLS} details:not([open])>summary .${CLS}-less{display:none}</style>`;
+    + `.${CLS} details[open]>summary .${CLS}-more{display:none}.${CLS} details:not([open])>summary .${CLS}-less{display:none}${SQCSS}</style>`;
   const chip = k => { const d = G.def(k); return `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px ${d.icon ? '3px 4px' : '3px 10px'};border:1px solid ${C.line};border-radius:14px;font-size:13px;color:${C.text};white-space:nowrap">`
     + (d.icon ? `<img src="${esc(src(d.icon))}" alt="" width="20" height="20" style="display:block">` : '') + `${esc(d.chip || title(k))} · ${cnt(k)}</span>`; };
   const head = k => { const d = G.def(k); return `<div style="display:flex;align-items:center;gap:10px;margin:16px 0 8px">`
