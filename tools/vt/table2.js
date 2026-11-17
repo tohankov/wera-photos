@@ -10,6 +10,8 @@ const LBL = {
 };
 const C = { bg: '#191816', head: '#262523', line: '#363434', text: '#ededed', muted: '#999', green: '#1e9676', cur: '#16302a' };
 const ICON_DIR = '/content/uploads/images/icons/';
+// room under the PDF button: the storefront description box (overflow:hidden) cut its bottom border line off (owner 17.11.2026, 05056305001)
+const PDF_P = 'margin:0 0 16px;padding-bottom:4px';
 // site zebra: .text tr:nth-child(2n+1) td{background:rgba(237,237,237,.05)} — the sticky cell needs the same colour, but opaque
 const zebra = hex => '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) * 0.95 + 237 * 0.05).toString(16).padStart(2, '0')).join('');
 
@@ -46,7 +48,7 @@ function table(series, lang, current, links) {
 
 function datasheet(lang, art, pdfLang) {
   const url = `https://hybris-media.wera.de/download/pdfgenerator-datasheets/${pdfLang}/${art}.pdf`;
-  return `<h3>${LBL.more[lang]}</h3><p><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:8px 16px 8px 10px;border:1px solid ${C.line};border-radius:8px;color:${C.text}">`
+  return `<h3>${LBL.more[lang]}</h3><p style="${PDF_P}"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:8px 16px 8px 10px;border:1px solid ${C.line};border-radius:8px;color:${C.text}">`
     + `<img src="${ICON_DIR}icon-pdf.png" width="31" height="40" alt="PDF">${LBL.pdf[lang]}</a></p>`;
 }
-module.exports = { table, datasheet };
+module.exports = { table, datasheet, PDF_P };
