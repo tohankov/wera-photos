@@ -7,6 +7,7 @@ const dsText = it => { const f = path.join(__dirname, '../batch/ds', it.a + '.tx
 const norm = s => s.replace(/​/g, '').replace(/(\d)\.(\d)/g, '$1,$2').replace(/(\d) ?["”″]/g, '$1″').replace(/(\d|″)\s*[хХ×]\s*(?=\d)/g, '$1x');
 const f = s => +String(s).replace(',', '.');
 const INLB = 0.113; // 1 in·lb = 0,113 N·m
+const BIT = /креплени\S* бит|смена бит/i;
 const NUM = '(\\d+(?:,\\d+)?)';
 const TQX = require('./torque_exact.json').products;
 const fmt = x => String(Math.round(x * 1000) / 1000).replace('.', ',');
@@ -49,7 +50,8 @@ for (const it of I) { const s = it.secs[0], n = norm(it.title), t = norm(dsTitle
   if (kind === 'ind' || kind === 'key' || kind === 'drv' || vyd.startsWith('Набір')) { const q = TQX[it.a] ? null : torque(it, n);
     if (TQX[it.a]) v.torque = TQX[it.a].vals; else if (q) v.torque = [exact(q, n)]; else if (kind) disputed.push({ a: it.a, sec: s, what: 'Діапазон моменту', why: 'нет в таблице, названии и datasheet', title: it.title }); }
   if (kind && (kind === 'ind' || [1204, 1205, 1206].includes(s) || s === 1464)) v.set = ['Встановлений (фіксований)']; else if (kind === 'key' || kind === 'drv') v.set = ['Регульований'];
-  if (kind === 'key' || s === 1458) v.drv = drives(n, t);
+  // bit holder (external hex 1/4″): title «під біту» or WERA datasheet p1 «креплением бит» / «смена бит» (Click-Torque Lock A 6, Lock A 6 R/L — owner 18.11.2026; was «квадрат 1/4″» from «1/4″ x»)
+  if (kind === 'key' || s === 1458) v.drv = BIT.test(dsText(it).split('\n').filter(l => /^p1 /.test(l)).join(' ')) ? ['шестигранник 1/4″'] : drives(n, t);
   if (kind === 'drv') v.drv = [1199, 1205].includes(s) ? ['Halfmoon / HIOS 4 мм'] : (s === 1202 || /VDE/.test(n)) ? ['Kraftform Kompakt VDE (вставки)'] : ['шестигранник 1/4″'];
   if (kind === 'nas') { v.nas = [NAS[s]]; if (s === 1219 && /тріскачк|тремтіння|реверс/i.test(n)) v.nas = ['Тріскачка з квадратом'];
     v.drv = drives(n, t).filter(d => /змінні насадки/.test(d)); if (!v.drv.length) disputed.push({ a: it.a, sec: s, what: 'Привід', why: 'нет в названии и datasheet', title: it.title });
