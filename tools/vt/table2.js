@@ -46,9 +46,27 @@ function table(series, lang, current, links) {
   return h;
 }
 
+// «Технічні дані» (owner 17.11.2026): a single product without a WERA series (wera.de shows only this article) — the same table, one row,
+// no «цей товар» badge, no «Натисніть на артикул» hint. spec: {cols:[{icon, w, ua, ru, unit?}], row:[art, ...values, noteNo], notes:{ua:[..], ru:[..]}}
+const TECH = { ua: 'Технічні дані', ru: 'Технические данные' };
+function tech(spec, lang) {
+  const sup = n => n ? `<sup style="color:${C.muted}">${String(n).split(',').map(x => x + ')').join(',')}</sup>` : '';
+  let h = `<h3>${TECH[lang]}</h3><table style="width:100%;min-width:560px;border-collapse:collapse;text-align:center;white-space:nowrap;font-size:14px">`;
+  h += `<thead><tr style="background:${C.head};border-bottom:2px solid ${C.green};vertical-align:bottom">`;
+  const th = `text-align:center;color:${C.text};font-weight:600;line-height:1.25`;
+  h += `<th style="${th};text-align:left;position:sticky;left:0;background:${C.head}">${LBL.art[lang]}</th>`;
+  for (const c of spec.cols) { const img = c.icon ? `<img src="${ICON_DIR}${c.icon}.png" width="${c.w}" height="26" alt="" style="display:block;margin:0 auto 4px">` : '';
+    h += `<th style="${th};white-space:normal">${img}${c[lang]}` + (c.unit ? `<span style="display:block;color:${C.muted};font-weight:400">${c.unit[lang]}</span>` : '') + '</th>'; }
+  const r = spec.row, vals = r.slice(1, 1 + spec.cols.length), note = r[1 + spec.cols.length];
+  h += `</tr></thead><tbody><tr style="border-top:1px solid ${C.line}"><td style="text-align:left;position:sticky;left:0;background:${zebra(C.bg)}">${r[0]}${sup(note)}</td>`
+    + vals.map(v => `<td>${v}</td>`).join('') + '</tr></tbody></table>';
+  if (spec.notes[lang].length) h += `<p style="font-size:12px;color:${C.muted}">${spec.notes[lang].join('<br>')}</p>`;
+  return h;
+}
+
 function datasheet(lang, art, pdfLang) {
   const url = `https://hybris-media.wera.de/download/pdfgenerator-datasheets/${pdfLang}/${art}.pdf`;
   return `<h3>${LBL.more[lang]}</h3><p style="${PDF_P}"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:8px 16px 8px 10px;border:1px solid ${C.line};border-radius:8px;color:${C.text}">`
     + `<img src="${ICON_DIR}icon-pdf.png" width="31" height="40" alt="PDF">${LBL.pdf[lang]}</a></p>`;
 }
-module.exports = { table, datasheet, PDF_P };
+module.exports = { table, tech, datasheet, PDF_P };
